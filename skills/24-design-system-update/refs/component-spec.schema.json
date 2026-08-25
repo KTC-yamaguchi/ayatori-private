@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kinto-dev/ayatori/skills/24-design-system-update/refs/component-spec.schema.json",
+  "title": "component-spec",
+  "description": "Step 24 §Step 0 で style-guide-view.html から抽出して artifacts/{app_name}/build/component-spec.json として dump する形式。Step D 以降は本 JSON のフィールドを literal で Figma 要素にマッピングすること (核心原則 2: Verbatim Copy)。",
+  "type": "object",
+  "required": ["components", "foundations_samples"],
+  "additionalProperties": true,
+  "properties": {
+    "components": {
+      "type": "array",
+      "description": "style-guide-view.html の Section 05 から抽出した各 ComponentSet / Component の仕様",
+      "items": {
+        "type": "object",
+        "required": ["name", "variants"],
+        "additionalProperties": true,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Component 名 (例: Button / Input / Badge / Card / Focus Ring)"
+          },
+          "atomic_level": {
+            "type": "string",
+            "enum": ["atoms", "molecules", "organisms"],
+            "description": "Naming convention / 配置先サブフレーム"
+          },
+          "variants": {
+            "type": "array",
+            "description": "variants[] 全件 loop の対象 (AP-1)。variant が無い場合も配列で `[{state:'default'}]` を 1 件持つ",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["state"],
+              "additionalProperties": true,
+              "properties": {
+                "state": {
+                  "type": "string",
+                  "description": "Variant property 値 (例: primary / outline / ghost / danger / disabled / default / focus / error)"
+                },
+                "label_text": {
+                  "type": "string",
+                  "description": "HTML literal の label テキスト (Button の '+ コードを追加' 等)。AP-2 違反防止"
+                },
+                "icon_svg": {
+                  "type": ["string", "null"],
+                  "description": "HTML literal の inline SVG 全文。Step D-2a で createNodeFromSvg に渡す (AP-5)"
+                },
+                "literal_content": {
+                  "type": "object",
+                  "description": "Card 等で複数 Text Node を持つ場合の literal map (title / chord_chips / bpm_text / key_badge 等)。Step D-2 で全 key 配置必須 (AP-3)",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "fixed_props": {
+            "type": "object",
+            "description": "全 variant 共通の固定プロパティ (min-height / border-radius / padding 等)",
+            "additionalProperties": true
+          },
+          "literal_content": {
+            "type": "object",
+            "description": "variant が無い Component (Card 等) の literal map",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "foundations_samples": {
+      "type": "object",
+      "description": "Foundations セクション (Color / Typography / Spacing / Touch Target / Radius) の各 sample データ",
+      "additionalProperties": true,
+      "properties": {
+        "typography": {
+          "type": "array",
+          "description": "Typography Scale の各サイズで表示する literal sample (AP-2 違反防止)。skill 24 §C-1 §2 で各行に meta + sample_text の 2 段 Text Node を配置する際に使用。",
+          "items": {
+            "type": "object",
+            "required": ["token_name", "sample_text"],
+            "additionalProperties": true,
+            "properties": {
+              "token_name": { "type": "string", "description": "例: font-size-2xl" },
+              "sample_text": { "type": "string", "description": "HTML literal (例: 大見出し / 見出し / 本文)" },
+              "font_family": { "type": "string", "description": "(B2-2) Typography Scale 描画時の font family (例: 'Syne')。skill 24 §C-1 §2 の meta line で使用" },
+              "font_weight": { "type": "integer", "description": "(B2-2) font weight (400/500/600/700/800)" },
+              "font_size_px": { "type": "integer", "description": "(B2-2) font size 数値 (px)" }
+            }
+          }
+        },
+        "cta_label": {
+          "type": "string",
+          "description": "(B2-2) app-relevant CTA ラベル (例: 'スタジオを検索')。Focus Ring sample button / その他のサンプルで使用 (skill 24 §D-2-focus 参照)。"
+        }
+      }
+    },
+    "expression_constraints": {
+      "type": "object",
+      "description": "06 表現制約セクションの DO / DON'T カード。Step D-6 で Text Node として literal 配置 (AP-4)",
+      "additionalProperties": true,
+      "properties": {
+        "title": { "type": "string" },
+        "do_cards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["heading", "items"],
+            "additionalProperties": true,
+            "properties": {
+              "heading": { "type": "string", "description": "DO カードの見出し (例: コバルトの正しい使い方)" },
+              "items": { "type": "array", "items": { "type": "string", "description": "1 item = 1 Text Node" } }
+            }
+          }
+        },
+        "dont_cards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["heading", "items"],
+            "additionalProperties": true,
+            "properties": {
+              "heading": { "type": "string", "description": "DON'T カードの見出し" },
+              "items": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "_meta": {
+      "type": "object",
+      "description": "Step 0 dump 時の audit trail",
+      "additionalProperties": true,
+      "properties": {
+        "source_html": { "type": "string", "description": "artifacts/{app_name}/screens/style-guide-view.html" },
+        "dumped_at": { "type": "string", "format": "date-time" },
+        "skill_version": { "type": "string" }
+      }
+    }
+  }
+}

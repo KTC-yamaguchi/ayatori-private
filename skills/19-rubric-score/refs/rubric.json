@@ -1,0 +1,125 @@
+{
+  "type": "design_evaluation",
+  "total_score": 100,
+  "pass_score": 80,
+  "layers": {
+    "layer_1": {
+      "name": "技術・数値軸",
+      "max_score": 40,
+      "standard": "WCAG 2.2 AA",
+      "default_tag": "AI改善可能",
+      "axes": {
+        "デザインシステム準拠": {
+          "max_score": 10,
+          "source": "Figma MCP",
+          "thresholds": {
+            "10": "Variables適用率95%以上",
+            "8": "Variables適用率90〜94%",
+            "6": "Variables適用率80〜89%",
+            "0-4": "Variables適用率80%未満"
+          },
+          "variables_weight": {
+            "カラー": 0.4,
+            "タイポグラフィ": 0.3,
+            "スペーシング": 0.3
+          }
+        },
+        "コントラスト・可読性": {
+          "max_score": 10,
+          "source": "Figma REST API + 補助計算",
+          "wcag_ref": ["1.4.3", "1.4.11"],
+          "thresholds": {
+            "10": "WCAG AA完全準拠",
+            "8": "軽微な違反1件",
+            "0-5": "重大違反あり"
+          }
+        },
+        "タイポグラフィ": {
+          "max_score": 10,
+          "source": "Figma REST API",
+          "thresholds": {
+            "10": "全テキスト要素がトークン準拠",
+            "7": "軽微な逸脱あり",
+            "0-5": "複数逸脱"
+          }
+        },
+        "インタラクション要素": {
+          "max_score": 10,
+          "source": "Figma REST API + Claude Vision",
+          "wcag_ref": ["2.4.7", "2.5.8"],
+          "platform_criteria": {
+            "mobile": {
+              "10": "主要CTA全て48px以上",
+              "6": "24〜47px",
+              "0": "24px未満あり"
+            },
+            "web": {
+              "8": "主要CTA全て44px以上",
+              "+2": "ホバー状態の定義あり",
+              "+0": "ホバー未定義"
+            },
+            "responsive": "モバイル基準＋Web基準の両方 + ブレイクポイント切替 + フォーカス状態定義"
+          }
+        }
+      }
+    },
+    "layer_2": {
+      "name": "ユーザビリティ軸",
+      "max_score": 30,
+      "standard": "Nielsen's 10 Heuristics",
+      "default_tag": "AI改善可能",
+      "axes": {
+        "ナビゲーション明確性": {
+          "max_score": 10,
+          "evaluation_unit": "単画面",
+          "description": "CTA・操作の直感性・情報量"
+        },
+        "一貫性": {
+          "max_score": 10,
+          "evaluation_unit": "フロー単位",
+          "description": "パターン統一・Jakob's Law準拠・画面間の整合"
+        },
+        "フィードバック・状態表示": {
+          "max_score": 10,
+          "evaluation_unit": "フロー単位",
+          "description": "システム状態の可視性・遷移の理解しやすさ。画面パターン網羅性 (L1〜L4) を含む",
+          "sub_criteria": {
+            "screen_coverage": {
+              "ref": "docs/screen-coverage-check.md",
+              "layers": {
+                "l1": "5 UI States 網羅性 (Scott Hurff)",
+                "l2": "アクション結果画面の有無",
+                "l3": "マルチステップフロー終端画面の有無",
+                "l4": "コンテンツ差し替え原則による不足検出"
+              },
+              "input": "artifacts/{app_name}/screens/00-coverage-check.json (Step 14 早期チェック結果) + Step 17 生成 HTML",
+              "deduction_tag": "screen_coverage"
+            }
+          }
+        }
+      }
+    },
+    "layer_3": {
+      "name": "デザイン性・センス軸",
+      "max_score": 30,
+      "standard": "Hartmann et al. + UICrit",
+      "default_tag": "人間対応必要",
+      "evaluation_method": "Claude Vision専用",
+      "axes": {
+        "美的品質": {
+          "max_score": 10,
+          "description": "Hartmann/UICrit準拠の美的評価"
+        },
+        "レイアウト・空間設計": {
+          "max_score": 10,
+          "description": "バランス・余白・アライメント"
+        },
+        "ブランド整合性": {
+          "max_score": 10,
+          "description": "⑧コンセプトとの一致・感情的訴求"
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
