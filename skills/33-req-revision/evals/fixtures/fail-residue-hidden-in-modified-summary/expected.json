@@ -1,0 +1,34 @@
+{
+  "run_id": "2026-07-07-010",
+  "app_name": "fixture-app",
+  "verdict": "FAIL",
+  "warnings": [],
+  "coverage": {
+    "mode": "full",
+    "snapshotted_docs": [
+      "04-use-cases.md",
+      "05-features.md"
+    ],
+    "unchecked_docs": []
+  },
+  "kanten1": {
+    "violations": [
+      {
+        "id": "F-05",
+        "occurrences": [
+          {
+            "file": "requirements/04-use-cases.md",
+            "line": 4
+          }
+        ]
+      }
+    ]
+  },
+  "kanten2": {
+    "results": []
+  },
+  "kanten3": {
+    "status": "full",
+    "violations": []
+  }
+}

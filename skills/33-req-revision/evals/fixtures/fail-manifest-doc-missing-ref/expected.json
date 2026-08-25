@@ -1,0 +1,53 @@
+{
+  "run_id": "2026-07-06-003",
+  "app_name": "fixture-app",
+  "verdict": "FAIL",
+  "warnings": [],
+  "coverage": {
+    "mode": "full",
+    "snapshotted_docs": [
+      "04-use-cases.md",
+      "05-features.md"
+    ],
+    "unchecked_docs": []
+  },
+  "kanten1": {
+    "violations": []
+  },
+  "kanten2": {
+    "results": [
+      {
+        "id": "F-09",
+        "status": "FAIL",
+        "expected_docs": [
+          "04-use-cases.md",
+          "05-features.md"
+        ],
+        "actual_docs": [
+          "05-features.md"
+        ],
+        "missing_docs": [
+          "04-use-cases.md"
+        ]
+      },
+      {
+        "id": "UC-02",
+        "status": "FAIL",
+        "expected_docs": [
+          "04-use-cases.md",
+          "05-features.md"
+        ],
+        "actual_docs": [
+          "04-use-cases.md"
+        ],
+        "missing_docs": [
+          "05-features.md"
+        ]
+      }
+    ]
+  },
+  "kanten3": {
+    "status": "full",
+    "violations": []
+  }
+}

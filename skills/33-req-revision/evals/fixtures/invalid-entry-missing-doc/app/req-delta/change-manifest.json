@@ -1,0 +1,19 @@
+{
+  "run_id": "2026-07-07-012",
+  "app_name": "fixture-app",
+  "created_at": "2026-07-07T09:00:00+09:00",
+  "change_type": "spec_change",
+  "change_description": "doc 欠落 entry の検証",
+  "directly_changed_docs": [
+    "05-features.md"
+  ],
+  "requirement_changes": [
+    {
+      "section": "F-01 ログイン",
+      "type": "modified",
+      "summary": "x",
+      "impact_hint": "",
+      "dependency_category": "feature_flow"
+    }
+  ]
+}

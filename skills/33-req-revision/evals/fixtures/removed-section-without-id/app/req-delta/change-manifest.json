@@ -1,0 +1,20 @@
+{
+  "run_id": "2026-07-07-011",
+  "app_name": "fixture-app",
+  "created_at": "2026-07-07T09:00:00+09:00",
+  "change_type": "spec_change",
+  "change_description": "fixture 用の変更",
+  "directly_changed_docs": [
+    "05-features.md"
+  ],
+  "requirement_changes": [
+    {
+      "doc": "05-features.md",
+      "section": "旧レポート機能",
+      "type": "removed",
+      "dependency_category": "feature_flow",
+      "summary": "F-05 を削除",
+      "impact_hint": ""
+    }
+  ]
+}

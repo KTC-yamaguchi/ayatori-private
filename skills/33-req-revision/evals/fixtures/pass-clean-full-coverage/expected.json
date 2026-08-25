@@ -1,0 +1,65 @@
+{
+  "run_id": "2026-07-06-001",
+  "app_name": "fixture-app",
+  "verdict": "PASS",
+  "warnings": [],
+  "coverage": {
+    "mode": "full",
+    "snapshotted_docs": [
+      "04-use-cases.md",
+      "05-features.md",
+      "06-non-functional.md",
+      "07-data-definition.md"
+    ],
+    "unchecked_docs": []
+  },
+  "kanten1": {
+    "violations": []
+  },
+  "kanten2": {
+    "results": [
+      {
+        "id": "F-03",
+        "status": "PASS",
+        "expected_docs": [
+          "04-use-cases.md",
+          "05-features.md"
+        ],
+        "actual_docs": [
+          "04-use-cases.md",
+          "05-features.md"
+        ],
+        "missing_docs": []
+      },
+      {
+        "id": "UC-01",
+        "status": "PASS",
+        "expected_docs": [
+          "04-use-cases.md",
+          "05-features.md"
+        ],
+        "actual_docs": [
+          "04-use-cases.md",
+          "05-features.md"
+        ],
+        "missing_docs": []
+      },
+      {
+        "id": "NFR-14",
+        "status": "PASS",
+        "expected_docs": [
+          "06-non-functional.md"
+        ],
+        "actual_docs": [
+          "05-features.md",
+          "06-non-functional.md"
+        ],
+        "missing_docs": []
+      }
+    ]
+  },
+  "kanten3": {
+    "status": "full",
+    "violations": []
+  }
+}

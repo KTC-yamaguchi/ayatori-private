@@ -1,0 +1,38 @@
+{
+  "run_id": "2026-07-06-001",
+  "app_name": "fixture-app",
+  "created_at": "2026-07-06T09:00:00+09:00",
+  "change_type": "spec_change",
+  "change_description": "fixture 用の変更",
+  "directly_changed_docs": [
+    "05-features.md",
+    "04-use-cases.md",
+    "06-non-functional.md"
+  ],
+  "requirement_changes": [
+    {
+      "doc": "05-features.md",
+      "section": "F-03 通知設定",
+      "type": "added",
+      "dependency_category": "feature_flow",
+      "summary": "通知設定機能を追加",
+      "impact_hint": "UC-01 の基本フロー末尾から遷移"
+    },
+    {
+      "doc": "04-use-cases.md",
+      "section": "UC-01 基本フロー",
+      "type": "modified",
+      "dependency_category": "feature_flow",
+      "summary": "F-03 への導線を追記",
+      "impact_hint": ""
+    },
+    {
+      "doc": "06-non-functional.md",
+      "section": "NFR-14 応答時間",
+      "type": "modified",
+      "dependency_category": "feature_flow",
+      "summary": "初期表示の目標値を 1.5 秒に変更",
+      "impact_hint": ""
+    }
+  ]
+}

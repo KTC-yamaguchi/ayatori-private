@@ -1,0 +1,25 @@
+{
+  "run_id": "2026-07-07-011",
+  "app_name": "fixture-app",
+  "verdict": "PASS",
+  "warnings": [
+    "requirement_changes[0] (type=removed, doc=05-features.md) の section「旧レポート機能」から主体 ID を導出できないため、観点 1 の残存検査対象になりません — section に削除対象の ID を含めてください"
+  ],
+  "coverage": {
+    "mode": "full",
+    "snapshotted_docs": [
+      "05-features.md"
+    ],
+    "unchecked_docs": []
+  },
+  "kanten1": {
+    "violations": []
+  },
+  "kanten2": {
+    "results": []
+  },
+  "kanten3": {
+    "status": "full",
+    "violations": []
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "run_id": "2026-07-06-008",
+  "app_name": "fixture-app",
+  "verdict": "PASS",
+  "warnings": [],
+  "coverage": {
+    "mode": "skipped",
+    "snapshotted_docs": [],
+    "unchecked_docs": []
+  },
+  "kanten1": {
+    "violations": []
+  },
+  "kanten2": {
+    "results": [
+      {
+        "id": "F-01",
+        "status": "PASS",
+        "expected_docs": [
+          "05-features.md"
+        ],
+        "actual_docs": [
+          "05-features.md"
+        ],
+        "missing_docs": []
+      }
+    ]
+  },
+  "kanten3": {
+    "status": "skipped",
+    "violations": []
+  }
+}

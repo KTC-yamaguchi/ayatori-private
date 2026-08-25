@@ -1,0 +1,37 @@
+{
+  "run_id": "2026-07-06-007",
+  "app_name": "fixture-app",
+  "created_at": "2026-07-06T09:00:00+09:00",
+  "change_type": "spec_change",
+  "change_description": "fixture 用の変更",
+  "directly_changed_docs": [
+    "05-features.md",
+    "04-use-cases.md"
+  ],
+  "requirement_changes": [
+    {
+      "doc": "05-features.md",
+      "section": "F-05 旧レポート",
+      "type": "removed",
+      "dependency_category": "feature_flow",
+      "summary": "F-05 を削除し F-08 に統合",
+      "impact_hint": "04-use-cases.md の参照は F-08 に更新"
+    },
+    {
+      "doc": "05-features.md",
+      "section": "F-08 統合レポート",
+      "type": "added",
+      "dependency_category": "feature_flow",
+      "summary": "統合レポートを新設",
+      "impact_hint": "参照元は 04-use-cases.md 側の記述を更新"
+    },
+    {
+      "doc": "04-use-cases.md",
+      "section": "UC-01 レポートを見る",
+      "type": "modified",
+      "dependency_category": "feature_flow",
+      "summary": "関連機能を F-08 に更新",
+      "impact_hint": ""
+    }
+  ]
+}
