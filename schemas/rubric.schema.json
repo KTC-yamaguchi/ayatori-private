@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/rubric.schema.json",
+  "title": "rubric.json — 要件定義ルーブリック criteria 定義",
+  "description": "Phase 1b 採点ルーブリックの **criteria 定義のみ** を保持するファイル。03-rubric-gen が生成し、04-scoring 以降は read-only。ループ attempt ごとのスコア / verdict / deficiencies は scoring-history.json に、Confluence 追跡 (`page_id` / `doc_page_ids` / `save_status`) は pipeline-state.json.confluence.requirements に分離されている。本スキーマは top-level `additionalProperties: false` で厳格 (新規プロジェクトのみ; legacy artifacts は対象外)。",
+  "type": "object",
+  "required": ["app_name", "criteria"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた実例が artifacts に存在するため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "criteria": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "description": "ISO 29148 5 品質属性。axis ごとに 1 件、計 5 件。",
+      "items": {
+        "type": "object",
+        "required": ["axis", "weight", "description", "checks"],
+        "additionalProperties": false,
+        "properties": {
+          "axis": { "$ref": "#/$defs/axis" },
+          "weight": { "type": "integer", "const": 20 },
+          "description": { "type": "string" },
+          "checks": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "required": ["id", "question", "max_points", "doc_targets"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^(correctness|unambiguity|completeness|consistency|feasibility)-C[1-4]$"
+                },
+                "question": { "type": "string" },
+                "max_points": { "type": "integer", "const": 5 },
+                "doc_targets": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "minItems": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "axis": {
+      "type": "string",
+      "enum": ["correctness", "unambiguity", "completeness", "consistency", "feasibility"]
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/reverse-provenance.schema.json",
+  "title": "reverse-provenance.json — リバース生成側 provenance 自己申告台帳",
+  "$comment": "本 schema は **ローカル JSON Schema 検証専用** (Draft 2020-12、.claude/hooks/schema-light-check.sh の jq 経路 R8 で使う)。Anthropic API の Structured Outputs / tool_use の strict mode には **投入しない** — 公式 doc で `if/then` は非サポートのため、本 schema の allOf+if/then 構造は API 経由では reject される (pending-questions / requirement-deviations / generation-provenance schema と同じ扱い、4 schema で統一)。",
+  "description": "Step 03 (03-requirements-gen) が reverse-engineered/01-08.md 生成後に load-bearing specifics を forced-enumerate し、各 specific の出所を『一次ソース (input-sources/) に file:line で引けるか / 推測か』の観点で自己申告する単一台帳。single writer = 03-requirements-gen。\n\n**forward の generation-provenance.json との対応**: forward 経路 (Step02) の generation-provenance.json と対をなす reverse 経路版。forward は突合先が『user 確定 input』のため provenance enum が {user_verbatim, derived, ai_proposed} だが、reverse は突合先が証拠ソース実物 (code / 文書アーカイブ / Figma capture アーカイブ) のため enum を {source_backed, doc_backed, figma_backed, derived, inferred} とし、根拠あり 3 種には種類別文法の source_ref を要求する (source_backed=input-sources/{stack}/path:line / doc_backed=ground-truth/{file}.md:line / figma_backed=ground-truth/figma/ 配下)。forward schema には相乗りせず別ファイルにすることで single-writer 原則 (forward=02 / reverse=Step 03) を保ち forward schema を汚さない。\n\n**requirement-deviations.json (output 側監査) との責務分離**: 本台帳は『生成側 (Step 03) が自分の書いたものを全件列挙して根拠ラベルを付ける』self-report。requirement-deviations.json (phase=reverse) は『第三者監査 (Step 04↔Step 06 間の reverse review gate が起動する ayatori-requirements-auditor subagent layer=reverse) が input-sources にトレース不能と判定したものだけ』を記録する verdict。前者は全 specific を網羅、後者は逸脱のみ。視点が逆 (生成側 self-report vs 監査側 third-party verdict)。\n\n**self-bias の前提**: Step 03 生成と reverse review gate 監査は同一 model family のため、生成側はここで inferred を source_backed/derived と誤申告しうる (self-bias)。本台帳は『監査が鵜呑みにする正本』ではなく『監査が再判定して誤申告を catch する検証対象』。auditor (layer=reverse) は本台帳の provenance ラベルを判定根拠にせず、input-sources 実コードへの literal トレースで独立再判定する (REQ-AUD-03 と同型)。本台帳の主価値は『生成側に全件列挙を強制して黙ってスキップする自由を奪う』こと (列挙強制) + source_backed/derived に file:line 引用を強制すること (CLAUDE.md Operating Principle 3 の self-check を機械可読化)。\n\n**列挙定義の SoT**: load-bearing specifics の列挙基準は docs/principle4-disambiguation.md §5.2 (定量値・式・閾値・外部依存 API/lib・データ enum/field・新機能/挙動を存在させる主張)。本 schema には再掲しない (SoT 1 箇所原則)。\n\n**lazy 初期化** (docs/artifact-file-responsibility.md 設計原則): 最初の writer (= Step 03) は init stub `{ \"app_name\": \"{app_name}\", \"specifics\": [] }` から start。Read or init-stub → specifics 再構築 → Write back。ループ再走時は全体上書き (01-08.md 全再生成と symmetric)。",
+  "type": "object",
+  "required": ["app_name", "specifics"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "enumerated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Step 03 が forced-enum を実行した時刻 (ISO 8601)。監査側 coverage の checked_at と区別する (生成時刻 vs 監査時刻)。"
+    },
+    "specifics": {
+      "type": "array",
+      "description": "load-bearing specifics の全件列挙。provenance=source_backed も含めて全件記録する (= 監査側 enumerated_count と対比する生成側分母)。散文の説明・自明な構造は列挙しない (noise 回避)。",
+      "items": { "$ref": "#/$defs/specific" }
+    }
+  },
+  "$defs": {
+    "specific": {
+      "type": "object",
+      "required": ["ref", "value", "artifact", "provenance"],
+      "additionalProperties": false,
+      "description": "1 件 = 1 つの load-bearing specific。",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*(\\.[A-Za-z0-9_-]+|\\[[A-Za-z0-9_-]+\\])*$",
+          "description": "specific の所在 (どの F-ID / SCR-ID / NFR-ID の中の何か)。例: 'F-03.badge_grant_condition' / 'SCR-005.back_nav_state'。dedupe key。dot/bracket 文法は pending-questions.json / generation-provenance.json の ref と共通 (hook の TARGET_PAT で検証)。"
+        },
+        "value": {
+          "type": "string",
+          "description": "申告対象の具体値・仕様・挙動。例: 'バッジ付与は介入群限定' / '画面遷移時に音声を自動停止' / 'アップロード画像は16:9にクロップ'。"
+        },
+        "artifact": {
+          "type": "string",
+          "description": "この specific が書かれた reverse-engineered/NN-*.md。例: 'reverse-engineered/05-features.md'。requirement-deviations.json の artifact と同じ vocabulary。"
+        },
+        "provenance": {
+          "type": "string",
+          "enum": ["source_backed", "doc_backed", "figma_backed", "derived", "inferred"],
+          "description": "生成側の自己申告ラベル = **証拠の種類** (ソースの役割 source-inventory.json とは独立 — 縮退モードで figma が primary に昇格しても figma 由来の根拠は figma_backed のまま。source_backed は常に実コード専用)。source_backed=input-sources/{stack}/ の実コードに file:line で直接根拠あり (source_ref 必須) / doc_backed=アーカイブ済み文書 (Confluence ページ / ローカル文書正規化本 / Jira 課題正規化本 jira-{KEY}.md) に根拠あり (source_ref 必須: ground-truth/{file}.md:line。Jira 由来は時点の変更要求記録のため current-state の断定根拠には code / 仕様書を優先する) / figma_backed=アーカイブ済み Figma capture に根拠あり (source_ref 必須: ground-truth/figma/ 配下の design-context.md:line / variables.json:line / .png) / derived=確定した根拠付き仕様・確定値から決定的に導出 (derived_from に導出元を構造化 ref で必須。source_ref があれば併記推奨) / inferred=どのソースにも根拠を引けず AI が一般論・推測で書いた (source_ref は null/省略、本文に `※ 推測 (inferred)` を付ける)。複数ソースが同一主張を支持する場合は code 優先 (source_backed で申告し、並走する doc/figma ref は note に併記可)。⚠️ self-bias 注意: ここで inferred を根拠ありと誤申告しうる。最終判定は reverse review gate の監査 subagent (layer=reverse)。迷ったら inferred に倒す (過小申告 → 監査が拾う graceful degradation)。CLAUDE.md Operating Principle 3 の『file:line を引けないなら未確認/推測と明示』を機械可読化したもの。"
+        },
+        "source_ref": {
+          "type": ["string", "null"],
+          "pattern": "^(input-sources/.+:[0-9]+(-[0-9]+)?|ground-truth/[^/]+\\.md:[0-9]+(-[0-9]+)?|ground-truth/figma/.+(:[0-9]+(-[0-9]+)?|\\.png))$",
+          "description": "根拠の所在。文法は provenance の種類ごとに固定 (per-値 allOf が enforce): source_backed → `input-sources/{stack}/path/to/file.ext:line` (例: 'input-sources/be-python/app/gamification/badge.py:142') / doc_backed → `ground-truth/{file}.md:line` (root 直下の文書アーカイブ — Confluence ページ / local-{stem}.md / jira-{KEY}.md すべて同文法) / figma_backed → capture アーカイブ内のテキスト証拠は `:line` 必須 — frame 構造・スタイル・文言は `ground-truth/figma/{file_key}/{node}--{slug}.design-context.md:line`、**デザイントークン値は `ground-truth/figma/{file_key}/variables.json:line`** (当該トークンキーの行を指す)。純粋に視覚的な根拠のみ同 `.png` パス (:line なし) を使う。行範囲は `:line-line`。provenance=derived のときは導出に使った根拠があれば併記推奨 (3 文法いずれも可)。provenance=inferred のときは null / 省略 (引けないから inferred)。CLAUDE.md Operating Principle 3 の引用義務を field 化したもの。"
+        },
+        "derived_from": {
+          "type": ["string", "null"],
+          "description": "provenance=derived のとき必須。導出元の確定 specific / 確定機能への参照 (例: 'F-03' = source_backed なバッジ機能からの導出)。provenance != derived のとき null / 省略。CLAUDE.md (C) DERIVED の『導出元と式を併記必須』を台帳化したもの。"
+        },
+        "note": {
+          "type": "string",
+          "description": "任意。判断根拠 1 行 (例: '対象群でも条件を満たせば獲得しうる旨はソース未確認、推測'）。"
+        }
+      },
+      "allOf": [
+        {
+          "description": "provenance=source_backed のとき source_ref を必須 + null 不可 + input-sources file:line 文法に拘束する (base の type:[string,null] を then で string に絞る)。required だけだと source_ref:null が通ってしまうため (hook R8 は弾くが JSON Schema 単体も塞ぐ)。",
+          "if": {
+            "properties": { "provenance": { "const": "source_backed" } },
+            "required": ["provenance"]
+          },
+          "then": {
+            "required": ["ref", "value", "artifact", "provenance", "source_ref"],
+            "properties": { "source_ref": { "type": "string", "pattern": "^input-sources/.+:[0-9]+(-[0-9]+)?$" } }
+          }
+        },
+        {
+          "description": "provenance=doc_backed のとき source_ref を必須 + null 不可 + ground-truth 文書 :line 文法に拘束する。",
+          "if": {
+            "properties": { "provenance": { "const": "doc_backed" } },
+            "required": ["provenance"]
+          },
+          "then": {
+            "required": ["ref", "value", "artifact", "provenance", "source_ref"],
+            "properties": { "source_ref": { "type": "string", "pattern": "^ground-truth/[^/]+\\.md:[0-9]+(-[0-9]+)?$" } }
+          }
+        },
+        {
+          "description": "provenance=figma_backed のとき source_ref を必須 + null 不可 + Figma capture アーカイブ文法 (テキスト = design-context.md / variables.json は :line 必須、.png は行アンカーなし) に拘束する。",
+          "if": {
+            "properties": { "provenance": { "const": "figma_backed" } },
+            "required": ["provenance"]
+          },
+          "then": {
+            "required": ["ref", "value", "artifact", "provenance", "source_ref"],
+            "properties": { "source_ref": { "type": "string", "pattern": "^ground-truth/figma/.+(:[0-9]+(-[0-9]+)?|\\.png)$" } }
+          }
+        },
+        {
+          "description": "provenance=derived のとき derived_from を必須にし、かつ null/空文字不可の非空 string に拘束する (base の type:[string,null] を then で string+minLength:1 に絞る。source_ref と異なり pattern が無いため minLength で空文字も塞ぐ)。required だけだと derived_from:null / \"\" が通ってしまい『必須』の意図に反する (hook R8 は両方弾く)。",
+          "if": {
+            "properties": { "provenance": { "const": "derived" } },
+            "required": ["provenance"]
+          },
+          "then": {
+            "required": ["ref", "value", "artifact", "provenance", "derived_from"],
+            "properties": { "derived_from": { "type": "string", "minLength": 1 } }
+          }
+        }
+      ]
+    }
+  }
+}

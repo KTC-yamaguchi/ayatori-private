@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/state-pattern-scores.schema.json",
+  "title": "screens/state-pattern-scores.json — sub-state 採点履歴 (loop history)",
+  "description": "Step 25c (state-pattern-score) が attempt ごとに append する loop history。Step 19 の scores.json (main HTML 採点) とは分離する (単一所有権原則)。Phase 3 mini-loop (25c→25b、max_attempts: 2) の判定材料および Phase 4 retro での振り返りに使用。",
+  "type": "object",
+  "required": ["app_name", "attempts"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "attempts": {
+      "type": "array",
+      "description": "25c の採点 attempt 履歴。Step 25c が attempt ごとに append。25b に戻る判定 (`ai_improvable_deductions > 0` AND `attempts.length < max_attempts`) に使われる。",
+      "items": {
+        "type": "object",
+        "required": ["attempt", "scored_at", "ai_improvable_deductions"],
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "1-indexed の attempt 番号。append 順と一致。"
+          },
+          "scored_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "本 attempt を採点した時刻 (ISO 8601)。"
+          },
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Sub-state パターンの総合スコア (0-100)。Layer 2「状態可視性 & フィードバック」を sub-state 視点で再評価した結果。"
+          },
+          "ai_improvable_deductions": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "AI が再生成すれば改善可能な減点数。> 0 かつ attempt < max_attempts なら 25b に戻る (mini-loop)。"
+          },
+          "coverage_check": {
+            "$ref": "coverage-check.schema.json#/$defs/layer_result",
+            "description": "Sub-state 視点で再走した L1 ui_states 評価結果。docs/screen-coverage-check.md の判定基準を sub-state 群に適用する。"
+          },
+          "tags": {
+            "type": "array",
+            "description": "採点時の問題タグ (例: \"missing_loading_skeleton\", \"error_message_unclear\")。retro での集計に使う。",
+            "items": { "type": "string" }
+          },
+          "details": {
+            "type": "array",
+            "description": "各 sub-state ファイルに対する具体的指摘 (file + 指摘内容のペア)。25d 修正指示時に user 提示する内容のソース。",
+            "items": {
+              "type": "object",
+              "required": ["file", "issue"],
+              "additionalProperties": false,
+              "properties": {
+                "file": { "type": "string", "description": "screens/{platform}/{画面名}--{state}.html 形式の相対パス。" },
+                "issue": { "type": "string", "description": "具体的指摘内容 (自由記述)。" },
+                "severity": {
+                  "type": "string",
+                  "enum": ["critical", "major", "minor"],
+                  "description": "指摘の重要度。critical = 必ず修正 / major = 修正推奨 / minor = 任意。"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

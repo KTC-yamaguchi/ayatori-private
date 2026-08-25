@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/train-play-log.schema.json",
+  "title": "play-log.json — AYATORI トレーニングモード シナリオ プレイ履歴",
+  "description": "/ayatori-train。訓練中のコンサルタント個人がどのシナリオを何回プレイしたかの履歴。プロフィール単位で 1 ファイル = artifacts/_train-profile/play-log.json (シナリオ別 app_name とは別)。用途: (1) 再走シナリオのネタバレ注記 (train-00) (2) 初回フォールバック判定 (train-07 Phase 3) (3) 前回比を次アクション提案の手がかりに。同一 app_name はステップ7 完了記録時に dedupe する。writer: train-00 (開始時 append) / train-07 (完了時 completed:true に更新)。reader: train-00 / train-07。",
+  "type": "object",
+  "required": ["plays"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "plays": {
+      "type": "array",
+      "description": "プレイ記録。init 時は空配列 []。同一 app_name のエントリは重複させない (dedupe)。",
+      "items": {
+        "type": "object",
+        "required": ["scenario_id", "app_name", "completed"],
+        "additionalProperties": false,
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "description": "プレイした教材シナリオの ID (例: 3-owned-media)。同一 scenario_id が複数回 (別 app_name) 現れうる。"
+          },
+          "app_name": {
+            "type": "string",
+            "pattern": "^_train-",
+            "description": "このプレイの session 識別子 (例: _train-owned-media-01)。dedupe キー。"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "プレイ開始時刻 (ISO 8601)。train-00 が記録。"
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "ステップ7 振り返りまで完走したか。train-00 は false で append、train-07 完了時に true へ更新。"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "振り返り完了時刻 (ISO 8601)。train-07 が completed:true と同時に記録。"
+          }
+        }
+      }
+    }
+  }
+}

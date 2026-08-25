@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/color-lint-report.schema.json",
+  "title": "color-lint-report.json — 画面 content 色 lint レポート",
+  "description": "scripts/lint-screen-colors.mjs --report が生成する **derived report**。screens/{web,web-sm,mobile}/*.html + icons/*.svg + _shared/illustrations/*.svg の決定的関数であり (tokens.json は直接読まない — var 解決は各 HTML の :root に対して行う。:root ↔ tokens.json の同期は Step 17 P-15 の単方向フロー + Step 24 A-2 diff が担保)、毎回丸ごと再生成 (上書き) する。append 型 ledger ではないため resolved_at / 世代管理フィールドを持たない — 人間の決定は従来の場所に残る (装飾色の昇格 → Step 24 ゲート経由で tokens.json / 修正指示 → feedback-log.md)。\n\n**writer**: 18-design-review (primary)。29-partial-screen-regen / 25c-state-pattern-score は再生成・sub-state 追加後、29b-reverse-propagate は screen-edit run 冒頭に同 script を再実行して上書きする (derived のため複数 invoker でも単一所有権と矛盾しない — SoT は HTML+tokens 側)。17-screen-gen は --check モード (stdout のみ・本ファイルを書かない) を self-check に使う。\n\n**reader**: 19-rubric-score (機械減点)、21-screen-human-review / 25d (color-lint-report.html 経由の人間判断 — icon_color_variance / unmatched_svgs / boundary は auto-fail せず人間ゲート材料)、24-design-system-update Step A-2b (promotion_queue → tokens.json 昇格)。\n\n**2 層モデル** (pipeline.yaml C-25): violations.* = L1 Hard (fail-closed 対象の機械的事実)。icon_color_variance / unmatched_svgs / boundary_violations / theme_asymmetry / extra_root_vars = L2 Report (正当な文脈変化と機械区別できないため人間が判断する事実)。\n\n**theme 軸の制約**: 各 entry の theme はファイル名サフィックス (--light/--dark) または <html data-theme> 属性からの判定。media-query 同梱方式 (1 ファイルに light+dark の :root を持つ) では theme='default' に集約される — その場合のテーマ別分解は theme_asymmetry のみが手掛かり。",
+  "type": "object",
+  "required": ["app_name", "generated_at", "scanned", "violations", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "deprecated": true, "description": "廃止済みの旧 informational マーカー。新規に書かない (lint-screen-colors.mjs の出力にも含めない)。既存レポートに残存する値は受理して無視する。互換判定・読み込み分岐には一切使わない。" },
+    "app_name": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "scanned": {
+      "type": "object",
+      "required": ["files"],
+      "additionalProperties": false,
+      "properties": {
+        "files": { "type": "integer", "minimum": 0, "description": "走査した画面 HTML 数 (web/ + mobile/、*.bak* 除外)" },
+        "icons": { "type": "integer", "minimum": 0, "description": "icons/*.svg の path 署名数" },
+        "illustrations": { "type": "integer", "minimum": 0, "description": "_shared/illustrations/*.svg の path 署名数 (Phase 2 導入前は 0)" }
+      }
+    },
+    "violations": {
+      "type": "object",
+      "description": "L1 Hard 層の機械的事実 (17 self-check の fail-closed 対象と同じ判定)。",
+      "required": ["literals", "unresolved_vars", "other"],
+      "additionalProperties": false,
+      "properties": {
+        "literals": {
+          "type": "array",
+          "description": "zero-literal 違反。dedup 単位 = (value, platform, theme)。instances は CAP (5) 件まで、総数は count。",
+          "items": {
+            "type": "object",
+            "required": ["value", "platform", "theme", "count", "instances"],
+            "additionalProperties": false,
+            "properties": {
+              "value": { "type": "string", "description": "正規化済みリテラル (#hex / rgba(…) / named)" },
+              "platform": { "type": "string", "enum": ["web", "web-sm", "mobile", "other"] },
+              "theme": { "type": "string", "enum": ["default", "light", "dark"] },
+              "count": { "type": "integer", "minimum": 1 },
+              "instances": { "type": "array", "items": { "$ref": "#/$defs/instance" } }
+            }
+          }
+        },
+        "unresolved_vars": {
+          "type": "array",
+          "description": "当該 HTML の定義ブロックに無い var(--x) 参照 (typo / 未昇格の装飾色 / 外部 stylesheet 依存)。",
+          "items": {
+            "type": "object",
+            "required": ["name", "platform", "theme", "count", "instances"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "platform": { "type": "string", "enum": ["web", "web-sm", "mobile", "other"] },
+              "theme": { "type": "string", "enum": ["default", "light", "dark"] },
+              "count": { "type": "integer", "minimum": 1 },
+              "instances": { "type": "array", "items": { "$ref": "#/$defs/instance" } },
+              "hint": { "type": "string" }
+            }
+          }
+        },
+        "other": {
+          "type": "array",
+          "description": "その他の L1 違反 (var_in_presentation_attr / illustration_canon_mismatch / external_stylesheet / root_vars_incomplete)。",
+          "items": {
+            "type": "object",
+            "required": ["type", "value", "file"],
+            "additionalProperties": true,
+            "properties": {
+              "type": { "type": "string", "enum": ["var_in_presentation_attr", "illustration_canon_mismatch", "external_stylesheet", "root_vars_incomplete"] },
+              "value": { "type": "string" },
+              "file": { "type": "string" },
+              "line": { "type": "integer" },
+              "context": { "type": "string" },
+              "hint": { "type": "string" },
+              "platform": { "type": "string" },
+              "theme": { "type": "string" }
+            }
+          }
+        },
+        "icon_source_violations": {
+          "type": "array",
+          "description": "icons/*.svg 内の色リテラル (Step 0 currentColor 正規化漏れ)。--normalize-icons で機械修正可能。",
+          "items": {
+            "type": "object",
+            "required": ["file", "literals"],
+            "additionalProperties": false,
+            "properties": {
+              "file": { "type": "string" },
+              "literals": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "illustration_source_violations": {
+          "type": "array",
+          "description": "_shared/illustrations/*.svg (正典) 内の色リテラル。正典は var(--token) / currentColor のみ許可。",
+          "items": {
+            "type": "object",
+            "required": ["file", "literals"],
+            "additionalProperties": false,
+            "properties": {
+              "file": { "type": "string" },
+              "literals": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "icon_color_variance": {
+      "type": "array",
+      "description": "L2: 同一アイコン / イラスト正典 (path 署名で照合 — data 属性不要) が複数の実効色ソースを持つもの。currentColor の文脈追従 (active/hover 等) は正当でありうるため **auto-fail しない**。Step 21 で人間が「正当な変化か、親色トークンの選び間違いか」を判断する。illustration entry は currentColor 正典の親色ドリフト検出用 (4ロールレビュー MAJOR-4)。",
+      "items": {
+        "type": "object",
+        "required": ["icon", "usages"],
+        "additionalProperties": false,
+        "properties": {
+          "icon": { "type": "string", "description": "icons/{name}.svg または _shared/illustrations/{name}.svg のファイル名 (決定的識別子)" },
+          "kind": { "type": "string", "enum": ["icon", "illustration"], "description": "照合元 (省略時は icon = 旧版互換)" },
+          "usages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["source", "platform", "theme", "count"],
+              "additionalProperties": false,
+              "properties": {
+                "source": { "type": "string", "description": "実効色ソースの静的近似: 'style:var(--x)' / 'class .cls{color:var(--x)}' / 'indeterminate(…)'" },
+                "platform": { "type": "string" },
+                "theme": { "type": "string" },
+                "count": { "type": "integer", "minimum": 1 },
+                "screens": { "type": "array", "items": { "type": "string" }, "description": "CAP (8) 件まで" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "unmatched_svgs": {
+      "type": "array",
+      "description": "L2: icons/ にも _shared/illustrations/ にも path 署名が一致しない content SVG。= 正典化候補 (繰り返しイラスト) or データ駆動グラフィック (盤面・チャート等、正典化対象外)。人間ゲートで判断。",
+      "items": {
+        "type": "object",
+        "required": ["signature", "count", "screens", "sample"],
+        "additionalProperties": false,
+        "properties": {
+          "signature": { "type": "string", "description": "path 署名 hash (16 hex)" },
+          "count": { "type": "integer", "minimum": 1 },
+          "screens": { "type": "array", "items": { "type": "string" } },
+          "sample": { "$ref": "#/$defs/instance" }
+        }
+      }
+    },
+    "promotion_queue": {
+      "type": "array",
+      "description": "Step 24 Step A-2b が読む昇格キュー: 未解決の --color-illustration-* (= AI が必要とした未承認の装飾色)。A-3 の AskUserQuestion ゲートを通過したもののみ tokens.json の global 装飾グループへ追加される (自動昇格しない)。",
+      "items": {
+        "type": "object",
+        "required": ["kind", "name", "count"],
+        "additionalProperties": true,
+        "properties": {
+          "kind": { "type": "string", "enum": ["illustration_color"] },
+          "name": { "type": "string", "pattern": "^--color-illustration-" },
+          "platform": { "type": "string" },
+          "theme": { "type": "string" },
+          "count": { "type": "integer", "minimum": 1 },
+          "instances": { "type": "array", "items": { "$ref": "#/$defs/instance" } }
+        }
+      }
+    },
+    "boundary_violations": {
+      "type": "array",
+      "description": "L2: 装飾専用ルール (§4.6 境界) の逸脱 — --color-illustration-* がイラスト正典外 (text color / UI 要素) で使われた。load-bearing 用途なら通常パレット (11 が WCAG 検証) へ移す。",
+      "items": {
+        "type": "object",
+        "required": ["var", "file"],
+        "additionalProperties": true,
+        "properties": {
+          "var": { "type": "string" },
+          "file": { "type": "string" },
+          "line": { "type": "integer" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "theme_asymmetry": {
+      "type": "array",
+      "description": "L2: 複数の定義ブロック (light/dark 等) を持つファイルで、一部ブロックにしか定義されていない変数 (dual-theme の片側欠落シグナル)。",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "files": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "extra_root_vars": {
+      "type": "array",
+      "description": "L2: root-variables.css 正典に無く色値を持つ :root 変数 (4ロールレビュー CRITICAL-1)。superset 許容 (画面固有変数 OK) は維持しつつ、「リテラルを :root に持ち上げて var 化する」台帳迂回の洗浄経路を人間ゲート (Step 21 Section 1-D) で可視化する。auto-fail しない — 正当な画面固有値 (足場 shadow 等) か洗浄かは人間が判断。",
+      "items": {
+        "type": "object",
+        "required": ["name", "value", "count"],
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" },
+          "platform": { "type": "string" },
+          "theme": { "type": "string" },
+          "count": { "type": "integer", "minimum": 1 },
+          "screens": { "type": "array", "items": { "type": "string" }, "description": "CAP (8) 件まで" }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "Step 18 / 19 が読む集計 (full JSON を LLM context に載せない — context 爆発防止)。",
+      "required": ["literal_colors", "literal_occurrences", "unresolved_vars", "unresolved_vars_excl_promotion", "other_violations", "other_by_type", "icons_with_variance", "unmatched_svgs", "promotion_queue", "boundary_violations", "extra_root_vars"],
+      "additionalProperties": false,
+      "properties": {
+        "literal_colors": { "type": "integer", "minimum": 0, "description": "dedup 後の違反色 entry 数。dedup key は (value, platform, theme) — 同一 hex が web と mobile の両方に出ると 2 とカウントされる" },
+        "literal_occurrences": { "type": "integer", "minimum": 0 },
+        "unresolved_vars": { "type": "integer", "minimum": 0 },
+        "unresolved_vars_excl_promotion": { "type": "integer", "minimum": 0, "description": "unresolved_vars から昇格候補 (--color-illustration-*) を除いた数。19 / 25c の機械減点はこちらを使う (昇格候補を減点しないため)" },
+        "other_violations": { "type": "integer", "minimum": 0 },
+        "other_by_type": {
+          "type": "object",
+          "description": "other の type 別件数 (19 の型別減点が summary だけで計算できるように。レビュー#3 追加)",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "icons_with_variance": { "type": "integer", "minimum": 0 },
+        "unmatched_svgs": { "type": "integer", "minimum": 0 },
+        "promotion_queue": { "type": "integer", "minimum": 0 },
+        "boundary_violations": { "type": "integer", "minimum": 0 },
+        "extra_root_vars": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "instance": {
+      "type": "object",
+      "required": ["file"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string", "description": "画面 HTML の basename (platform は親 entry の platform field を参照)" },
+        "line": { "type": "integer" },
+        "context": { "type": "string", "description": "例: '.cls { background: … }' / '<rect fill=\"…\">'" }
+      }
+    }
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/requirements.schema.json",
+  "title": "requirements.json — プロジェクト要件記述 (INPUT)",
+  "description": "プロジェクト要件の純粋な記述を保持するファイル。Phase 1a (01-question) が初期生成、Phase 0b (03-requirements-gen) は status=REVERSE_ENGINEERED で生成。各フェーズの実行状態 (承認時刻 / 選択結果 / Confluence ID 等) は本ファイルではなく `pipeline-state.json` に書く (cross-phase hot state 分離原則)。スキーマは top-level `additionalProperties: false` で厳密化済 (厳密化後の整合性監査で確認、新規プロジェクトは Draughts 同様 properties 完全準拠)。旧 legacy artifacts (15Puzzle / DecisionPath / TournamentBracket) は cross-phase state field を本ファイルに混入させていたが、現在は deprecated structure として扱う (再走しない限り影響なし)。",  "type": "object",
+  "required": ["app_name", "created_at"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた残存値が配布先の artifacts に存在しうる (artifacts は配布先ごとに異なり、走査で全数を確定できない) ため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "app_name": { "type": "string" },
+    "created_at": {
+      "type": "string",
+      "description": "ISO 8601 date (YYYY-MM-DD) or date-time。"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["REVERSE_ENGINEERED"],
+      "description": "Phase 0b (reverse) 経由で生成されたことを示すセンチネル。Phase 1b は本値が立っているとき scoring loop をスキップする。Phase 1a (greenfield) では本フィールドを省略する。"
+    },
+    "reverse_provenance": {
+      "type": "object",
+      "description": "リバース経路 (status=REVERSE_ENGINEERED) のとき Step 06 が書く provenance 伝播ブロック。下流 (design Phase2 / screens Phase3) が『この要件には推測 (inferred) 由来の仕様が含まれる』ことを認識し、推測を確定事実として laundering しないための pointer。per-item の provenance 本体は ledger 側 (reverse-provenance.json) に保持し、本ブロックはそこへの参照 + ゲート結果サマリのみを持つ。Phase 1a (greenfield) では省略。ブロックを書く場合は ledger / gate_resolved / inferred_accepted_count の 3 field を必須にする (reverse_provenance:{} のような不完全出力で laundering 防止の担保が空洞化するのを防ぐ)。",
+      "additionalProperties": false,
+      "required": ["ledger", "gate_resolved", "inferred_accepted_count"],
+      "properties": {
+        "ledger": {
+          "type": "string",
+          "description": "per-item provenance 台帳への相対パス。通常 'reverse-engineered/reverse-provenance.json' (schemas/reverse-provenance.schema.json 準拠、writer=Step 03)。"
+        },
+        "gate_resolved": {
+          "type": "boolean",
+          "description": "Step 05 reverse review gate で flag された推測項目がすべて resolve (修正依頼反映 / 容認 / 要件に昇格) 済か。Step 06 は本値が true のときのみ通常実行する (false は gate 未完了 = 推測未解決のシグナル)。"
+        },
+        "inferred_accepted_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Step 05 ゲートで『容認 (推測のまま)』と判断され、requirements/*.md に `※ 推測 (inferred)` を残したまま下流へ流れる仕様の件数。0 でも本ブロック自体は書く (監査済の証跡)。下流はこの件数 > 0 なら requirements/*.md の `※推測` マークを目視確認する。"
+        },
+        "note": {
+          "type": "string",
+          "description": "任意。補足 1 行 (例: '残存 inferred は requirements/05-features.md の ※推測 マーク参照')。"
+        },
+        "primary_source": {
+          "type": "string",
+          "enum": ["code", "figma", "docs"],
+          "description": "任意 (多ソース run で推奨)。source-inventory.json の roles.primary の転記。'figma' = 縮退モード run (ソースコード不在で Figma を一次根拠に生成 — 挙動仕様の裏取りが弱い)。下流が根拠の強さを一目で判断するためのサマリ。legacy artifact は未定義 = 'code' 相当。"
+        },
+        "sources_used": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["code", "docs", "figma"] },
+          "description": "任意 (多ソース run で推奨)。本 run で実際に証拠として読んだソース種類の列挙。"
+        }
+      }
+    },
+    "interview_mode": {
+      "type": "string",
+      "enum": ["beginner", "intermediate", "beginner_switched_from_intermediate"],
+      "description": "Phase 1a (01-question) のヒアリング方式。skills/01-question/SKILL.md § Experience Level Selection で決定される。\n  - beginner: 既存の 7 軸選択肢ベースヒアリング (default)\n  - intermediate: refs/open-interview.md のオープンクエスチョン中心フロー\n  - beginner_switched_from_intermediate: 中級者モードで開始したが途中で選択肢ベースに切り替えたケース (mode switch exit)\n  用途: (1) audit / Phase 4 retro でのモード別品質比較、(2) 外部 consumer による分岐用 SoT (イラスト方針など、本フィールドを read して挙動を分岐させる consumer が今後追加される想定)。\n  現行パイプライン内の skill のうち Phase 1b〜4 は本フィールドで分岐しない。例外: skills/27-change-detect/refs/feature-add-interview.md (Steps 27/31, Phase 5 / Phase 1c) は本フィールドを読み Beginner / Intermediate ヒアリングパスを分岐する。本フィールドは Phase 1a の入り口分岐結果を後段の consumer / audit に伝搬する役割であり、外部 consumer も分岐 key として使う想定なので、書き換え時は consumer 影響を考慮すること。\n  legacy artifact (本フィールド導入前) は本フィールド未定義 = beginner 相当として扱う。Phase 0b (reverse) 経路は本フィールドを生成しない (status=REVERSE_ENGINEERED でフロー自体を分岐)。"
+    },
+    "design_output_scope": {
+      "type": "object",
+      "description": "01-question 7 軸ヒアリングで決定するデザイン出力範囲。",
+      "additionalProperties": false,
+      "properties": {
+        "platform_combo": {
+          "type": "string",
+          "description": "skills/01-question/SKILL.md 7-a と pipeline.yaml default_design_output_scope に対応。アプリのデリバリー先 platform を指定する (管理画面アプリの生成は AYATORI のスコープ外)。",
+          "enum": [
+            "mobile_only",
+            "web_only",
+            "mobile_and_web"
+          ]
+        },
+        "web_viewports": {
+          "type": "array",
+          "description": "platform_combo が web を含む場合の web 出力ビューポート幅 (直交属性)。skills/01-question/SKILL.md 7-a2 と pipeline.yaml default_design_output_scope.web_viewports に対応。desktop = 1440px 固定幅 (screens/web/)、sm = 390px 固定スマホ幅 (screens/web-sm/、ブラウザページ体裁でフォンフレーム / BottomTab なし — mobile ネイティブアプリとは別物)。media query による responsive 1 ファイル化は不採用 (Figma キャプチャが viewport 幅を制御できないため、幅ごとに固定幅 HTML を派生する)。未定義 = [\"desktop\"] 相当 (後方互換)。platform_combo が mobile_only の場合は省略する (意味を持たない)。",
+          "items": { "type": "string", "enum": ["desktop", "sm"] },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "screen_coverage": {
+          "type": "string",
+          "description": "skills/01-question/SKILL.md 7-b と pipeline.yaml default_design_output_scope に対応。",
+          "enum": ["must_only", "must_and_should", "all_features"]
+        },
+        "state_pattern": {
+          "type": "string",
+          "description": "skills/01-question/SKILL.md 7-c と pipeline.yaml default_design_output_scope に対応。本値は Step 25a (state-pattern-plan) が読んで sub-state 生成計画の推奨デフォルトとして提示する。Step 17 (screen-gen) は default 状態のみ生成し、本 enum を参照しない。**`default_only` の追加意図**: 初回フローは main を素早く一周させることを優先するため、追加 sub-state を作らない `default_only` を推奨デフォルトとする。Step 25a は本値が `default_only` (or 未設定) のとき「不要 (default のみで完了)」を推奨する。`required_4_states` / `nature_based_extra_states` は「将来 sub-state を作るときの既定の広さ」を表す preference (実際に作るか否かは Step 25a で改めて確認)。",
+          "enum": ["default_only", "required_4_states", "nature_based_extra_states"]
+        },
+        "mobile_framework": {
+          "type": "string",
+          "description": "skills/01-question/SKILL.md 7-d と pipeline.yaml default_design_output_scope に対応。platform_combo が mobile を含む (mobile_only / mobile_and_web) 場合に必須。web_only の場合は省略可。Flutter / KMP 選択時もネイティブ tokens (Swift + Compose) は併出力される。Android XML は native baseline から外れ、legacy_android_xml フィールドの opt-in に降格。",
+          "enum": ["native", "flutter", "kmp"]
+        },
+        "legacy_android_xml": {
+          "type": "boolean",
+          "description": "Android View システム用 XML リソース (build/android/colors.xml + dimens.xml) を Step 12 build-tokens で出力するかの legacy opt-in フラグ。skills/01-question/SKILL.md 7-d2 と pipeline.yaml default_design_output_scope に対応。platform_combo が mobile を含む場合のみ意味を持つ (web_only では無視)。true にすべきケース: 既存アプリが XML ベース / レガシー画面の解析・改修 / View ベースのカスタムビュー / Compose への移行プロジェクト。フィールド欠落 (legacy artifact 含む) = false 相当 = 出力しない — Android の既定出力は Compose のみで、新規案件のビルド成果物に未使用 XML を残さない。"
+        },
+        "dual_theme_mode": {
+          "type": "boolean",
+          "description": "skills/01-question/SKILL.md 7-e と対応。true = ライト + ダーク両モード対応 (OS prefers-color-scheme に追従)、false = 単一モード対応。現行仕様では single-mode の既定は light で生成され、dual-theme を要求した場合のみ light / dark の両モードを出力する。Phase 2 (skill 08 / 11 / 12) はこの値を直接 read し、両モード要件の検出に regex grep を使わない (確実な伝搬経路を保証するため)。legacy / frozen artifacts では本フィールドが未定義のことがあるが、その場合は旧 artifact 互換のため false 相当 (単一モード前提) として扱う。ただし light-default 化以前の単一モードは暗黙的に dark のみ生成されていた点に留意 (以降の単一モードは light default)。将来、単一モード時のテーマ既定を明示的に切り替える必要が生じた場合は `default_theme_mode` 等の追加フィールドで一般化する。"
+        },
+        "illustration_policy": {
+          "type": "string",
+          "description": "イラスト・アイコン方針。skills/01-question/SKILL.md 7-f と pipeline.yaml default_design_output_scope に対応。全画面一律適用 (タブバー / 空状態 / オンボーディング / エラー画面)。デフォルト: pictogram。",
+          "enum": ["pictogram", "illustration_character", "emoji_casual"]
+        },
+        "graphic_generation": {
+          "type": "string",
+          "description": "AI グラフィック生成ブロック (21a-21g) の起動方針 (設計 docs/graphic-generation-design.md §5)。ask = 21a 分析 + 21b 人間判断 (default) / skip = ブロック全体を不実行 (skip 記録の writer は phase orchestrator)。既存 illustration_policy とは別軸 (アイコン描画規約 vs ラスター生成の有無) のため統合しない。フィールド欠落 (legacy) は ask 相当として扱う — 後方互換は「聞く」側に倒す (Operating Principle 4: 勝手に skip しない)。Step 01 (Axis 7) への質問追加は 21a 実装チケットが行う。",
+          "enum": ["ask", "skip"]
+        }
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "description": "01-question 7 軸ヒアリングの readiness スコア。各軸 1〜10 点、合計最大 70 (7 軸 × 10)。skills/01-question/SKILL.md 参照。**用途: audit / 人間目視確認専用** — 01-question 終了後の readiness 表示および 26-retro での見直し材料として記録される。下流 skill のロジック分岐には使われない (greenfield/reverse どちらの経路でも参照されない)。",
+      "additionalProperties": false,
+      "properties": {
+        "overall": { "type": "integer", "minimum": 0, "maximum": 70 },
+        "status": {
+          "type": "string",
+          "description": "skills/01-question/SKILL.md L284 の判定: <5=NOT READY / 5-6=ALMOST / >=7=SHIPPABLE。",
+          "enum": ["NOT READY", "ALMOST", "SHIPPABLE"]
+        },
+        "axes": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 10 }
+        }
+      }
+    },
+    "provisional_flags": {
+      "type": "array",
+      "description": "未確定項目のリスト。ヒアリングで「未定」「TBD」と回答された項目。**用途: audit / 人間目視確認専用** — 下流 skill のロジック分岐には使われない。",
+      "items": { "type": "string" }
+    },
+    "recommendations_accepted": {
+      "type": "array",
+      "description": "01-question で AI が提案し、ユーザーが採用した推奨機能。**用途: audit / 人間目視確認専用** — 下流 skill のロジック分岐には使われない。",
+      "items": { "type": "string" }
+    },
+    "future_plans": {
+      "type": "array",
+      "description": "実現性が確認できなかった機能アイデアを仕様に載せずに保持する。01-question の Feasibility Threshold で `future_plan` 判定された機能、および Bonus Recommendations の internal feasibility screen で drop された候補が入る。各要素は `{機能名} — {理由ないし推定データ/API源}` の形で自由記述。**用途: audit / 人間目視確認専用** — 下流 skill のロジック分岐には使われない。",
+      "items": { "type": "string" }
+    },
+    "confluence_parent_id": {
+      "type": ["string", "null"],
+      "description": "親 Confluence space / page ID。プロジェクトページの作成親 (ユーザー入力 = INPUT)。01-question 直後は null。生成系 page_id (project_page_id / doc_page_ids) は pipeline-state.json.confluence.requirements に記録される。"
+    }
+  }
+}

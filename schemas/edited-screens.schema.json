@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/edited-screens.schema.json",
+  "title": "edited-screens.json — パイプライン外 画面 HTML 編集の台帳",
+  "description": "完成プロジェクトの screens/{web,web-sm,mobile}/*.html をパイプライン外 (ad-hoc / 手作業) で編集した際、PostToolUse hook (lint-screen-html.sh) が編集とその場 lint 結果を append する台帳。screen-edit delta (/ayatori-delta) の検知入力。hook が唯一の writer。consumed_by_run は delta run が消費済みエントリの再処理を防ぐため後から stamp される (検知 skill 側)。検知は git 非依存 — 本台帳 (hook 記録) + 人間による手動選択が権威で、台帳に残らない編集 (外部エディタ等) は検知 skill (27b) の手動選択でカバーする。本台帳は即時 lint フィードバック + 検知入力として使う。",
+  "type": "object",
+  "required": ["app_name", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "entries": {
+      "type": "array",
+      "description": "編集イベントの記録。同一 path の未消費 (consumed_by_run==null) エントリは最新の編集で上書きされる (dedup)。",
+      "items": {
+        "type": "object",
+        "required": ["screen", "platform", "path", "edited_at", "tool"],
+        "additionalProperties": false,
+        "properties": {
+          "screen": {
+            "type": "string",
+            "description": "画面 ID (HTML ファイル名から拡張子を除いたもの。例: 03-home / 03-home--empty)。"
+          },
+          "platform": {
+            "type": "string",
+            "enum": ["web", "web-sm", "mobile"],
+            "description": "出力プラットフォーム (web-sm = Web スマホ幅)。"
+          },
+          "path": {
+            "type": "string",
+            "description": "app ルートからの相対パス (例: screens/mobile/03-home.html)。"
+          },
+          "edited_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "編集検知時刻 (ISO 8601)。"
+          },
+          "tool": {
+            "type": "string",
+            "enum": ["Write", "Edit"],
+            "description": "編集に使われたツール。"
+          },
+          "lint": {
+            "type": "object",
+            "description": "編集直後の lint-screen-colors.mjs --check 結果。",
+            "additionalProperties": false,
+            "properties": {
+              "exit": {
+                "type": "integer",
+                "description": "lint プロセスの exit code (0=ok / 1=hard違反 / 2=実行エラー)。"
+              },
+              "hard_violations": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "L1 hard 違反の総数。"
+              },
+              "summary": {
+                "type": "string",
+                "description": "短い人間可読サマリ (例: ok / 色トークン hard 違反 2件 / lint-error)。"
+              }
+            }
+          },
+          "consumed_by_run": {
+            "type": ["string", "null"],
+            "description": "本エントリを取り込んだ delta run_id。未消費なら null。検知 skill が消費時に stamp する。"
+          },
+          "dismissed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ユーザーが「破棄 (今後の run で再提示しない)」を選んだ時刻 (ISO 8601)。検知 skill が stamp する終端状態。dismissed_at が set のエントリは検知 skill の候補提示から除外する。同一 path への新たな編集は hook の dedup が未消費エントリを置き換えるため、再編集時は dismissed_at の無い新エントリとして再び検知対象に戻る。"
+          }
+        }
+      }
+    }
+  }
+}

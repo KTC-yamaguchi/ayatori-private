@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/generation-provenance.schema.json",
+  "title": "generation-provenance.json — 生成側 provenance 自己申告台帳 (F-3a)",
+  "$comment": "本 schema は **ローカル JSON Schema 検証専用** (Draft 2020-12、.claude/hooks/schema-light-check.sh の jq 経路 R7 で使う)。Anthropic API の Structured Outputs / tool_use の strict mode には **投入しない** — 公式 doc で `if/then` は非サポートのため、本 schema の allOf+if/then 構造は API 経由では reject される (pending-questions.schema.json と同じ扱い)。将来 API strict 化が必要になった場合は anyOf 分岐への書き換えを検討する。",
+  "description": "Step02 (02-iso-breakdown) が requirements/*.md 生成後に load-bearing specifics を forced-enumerate し、各 specific の出所を自己申告する単一台帳。single writer = 02-iso-breakdown (F-3a)。\n\n**requirement-deviations.json (output 側監査) との責務分離**: 本台帳は『生成側が自分の書いたものを全件列挙して根拠ラベルを付ける』self-report。requirement-deviations.json は『第三者監査 (Step07 が起動する ayatori-requirements-auditor subagent) が要件外と判定したものだけ』を記録する verdict。前者は全 specific (provenance=user_verbatim も含む) を網羅、後者は逸脱のみ。視点が逆 (生成側 self-report vs 監査側 third-party verdict)。\n\n**self-bias の前提 (本台帳の立ち位置)**: Step02 生成と Step07 監査は同一 model family のため、生成側はここで ai_proposed を derived と誤申告しうる (self-bias)。本台帳は『監査が鵜呑みにする正本』ではなく『監査が再判定して誤申告を catch する検証対象』。ayatori-requirements-auditor は本台帳の provenance ラベルを判定根拠にせず、user 確定 input への literal トレースで独立再判定する (F-3b、REQ-AUD-03)。本台帳の主価値は『生成側に全件列挙を強制して黙ってスキップする自由を奪う』こと (列挙強制) であり、provenance ラベルは self-bias 発動時に監査結果との不一致 (provenance_mismatch) を可視化する metric。\n\n**列挙定義の SoT**: load-bearing specifics の列挙基準は docs/principle4-disambiguation.md §5.2 (定量値・式・閾値・外部依存 API/lib・データ enum/field・新機能/挙動を存在させる主張)。本 schema には再掲しない (SoT 1 箇所原則)。\n\n**lazy 初期化** (docs/artifact-file-responsibility.md 設計原則 4): 最初の writer (= Step02) は init stub `{ \"app_name\": \"{app_name}\", \"specifics\": [] }` から start。Read or init-stub → specifics 再構築 → Write back。ループ再走時は全体上書き (requirements 8 ファイル全再生成と symmetric)。",
+  "type": "object",
+  "required": ["app_name", "specifics"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "enumerated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Step02 が forced-enum を実行した時刻 (ISO 8601)。監査側 coverage の checked_at と区別する (生成時刻 vs 監査時刻)。"
+    },
+    "specifics": {
+      "type": "array",
+      "description": "load-bearing specifics の全件列挙。provenance=user_verbatim も含めて全件記録する (= 監査側 enumerated_count と対比する生成側分母)。散文の説明・自明な構造は列挙しない (noise 回避)。",
+      "items": { "$ref": "#/$defs/specific" }
+    }
+  },
+  "$defs": {
+    "specific": {
+      "type": "object",
+      "required": ["ref", "value", "artifact", "provenance"],
+      "additionalProperties": false,
+      "description": "1 件 = 1 つの load-bearing specific。",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*(\\.[A-Za-z0-9_-]+|\\[[A-Za-z0-9_-]+\\])*$",
+          "description": "specific の所在 (どの F-ID / NFR-ID / CON-ID の中の何か)。例: 'F-01.algorithm_ratio' / 'NFR-01.cold_start_sec' / 'F-03.reminder_time'。dedupe key。dot/bracket 文法は pending-questions.json の target と共通 (hook の TARGET_PAT で検証)。"
+        },
+        "value": {
+          "type": "string",
+          "description": "申告対象の具体値・式・仕様。例: '弱点最大60%/未学習最大30%/ランダム残り' / '3秒以内（コールドスタート）' / 'OS Push API（iOS/Android標準）'。"
+        },
+        "artifact": {
+          "type": "string",
+          "description": "この specific が書かれた requirements/NN-*.md。例: 'requirements/05-features.md'。requirement-deviations.json の artifact と同じ vocabulary。"
+        },
+        "provenance": {
+          "type": "string",
+          "enum": ["user_verbatim", "derived", "ai_proposed"],
+          "description": "生成側の自己申告ラベル。user_verbatim=user 確定 input (ledger resolved entry / 00-raw-input / 7軸) に literal 根拠あり / derived=確定機能・確定値からの導出 (確定機能の動詞の言い換え / 確定値からの計算。derived_from に導出元を構造化 ref で必須) /ai_proposed=確定 input に根拠なく AI が決めた発明。⚠️ self-bias 注意: ここで ai_proposed を derived と誤申告しうる。最終判定は監査 subagent (F-3b)。迷ったら ai_proposed に倒す (過小申告 → 監査が拾う graceful degradation)。"
+        },
+        "derived_from": {
+          "type": ["string", "null"],
+          "description": "provenance=derived のとき必須。導出元の確定 specific / 確定機能への参照 (例: 'F-01' = 確定機能 学習メニュー自動生成 からの導出)。provenance != derived のとき null / 省略。CLAUDE.md (C) DERIVED の『導出元と式を併記必須』を台帳化したもの。"
+        },
+        "user_input_ref": {
+          "type": ["string", "null"],
+          "description": "provenance=user_verbatim のとき推奨。突合した user 確定 input の所在 (例: 'pending-questions.json#features.must[0].data_strategy' / '00-raw-input.md:24')。監査側が再検証する際の起点。"
+        },
+        "note": {
+          "type": "string",
+          "description": "任意。判断根拠 1 行。"
+        }
+      },
+      "allOf": [
+        {
+          "description": "provenance=derived のとき derived_from を併記すること",
+          "if": {
+            "properties": { "provenance": { "const": "derived" } },
+            "required": ["provenance"]
+          },
+          "then": { "required": ["ref", "value", "artifact", "provenance", "derived_from"] }
+        }
+      ]
+    }
+  }
+}

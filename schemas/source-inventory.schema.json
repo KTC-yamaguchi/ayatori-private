@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/source-inventory.schema.json",
+  "title": "source-inventory.json — リバース入力ソースの棚卸し + 役割確定記録",
+  "description": "Phase 0b (/ayatori-reverse) の Preamble が、存在する証拠ソース {code, docs, figma} を棚卸しし、各ソースの役割 (primary / base / cross_check) をユーザー確認の上で確定した結果の単一記録。single writer = phases/reverse Preamble (main session)。readers = reverse 01〜06 の全 step (どのソースをどの重みで読むかの分岐入力)。\n\n**役割規則** (phases/reverse/SKILL.md「Input Sources & Roles」が SoT):\n- code が存在すれば常に code = primary (突合で衝突したら code 勝ち)。\n- code 不在 + figma 存在 (+ Figma MCP enabled) なら figma = primary に昇格 = **縮退モード** (degraded_mode: true)。\n- code も figma も無ければ docs = primary (document-backed 止まり)。\n\n**責務分離**: 本ファイルは「ソースの役割」(run 単位の入力契約) を持ち、「個々の記述の証拠種別」は reverse-provenance.json の provenance ラベルが持つ。縮退モードでも figma 由来の根拠は figma_backed のまま (役割の昇格が証拠種別を書き換えることはない)。\n\n**resume 規約**: 本ファイルが存在する resume では再質問しない (ディスク上の存在再検証のみ)。ソース構成を変えたい場合はユーザーが本ファイルを削除して再実行する。\n\n**lazy 初期化** (docs/artifact-file-responsibility.md 設計原則): writer は init stub `{ \"app_name\": \"{app_name}\", \"sources\": {}, \"roles\": {} }` から start し、棚卸し結果を埋めて Write back。",
+  "type": "object",
+  "required": ["app_name", "sources", "roles"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。既存 artifact に残存する値は受理して無視する。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Preamble がディレクトリ走査 + env 判定を実行した時刻 (ISO 8601)。"
+    },
+    "user_confirmed_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "棚卸し結果 + 役割割当をユーザーが AskUserQuestion (batch 1 回) で確認した時刻。確認済み entry は pending-questions.json に born-resolved で記録される (Operating Principle 4)。"
+    },
+    "degraded_mode": {
+      "type": "boolean",
+      "description": "縮退モードか (= roles.primary == \"figma\" と常に一致する導出値。jq での分岐を単純にするため明示保持)。code 不在で figma を primary に昇格したときのみ true。"
+    },
+    "sources": {
+      "type": "object",
+      "description": "存在検出の生結果 (役割ではなく事実)。",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present"],
+          "properties": {
+            "present": { "type": "boolean" },
+            "stacks": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "input-sources/ 直下で検出した {stack} サブディレクトリ名の列挙 (例: [\"kmp\", \"be-python\"])。予約名 docs/ は含めない。"
+            },
+            "source_repo_url": {
+              "type": ["string", "null"],
+              "description": "ユーザーが提示した repo URL の記録 (トレーサビリティ用)。**本 URL からパイプラインがコードを取得することはない** — トリー全体が必要で git 等の外部 CLI に依存しない設計 (Operating Principle 1)。Preamble が clone コマンドを提示し、ユーザー自身が input-sources/{stack}/ へ配置する。⚠️ 本 field が set でも配下にファイルが実在しない限り code.present は false のまま (URL の存在をコードの存在と混同すると、読む対象が無いまま source_backed を主張しうる)。"
+            }
+          }
+        },
+        "docs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present"],
+          "properties": {
+            "present": { "type": "boolean" },
+            "confluence_parent_ids": {
+              "type": "array",
+              "items": { "type": "string" },
+              "uniqueItems": true,
+              "description": "Confluence 収集の起点となる親ページ ID の列挙 (複数トリー対応)。Preamble が単一 writer として append する (既存値の上書き禁止 — 追加提示された親は要素として増える)。Step 01 A0 の実行条件 (非空) と D1 の列挙起点 (親ごとに列挙 → union) が読む。⚠️ requirements.json.confluence_parent_id (単数) は要件文書 8 件の**保存先**であり本 field とは役割が別 — 保存先は常に 1 箇所、収集起点は複数ありうる。"
+            },
+            "confluence_parent_id": {
+              "type": ["string", "null"],
+              "deprecated": true,
+              "description": "旧単数 field。新規に書かない (writer は confluence_parent_ids を使う)。既存 artifact に残存する値は confluence_parent_ids の 1 要素として読む (reader 互換)。"
+            },
+            "local_files": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "input-sources/docs/ 直下で検出したローカル文書ファイル名 (md / txt / pdf)。"
+            },
+            "jira_issue_keys": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "ユーザー指定の Jira 課題キーの列挙 (例: [\"ABC-123\"]。課題 URL で渡された場合は key を抽出して記録)。Step 01 の jira sub-module が ground-truth/jira-{KEY}.md へ正規化する。課題は「ある時点の変更要求」の記録であり現状仕様の記述ではないため、課題のみを根拠にした current-state の主張は裏取り (cross_check) 扱い。"
+            },
+            "jira_jql": {
+              "type": ["string", "null"],
+              "description": "課題列挙用の JQL (任意)。set のとき Step 01 が searchJiraIssuesUsingJql で列挙し、明示 key と合算・dedup した上で予算ゲートを経て収集する。"
+            }
+          }
+        },
+        "figma": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present", "mcp_enabled"],
+          "properties": {
+            "present": { "type": "boolean" },
+            "mcp_enabled": {
+              "type": "boolean",
+              "description": "skills/00-figma-mode-detect の判定結果。false のとき figma は present でも収集不可 (Step 01 の figma sub-module は self-skip)。"
+            },
+            "urls": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "ユーザーが指定した Figma file / frame URL の列挙。"
+            },
+            "file_keys": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "urls から抽出した Figma file key の列挙 (ground-truth/figma/{file_key}/ のディレクトリ名になる)。"
+            }
+          }
+        }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "description": "ユーザー確認済みの役割割当。",
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "type": "string",
+          "enum": ["code", "figma", "docs"],
+          "description": "一次根拠 (突合の勝者)。code 存在時は常に code。"
+        },
+        "docs": {
+          "type": "string",
+          "enum": ["primary", "base", "cross_check", "absent"],
+          "description": "base = 先方文書が十分で「読み込んで骨格にし、code/figma で裏取り」するパターン (充分性はユーザー確認)。cross_check = 突合ソースとしてのみ参照。"
+        },
+        "figma": {
+          "type": "string",
+          "enum": ["primary", "cross_check", "absent"],
+          "description": "primary = 縮退モード (code 不在時の昇格) のみ。"
+        }
+      }
+    }
+  }
+}

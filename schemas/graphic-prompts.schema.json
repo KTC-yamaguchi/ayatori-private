@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/graphic-prompts.schema.json",
+  "title": "graphics/graphic-prompts.json — slot 別確定プロンプト",
+  "description": "Step 21d (graphic-prompts) が user フィードバック反映後に生成する確定プロンプト台帳。graphic-plan.json の slot ごとに、生成ツール (gpt-image-2) へ渡すプロンプトと生成パラメタを確定する。21e (graphic-generate) が READ-ONLY で消費する。\n\n**writer 責務**: 21d のみ (single writer)。プロンプトの草案→FB→確定の往復は 21d セッション内で完結し、本ファイルには**確定値のみ**を書く (draft は書かない — (E) PROPOSED が human gate を通過した後の記録)。\n\n設計 SoT: docs/graphic-generation-design.md §7。",
+  "type": "object",
+  "required": ["app_name", "confirmed_at", "prompts"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (21d の Write にも含めない)。既存 file に残存する値や旧版 writer が書いた値は受理して無視する。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "tool": {
+      "type": "string",
+      "description": "生成ツール識別子。省略時は pipeline.yaml screens.graphic_generation.tool (現行 \"gpt-image-2\"、ツール比較で採用) を使う。明示記録するのは「この prompts がどのツール向けに書かれたか」を将来のツール差し替え時に判別するため。鮮度判定の source_digest (設計 §9-2b) は**非透過 slot** に本値を含める — 省略時は pipeline.yaml 既定値に正規化してから算出する (ツール差し替え時に旧ツール生成画像が fresh 扱いのまま残らないため)。**透過 slot** は本値でなく pipeline.yaml screens.graphic_generation.tool_transparent 由来の tool を digest に含める (透過 slot の実生成モデルは tool_transparent 側のため — 実装 SoT は skills/21e-graphic-generate/scripts/preflight.mjs sourceDigestOf)。"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "21d で user が全プロンプトを確定した時刻 (ISO 8601)。pipeline-state.json の screens.graphics.prompts_confirmed_at と同値 (resume 判定は pipeline-state 側を読む)。"
+    },
+    "prompts": {
+      "type": "array",
+      "description": "slot 別の確定プロンプト。graphic-plan.json の slots[] と graphic_id で 1:1 対応する (plan に無い graphic_id を持ってはならない。逆に plan の slot がここに無い = 21d 未完了 or 当該 slot の生成中止をユーザーが選択した記録として許容)。**全 slot 中止の場合は本ファイル自体を書かない** — 21d は pipeline-state.json に screens.graphics.decision='skip', decided_by='step21d' を記録して 21e-21g を skip する (設計 §8-4 gate_21d_all_cancel)。したがって本ファイルが存在する限り確定 prompt は必ず 1 件以上あり、minItems: 1 が成立する (prompts: [] という状態は設計上存在しない)。\n\n**graphic_id は prompts[] 内で重複禁止** (1 graphic_id = 1 確定プロンプト。重複を許すと同じ絵に食い違う指示が 2 つ並存し 21e がどちらを使うか不定になる)。JSON Schema では配列要素のキー単位 uniqueness を表現できないため、本制約は writer 21d (F-4) が書き込み前の重複チェックで enforce する。\n\nなお 21g の埋め込み / 29 (delta) の再埋め込みは pipeline-state の generated_files[] − excluded_slots[] を driver とする (設計 §9-2b 共通契約 — 本ファイルや plan の slots[] を driver にしない) ため、省略された slot や 21e で除外された slot が下流で復元されることはない。本ファイルの存在もブロック有効のシグナルではない (21e ブロック中止 [decision='skip'] は本ファイル生成後に起きるため残置される)。",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["graphic_id", "prompt", "size_px"],
+        "additionalProperties": false,
+        "properties": {
+          "graphic_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+            "description": "graphic-plan.json の slots[].graphic_id と一致。"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "確定した生成プロンプト全文。taste.style_directive (共通テイスト) + palette_hints (DERIVED 色ヒント) + slot 固有の内容記述を 21d が合成し、user FB 反映後に確定したもの。実在ブランド名・実在人物・文字入れ指示を含めてはならない (比較で文字/ブランド混入が品質リスクと判明済みのため、混入しにくいプロンプト設計を 21d 側の責務とする)。"
+          },
+          "size_px": {
+            "type": "object",
+            "description": "生成ピクセル数の確定値。plan の size_role (hero/content/small) から 21d が埋め込み先レイアウトに合わせて具体化する。<img> の width/height 属性 (C-26 案: 明示必須) の基準値にもなる。",
+            "required": ["width", "height"],
+            "additionalProperties": false,
+            "properties": {
+              "width": { "type": "integer", "minimum": 1 },
+              "height": { "type": "integer", "minimum": 1 }
+            }
+          },
+          "transparent_background": {
+            "type": "boolean",
+            "description": "背景透過が必要か。true の場合 21e が透過対応モデル (pipeline.yaml screens.graphic_generation.tool_transparent) + background: transparent で生成し、21f (postprocess) が alpha 統計で背景透明化を検証する (透過は生成段階で作る — 実装時の結論。検証 fail は 21f の degrade 分岐: そのまま採用 [transparency_waived ラベル] / リトライ / 除外 / 保留)。省略時 false。"
+          },
+          "notes": {
+            "type": "string",
+            "description": "FB 反映の経緯・生成リトライ時の注意等の自由記述 (audit 用)。省略可。"
+          }
+        }
+      }
+    }
+  }
+}

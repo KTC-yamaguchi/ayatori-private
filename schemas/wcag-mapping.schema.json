@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/wcag-mapping.schema.json",
+  "title": "wcag-mapping.json — WCAG 2.2 AA ループ不変量",
+  "description": "Phase 2 デザインループの不変量 (constraints / criteria) を保持するファイル。11-wcag-mapping が **初回のみ** 書き込む (W1 設計判断)。各 attempt の違反 (violations) は wcag-history.json に append される。design-brief.yaml の palette は変動するが、ここに定義される構造的制約 (touch_target / focus_ring / typography 等) はループ中不変。",
+  "type": "object",
+  "required": ["app_name", "wcag_version", "conformance_level", "constraints", "criteria"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた実例が artifacts に存在するため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "wcag_version": {
+      "type": "string",
+      "const": "2.2"
+    },
+    "conformance_level": {
+      "type": "string",
+      "const": "AA"
+    },
+    "constraints": {
+      "type": "object",
+      "description": "色非依存の数値・構造的制約。docs/wcag-standards.md §3 から派生。文脈 (ターゲット層・プラットフォーム) に応じて値を調整。",
+      "additionalProperties": false,
+      "properties": {
+        "contrast": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text_minimum_ratio": { "type": "string" },
+            "large_text_minimum_ratio": { "type": "string" },
+            "non_text_minimum_ratio": { "type": "string" },
+            "recommended_target": { "type": "string" }
+          }
+        },
+        "focus_ring": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "width": { "type": "string" },
+            "offset": { "type": "string" },
+            "style": { "type": "string" },
+            "must_not_be_obscured": { "type": "boolean" },
+            "scroll_margin_top_px": { "type": "integer" },
+            "scroll_margin_bottom_px": { "type": "integer" }
+          }
+        },
+        "touch_target": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "minimum_size_px": { "type": "integer" },
+            "rationale": { "type": "string" }
+          }
+        },
+        "typography": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mobile_font_size_minimum_px": { "type": "integer" },
+            "mobile_body_recommended_px": { "type": "integer" }
+          }
+        },
+        "motion": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "prefers_reduced_motion_required": { "type": "boolean" },
+            "non_essential_animation_allowed_under_250ms": { "type": "boolean" }
+          }
+        },
+        "forms": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "error_identification_required": { "type": "boolean" },
+            "redundant_entry_prevention_required": { "type": "boolean" },
+            "accessible_auth_minimum": { "type": "string" }
+          }
+        }
+      }
+    },
+    "criteria": {
+      "type": "array",
+      "description": "WCAG 2.2 AA で対象とする基準項目。docs/wcag-standards.md §2 と対応。",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "constraint_definition"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "WCAG 2.2 基準番号 (例: \"1.4.3\")。"
+          },
+          "name": { "type": "string" },
+          "constraint_definition": {
+            "type": "string",
+            "description": "色具体値ではなく規則 (どう選ぶか) を記述。"
+          }
+        }
+      }
+    }
+  }
+}

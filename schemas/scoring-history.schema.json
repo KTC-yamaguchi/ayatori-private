@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/scoring-history.schema.json",
+  "title": "scoring-history.json — Phase 1b スコアリング履歴",
+  "description": "Phase 1b (要件定義) のスコアリング結果をループ attempt ごとに append するファイル。03-rubric-gen が空配列で初期化し、04-scoring が attempt ごとに 1 件 append する。05-loop-req は attempts[-1] を見て pass/fail を判定する。26-retro が読込んでスコア推移を分析。`attempt_count` は `len(attempts) - 1` で導出される (rubric.json から消滅)。`escalated` は `len(attempts) >= max_attempts AND attempts[-1] が pass 条件未達` で導出される。",
+  "type": "object",
+  "required": ["app_name", "attempts"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた実例が artifacts に存在するため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "attempts": {
+      "type": "array",
+      "minItems": 0,
+      "description": "ループ試行の時系列ログ。先頭が最古 (attempt_count=0)、末尾が最新。",
+      "items": {
+        "type": "object",
+        "required": ["attempt_count", "timestamp", "total", "scores"],
+        "additionalProperties": false,
+        "properties": {
+          "attempt_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "0 始まりの試行番号。配列 index と一致。"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 (date or date-time)。attempt 完了時刻。"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "scores 全軸の合計。100 点満点。"
+          },
+          "scores": {
+            "type": "object",
+            "description": "軸別スコア (各軸 0〜20)。",
+            "required": ["correctness", "unambiguity", "completeness", "consistency", "feasibility"],
+            "additionalProperties": false,
+            "properties": {
+              "correctness": { "$ref": "#/$defs/axisScore" },
+              "unambiguity": { "$ref": "#/$defs/axisScore" },
+              "completeness": { "$ref": "#/$defs/axisScore" },
+              "consistency": { "$ref": "#/$defs/axisScore" },
+              "feasibility": { "$ref": "#/$defs/axisScore" }
+            }
+          },
+          "check_results": {
+            "type": "array",
+            "description": "全 check の判定結果 (通常 20 件)。overwrite-loss を防ぐため per-attempt で full に保持する (S3 設計判断)。",
+            "items": {
+              "type": "object",
+              "required": ["check_id", "verdict", "awarded_points"],
+              "additionalProperties": false,
+              "properties": {
+                "check_id": { "type": "string" },
+                "axis": { "$ref": "#/$defs/axis" },
+                "verdict": { "$ref": "#/$defs/verdict" },
+                "awarded_points": { "type": "integer", "enum": [0, 2, 5] },
+                "evidence": { "type": "string" }
+              }
+            }
+          },
+          "deficiencies": {
+            "type": "array",
+            "description": "partial / no と判定された check に対応する欠陥。原意ドリフトスイープ由来 (check_id == \"drift\") も含む。S3 により per-attempt で full に保持する。",
+            "items": {
+              "type": "object",
+              "required": ["axis", "doc", "issue", "severity", "tag"],
+              "additionalProperties": false,
+              "properties": {
+                "axis": { "$ref": "#/$defs/axis" },
+                "doc": { "type": "string" },
+                "issue": { "type": "string" },
+                "severity": { "type": "string", "enum": ["high", "medium", "low"] },
+                "check_id": { "type": "string" },
+                "tag": { "type": "string", "enum": ["AI改善可能", "人間対応必要"] },
+                "tag_reason": { "type": "string" }
+              }
+            }
+          },
+          "ai_improvable_count": { "type": "integer", "minimum": 0 },
+          "human_required_count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "axis": {
+      "type": "string",
+      "enum": ["correctness", "unambiguity", "completeness", "consistency", "feasibility"]
+    },
+    "axisScore": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["yes", "partial", "no"],
+      "description": "yes=完全充足 (5pt) / partial=過半数充足・軽微不足 (2pt) / no=過半数未満 (0pt)"
+    }
+  }
+}

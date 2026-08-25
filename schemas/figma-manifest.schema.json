@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/figma-manifest.schema.json",
+  "title": "figma-manifest.json — Figma capture アーカイブのインベントリ",
+  "description": "Phase 0b Step 01 の figma sub-module が ground-truth/figma/ に capture した frame 群のインベントリ。single writer = `scripts/build-figma-manifest.mjs` (main が F3 で実行する決定論組み立て。capture subagent は fragment のみ書き、本ファイルには触らない)。readers = Step 02 (突合パス解決) / Step 05 監査 / Step 06 (variables → tokens 導出)。\n\nパスは全て artifacts/{app_name}/ 起点の相対パス (reverse-provenance.json の source_ref 文法と一致)。冪等性: Step 01 の A0 済み判定は、source-inventory.json の全 file_keys について「確定 capture セット (.capture-scope-{file_key}.json の node_ids) ⊆ 本ファイルの frames[].node_id」を満たすかで行う (確定セット不在の file_key は frames 1 件以上)。URL 追加や範囲確定ゲートの union 更新でセットが広がったときは不足分のみ差分 capture して該当エントリを更新する (他エントリは保持)。\n\n**lazy 初期化**: writer は init stub `{ \"app_name\": \"{app_name}\", \"files\": [] }` から start。",
+  "type": "object",
+  "required": ["app_name", "files"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。残存値は受理して無視する。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "最後に capture を実行した時刻 (ISO 8601)。差分 capture でも更新する。証拠が 1 件も無いとき (capture が全滅した run) は本 field 自体を省略する — 実際には capture できていないのに時刻が入っていると、収集済みと誤って判定される。"
+    },
+    "files": {
+      "type": "array",
+      "description": "capture 済み Figma file のエントリ。file_key が identity (差分 capture は同 key のエントリを置換)。",
+      "items": {
+        "type": "object",
+        "required": ["file_key", "frames"],
+        "additionalProperties": false,
+        "properties": {
+          "file_key": {
+            "type": "string",
+            "description": "Figma file key。ground-truth/figma/{file_key}/ のディレクトリ名。"
+          },
+          "url": {
+            "type": "string",
+            "description": "ユーザーが指定した元 URL。"
+          },
+          "name": {
+            "type": ["string", "null"],
+            "description": "Figma file 名 (get_metadata から取得できた場合)。"
+          },
+          "variables_file": {
+            "type": ["string", "null"],
+            "description": "get_variable_defs 結果の保存先 (相対パス)。未対応 / 失敗なら null。"
+          },
+          "frames": {
+            "type": "array",
+            "description": "capture した frame の列挙。",
+            "items": {
+              "type": "object",
+              "required": ["node_id", "slug"],
+              "additionalProperties": false,
+              "properties": {
+                "node_id": {
+                  "type": "string",
+                  "description": "元の Figma node ID (例: '1:23')。ファイル名では ':' を '-' に置換。"
+                },
+                "name": {
+                  "type": ["string", "null"],
+                  "description": "frame 名 (Figma 上の表示名)。"
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "frame 名の sanitize 済み slug (lowercase / 空白→ハイフン / 特殊文字除去)。ファイル名の {node-id}--{slug} 部分。"
+                },
+                "screenshot": {
+                  "type": ["string", "null"],
+                  "description": "PNG の相対パス (例: 'ground-truth/figma/{file_key}/1-23--home.png')。取得失敗なら null (warnings に記録)。"
+                },
+                "design_context": {
+                  "type": ["string", "null"],
+                  "description": "design-context.md の相対パス。取得失敗なら null (warnings に記録)。screenshot のみの capture (視覚証拠のみ) では null が正常値。"
+                },
+                "family": {
+                  "type": ["string", "null"],
+                  "description": "クラスタリング (scripts/cluster-figma-candidates.mjs) が割り当てた画面ファミリ名。列挙を経ない capture (node-id 直指定) では省略可。"
+                }
+              }
+            }
+          },
+          "enumerated_not_captured": {
+            "type": "array",
+            "description": "列挙 (F1) では検出されたが capture しなかったノードの記録。**「アーカイブに無い」を「画面が存在しない」と誤読させないための必須記録** (文書 index の「範囲外 (未収集)」と同じ思想)。name はそれ自体が figma_backed の引用先になりうる — 例: 同一ファミリの状態変形名 (『スポット詳細_公開中/_非公開/_申請中』) は「公開状態が 3 種存在する」ことの証拠として figma-manifest.json:line で引用できる (視覚・構造の主張には capture 済み証拠が別途必要)。",
+            "items": {
+              "type": "object",
+              "required": ["node_id", "reason"],
+              "additionalProperties": false,
+              "properties": {
+                "node_id": {
+                  "type": "string",
+                  "description": "元の Figma node ID。差分 capture の対象指定にそのまま使える。"
+                },
+                "name": {
+                  "type": ["string", "null"],
+                  "description": "ノード名 (列挙時点)。"
+                },
+                "family": {
+                  "type": ["string", "null"],
+                  "description": "クラスタリングが割り当てたファミリ名。代表 frame と同ファミリなら、その frame の状態変形であることを示す。"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": ["family_variant", "duplicate_name", "anonymous_low_confidence", "debris", "out_of_scope", "capture_failed"],
+                  "description": "capture しなかった理由。family_variant = 代表で足りる状態/プラットフォーム変形 / duplicate_name = 同名重複の敗者 / anonymous_low_confidence = 自動命名 (Frame N 等) の低信頼候補 / debris = bak_ 等の明示的残骸 / out_of_scope = ユーザーが範囲から除外した代表 / capture_failed = 確定 capture セットに含まれるのに証拠がディスクに無い (収集失敗)。⚠️ out_of_scope は「人間が意図して外した」を意味するため、収集失敗を out_of_scope として記録してはならない (監査ゲート・人間が人間の判断と誤読する)。確定セットは範囲確定ゲートが `.capture-scope-{file_key}.json` に残す。"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

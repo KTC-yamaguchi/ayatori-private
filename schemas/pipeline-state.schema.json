@@ -1,0 +1,683 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/pipeline-state.schema.json",
+  "title": "pipeline-state.json — cross-phase hot state container",
+  "description": "AYATORI パイプライン全体で複数 step が読み書きするクロスフェーズ状態を集約するファイル。Phase 1b/2/3 の人間ゲート承認時刻、サンプル選択結果、Confluence ページ ID 等を保持する。最初の writer が空 stub から lazy init し、以降は `Read or {} → merge → Write back` パターンで更新する。スキーマは top-level `additionalProperties: false` で厳密化済 (厳密化後の整合性監査で Draughts / AmidaPick-vol1/vol2 を CLEAN 確認、新規プロジェクトも properties 完全準拠を強制)。",
+  "type": "object",
+  "required": ["app_name"],
+  "additionalProperties": false,
+  "$defs": {
+    "mini_retro_fields": {
+      "description": "Phase 6 /ayatori-delta-mini が delta.runs[] / req_delta.runs[] の各エントリに書き込む 3 field のセット。両所有者 (delta / req_delta) で完全同一の定義を維持するため $defs で共有 (DRY)。参照側は allOf + $ref で取り込み、unevaluatedProperties: false で strict 性を担保する。",
+      "type": "object",
+      "properties": {
+        "mini_retro_completed_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Phase 6 /ayatori-delta-mini で本 run を retrospective した時刻 (ISO 8601)。Step 34 が pending 全 run に同一 timestamp を書き込む。"
+        },
+        "mini_retro_appended": {
+          "type": "boolean",
+          "description": "Phase 6 で改善提案を artifacts/pipeline-improvements.md に append したか。Pattern 0 件 / 全件却下時 false。"
+        },
+        "mini_retro_pattern_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Phase 6 が feedback-log.md から検出した Pattern A/B/C エントリ数 (marker 以降 + step 27-33 filter 後)。"
+        }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "pending_questions_open": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "artifacts/{app_name}/pending-questions.json の `entries[].length where resolved_at is unset` から導出される counter。各 Phase 入口で main session が pending-questions.json を Read して再計算し、本 field を更新する (single writer = main session)。0 より大きいとき次 Phase は batch AskUserQuestion で propose-then-confirm パターン (Anthropic 公式 best practice)。ただし ask の対象は `reflect_to` が当該 phase の `target_artifacts` に解決できる entry のみで、解決できない entry は ask せず未解決のまま持ち越される (= 本 counter には残り続ける。振り分けは `scripts/preflight-partition.mjs`)。実 entry は別ファイル pending-questions.json (アーキレビュー C5: pipeline-state は完了イベント、pending-questions は未完了キューで責務分離)。"
+    },
+    "approvals": {
+      "type": "object",
+      "description": "人間ゲートの承認結果と承認時刻。各 step の gate skill が書き込む。",
+      "additionalProperties": false,
+      "properties": {
+        "step07_approved_at": {
+          "type": "string",
+          "description": "07-human-gate-req 承認時刻 (ISO 8601)。Phase 1b 完了の合図。reverse 経路 (Phase 0b) では Completion が Step 05 reverse review gate (人間) 通過を根拠に同キーを書く — 由来は step07_approved_via で判別 (二重 writer の例外は docs/artifact-file-responsibility.md に明記)。"
+        },
+        "step07_approved_via": {
+          "type": "string",
+          "enum": ["reverse-review-gate"],
+          "description": "step07_approved_at の由来注記。Phase 1b の正規ゲート (skill 07) 通過時は書かれない (absent = Phase 1b 由来)。reverse 経路で Phase 0b Completion が押印した場合のみ \"reverse-review-gate\"。"
+        },
+        "step13_approved_at": {
+          "type": "string",
+          "description": "13-human-gate-design 承認時刻 (ISO 8601)。スタイルガイド承認の合図。"
+        },
+        "step16_approved_at": {
+          "type": "string",
+          "description": "16-design-doc-human-review 承認時刻 (ISO 8601)。画面リスト・遷移マップ承認の合図。"
+        },
+        "screens_human_approved": {
+          "type": "boolean",
+          "description": "21-screen-human-review 承認結果。フル画面 HTML 承認の合図 (canonical 承認フラグ。skill 21 が必ず書く)。"
+        },
+        "step21_approved_at": {
+          "type": "string",
+          "description": "21-screen-human-review 承認時刻 (ISO 8601、optional)。`screens_human_approved=true` と並列に記録される auxiliary timestamp。過去の運用慣習で複数 artifact (Draughts / AmidaPick-vol1/2) に存在。step07/13/16 と命名整合のため schema に明示。"
+        },
+        "final_approved": {
+          "type": "boolean",
+          "description": "23-human-final-approval 承認結果。Phase 3 完了の合図 (canonical 承認フラグ。skill 23 が必ず書く)。"
+        },
+        "step23_approved_at": {
+          "type": "string",
+          "description": "23-human-final-approval 承認時刻 (ISO 8601、optional)。`final_approved=true` と並列に記録される auxiliary timestamp。step07/13/16 と命名整合のため schema に明示。"
+        },
+        "patterns_human_approved": {
+          "type": "boolean",
+          "description": "25d-state-pattern-approval 承認結果。Sub-state パターン HTML 承認の合図 (canonical 承認フラグ。skill 25d が必ず書く)。"
+        },
+        "step25d_approved_at": {
+          "type": "string",
+          "description": "25d-state-pattern-approval 承認時刻 (ISO 8601、optional)。`patterns_human_approved=true` と並列に記録される auxiliary timestamp。"
+        },
+        "completed_at_states": {
+          "type": "string",
+          "description": "25e (figma-pattern-export) 完了時刻 (ISO 8601)。Sub-state を含む Phase 3 完全完了の合図。`final_approved` (Step 23) は main HTML 完了のみを表すため、本フィールドが立つことで sub-state パターンも Figma に出力済となる。Phase 5 delta は `final_approved` OR `completed_at_states` のいずれかを accept する (後方互換。reverse 基線例外 `baseline_approved_at` も accept — SoT は CLAUDE.md § 完走後 Phase 共通 Entry Guard)。"
+        },
+        "baseline_approved_at": {
+          "type": "string",
+          "description": "ベースライン承認ゲート (人間) の承認時刻 (ISO 8601)。reverse 経路 (Phase 0b) 由来のプロジェクトが「機能追加に進める土台が揃った」ことを人間が確認した印 (完走相当)。効力: Phase 1d (/ayatori-add-feature) / Phase 5 (/ayatori-delta) / Phase 6 (/ayatori-delta-mini) の Entry Guard が accept する — Phase 4 retro は対象外 (SoT は CLAUDE.md § 完走後 Phase 共通 Entry Guard、扉選定の導出基準は docs/two-phase-completion-model.md)。**本キー単独では入場できない** — Entry Guard は requirements.json.status == \"REVERSE_ENGINEERED\" を AND で検査する (由来検査。正規ゲートは reverse 経路限定だが手動 stub でも同じ鍵を書けるため、forward 経路プロジェクトへの誤適用を判定式でも弾く)。`final_approved` とは独立で、画面レビュー済みを意味しない (`final_approved` 系が立った後は Entry Guard 判定に影響しない — F ∨ C が先に真になるため)。書き手: ベースライン承認ゲート — 配線済み (writer = /ayatori-screens の screens-lite ルート出口の人間ゲート、phases/screens/SKILL.md § Execution — screens-lite の lite-4c。reverse 経路限定・冪等 [既 set なら両キーとも触らない])。検証・Standalone 運用では手動 stub も可。由来は baseline_approved_via で判別し、必ず併記する。"
+        },
+        "baseline_approved_via": {
+          "type": "string",
+          "enum": ["screens-lite-gate", "manual-stub"],
+          "description": "baseline_approved_at の由来注記 (必ず併記する — step07_approved_via と同型)。screens-lite 出口の人間ゲート (/ayatori-screens Route A の lite-4c、実装済み) が押した場合は \"screens-lite-gate\"、検証・Standalone 運用の手動 stub は \"manual-stub\"。stub と本物のゲート通過を機械判別できないと「人間が承認した印」を stub が騙れるため。"
+        },
+        "graphics_human_approved": {
+          "type": "boolean",
+          "description": "21g (graphic-embed-review) 承認の canonical フラグ — resume cascade / Step 15 (2nd run)・22 入口 assert はこちらを読む (timestamp との読み分け揺れを作らない、設計 docs/graphic-generation-design.md §9-2)。writer は 21g (writer 実体は commit-approval.mjs approve — write-back 検証付き)。"
+        },
+        "step21g_approved_at": {
+          "type": "string",
+          "description": "21g 承認時刻 (ISO 8601)。graphics_human_approved の補助 timestamp (screens_human_approved + step21_approved_at の既存対と同型)。"
+        }
+      }
+    },
+    "selections": {
+      "type": "object",
+      "description": "ユーザー選択結果。10-sample-human-review 等のゲート skill が書き込む。",
+      "additionalProperties": false,
+      "properties": {
+        "selected_sample_id": {
+          "type": "string",
+          "description": "10-sample-human-review でユーザーが選択した案 (a/b/c)。"
+        },
+        "selected_sample_direction": {
+          "type": "string",
+          "description": "選択された案のデザイン方向ラベル。"
+        },
+        "step09_structure_warning": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Step 09 Phase 3.6 の構造記述子チェックが bounded 再生成の上限到達後も衝突を解消できなかった時に立つ fail-loud フラグ。Step 10 人間ゲートが「構造差不足の可能性 → 再生成 or 続行」を提示するために読む。{ platform, collisions[], derived_descriptors, raised_at } 等を保持 (free-form)。orchestrator が単一 writer。"
+        }
+      }
+    },
+    "req_delta": {
+      "type": "object",
+      "description": "Phase 1c (ayatori-req-delta) の実行履歴。runs[] に req-delta ごとのエントリを append していく。",
+      "additionalProperties": false,
+      "properties": {
+        "runs": {
+          "type": "array",
+          "description": "req-delta 実行ごとのサマリー。31-req-change-detect が初回エントリを作成し、33-req-revision が revisions_approved_at を追記する。",
+          "items": {
+            "type": "object",
+            "required": ["run_id", "change_description", "initiated_at"],
+            "unevaluatedProperties": false,
+            "properties": {
+              "run_id": { "type": "string", "description": "YYYY-MM-DD-NNN または UUID。change-manifest.json.run_id と一致。" },
+              "change_description": { "type": "string", "description": "Step 31 Q1 の自由記述回答。" },
+              "initiated_at": { "type": "string", "description": "change-manifest.json.created_at (ISO 8601)。" },
+              "directly_changed_docs": { "type": "array", "items": { "type": "string" }, "description": "32-req-impact-analysis で directly_changed と分類されたドキュメント名一覧。" },
+              "impacted_docs": { "type": "array", "items": { "type": "string" }, "description": "32-req-impact-analysis で impacted と分類されたドキュメント名一覧。" },
+              "impact_approved_at": { "type": "string", "description": "32-req-impact-analysis 人間ゲート承認時刻 (ISO 8601)。" },
+              "revisions_approved_at": { "type": "string", "description": "33-req-revision 人間ゲート承認時刻 (ISO 8601)。run 完了の合図。" },
+              "cancelled_at": { "type": "string", "description": "ユーザーが中止した時刻 (ISO 8601)。" },
+              "cancel_reason": { "type": "string", "enum": ["user_abort"], "description": "中止理由。" }
+            },
+            "allOf": [
+              { "$ref": "#/$defs/mini_retro_fields" }
+            ]
+          }
+        }
+      }
+    },
+    "screens": {
+      "type": "object",
+      "description": "Phase 3 (Step 14-25 + 25a-25e) の各 step 完了タイムスタンプとスコア。正式 schema 化後の整合性監査で additionalProperties: false に厳密化し、25a-25e 系列を追加。",
+      "additionalProperties": false,
+      "properties": {
+        "step17_completed_at": { "type": "string", "description": "17 完了時刻 (ISO 8601)。" },
+        "step18_completed_at": { "type": "string", "description": "18 完了時刻 (ISO 8601)。" },
+        "step19_score": { "type": "integer", "minimum": 0, "maximum": 100, "description": "19 のスコア (0-100)。" },
+        "step20_completed_at": { "type": "string", "description": "20 完了時刻 (ISO 8601)。" },
+        "step22_figma_status": {
+          "type": "string",
+          "enum": ["skipped_stub_mode"],
+          "description": "FIGMA_MCP_ENABLED=false (スタブモード) で Step 22 の Figma 出力を skip した場合のみ書き込まれる。enabled mode の通常実行時は省略 (進捗 SoT は figma-state.json.scope)。writer は skills/22-figma-export/SKILL.md §フォールバック。phases/screens resume 規則と /ayatori-status Phase 3 判定が「22 は disabled で処理済み」の識別に読む (disabled では nodes.screens が populate されないため)。"
+        },
+        "step24_completed_at": {
+          "type": "string",
+          "description": "24 (design-system-update) 完了時刻 (ISO 8601)。MEO 完了条件 #6 (B1-5)。enabled mode は Step 24 §Step E-2、スタブモードは Step 24 §Step -1 スタブ手順で書き込む。"
+        },
+        "step24_figma_status": {
+          "type": "string",
+          "enum": ["skipped_stub_mode"],
+          "description": "FIGMA_MCP_ENABLED=false (スタブモード) で Step 24 の Figma 構築 (Variables 3 コレクション + Component Library) を skip した場合のみ書き込まれる。enabled mode の通常実行時は省略。writer は skills/24-design-system-update/SKILL.md §Step -1 スタブ手順。step25e.figma_status の skipped_stub_mode と同型。"
+        },
+        "step25_completed_at": {
+          "type": "string",
+          "description": "25 (variables-bind) 完了時刻 (ISO 8601)。enabled mode は Step 25 §Step E、スタブモードは Step 25 §Step 0 スタブ手順で書き込む。step25a への resume 遷移条件。"
+        },
+        "step25_figma_status": {
+          "type": "string",
+          "enum": ["skipped_stub_mode"],
+          "description": "FIGMA_MCP_ENABLED=false (スタブモード) で Step 25 の Variables バインドを skip した場合のみ書き込まれる。enabled mode の通常実行時は省略。writer は skills/25-component-build/SKILL.md §Step 0 スタブ手順。step25e.figma_status の skipped_stub_mode と同型。"
+        },
+        "graphics": {
+          "type": "object",
+          "description": "21a-21g グラフィック生成ブロックの進行 state (設計 docs/graphic-generation-design.md §9-2)。21g の完了記録は approvals.graphics_human_approved 側 (人間ゲート step は completed_at を持たない — 完了 = 承認)。writer: 21a (step21a_completed_at) / 21b (decision, decided_by=step21b) / 21c (taste_confirmed_at) / 21d (prompts_confirmed_at / rework_pending 消費 / decision=skip decided_by=step21d) / 21e (generated_files [成功ごと増分] / excluded_slots append / step21e_completed_at / decision=skip decided_by=step21e) / 21f (generated_files[].file の正典パス更新 / step21f_completed_at / transparency_waived append / excluded_slots append / retry 時の generated_files entry 削除 + step21e_completed_at クリア / decision=skip decided_by=step21f) / 21g (却下時の generated_files entry 削除 + excluded_slots append + 全却下時 decision=skip decided_by=step21g、writer 実体は commit-approval.mjs) / phase orchestrator (上流 skip の decision+decided_by=upstream_scope、21g 差し戻し routing の rework_pending + timestamp クリア — 実体は 21g の route-rework.mjs を phases/screens § Step 21g の指示で起動)。",
+          "additionalProperties": false,
+          "properties": {
+            "decision": {
+              "type": "string",
+              "enum": ["generate", "skip"],
+              "description": "ブロック有効判定の SoT。generate = 21b で「必要」確定 / skip = 不実行確定。graphic-plan.json 等のファイル存在は有効シグナルではない (skip 決定後も残置されるため、設計 §9-2b)。"
+            },
+            "decided_by": {
+              "type": "string",
+              "enum": ["upstream_scope", "step21b", "step21d", "step21e", "step21f", "step21g"],
+              "description": "skip の決定経路 (upstream_scope = orchestrator が上流 skip を記録 / step21b = 要否ゲートで不要 / step21d = 全 slot 中止 / step21e = 生成失敗によるブロック中止 / step21f = 後処理失敗によるブロック中止 [POCTEAMA-189] / step21g = 全対象 slot の per-slot 却下によるブロック中止 [設計 §11、POCTEAMA-190])。decision=generate では省略する。"
+            },
+            "step21a_completed_at": { "type": "string", "description": "21a (必要性分析) 完了時刻 (ISO 8601)。degrade (fail-open) 完了でも記録される — 21b の起動前提。" },
+            "taste_confirmed_at": { "type": "string", "description": "21c テイスト確定時刻 (ISO 8601)。graphic-plan.json の taste.confirmed_at と同値 (resume 判定は本キーを読む)。" },
+            "prompts_confirmed_at": { "type": "string", "description": "21d プロンプト確定時刻 (ISO 8601)。resume cascade の「21d 通過」判定のみに使う (slot 鮮度判定には使わない — 1 slot 改訂で全 slot が stale 化するため、設計 §9-2b)。" },
+            "step21e_completed_at": { "type": "string", "description": "21e (生成) 完了時刻 (ISO 8601)。" },
+            "step21f_completed_at": { "type": "string", "description": "21f (透過/後処理) 完了時刻 (ISO 8601)。" },
+            "generated_files": {
+              "type": "array",
+              "description": "生成済み slot の記録 (21e/21f の resume + 21g/29 埋め込み対象集合の driver — 設計 §9-2b 共通契約)。source_digest は当該 prompts entry から決定的に導出した鮮度判定用 digest。file は 21e 生成直後は graphics/raw/{graphic_id}.png、21f の正典化後は screens/_shared/graphics/{graphic_id}.png を指す (POCTEAMA-189 — 21g/29 はこの正典パスを <img src> の解決に使う。圧縮 ⑫ 非搭載のため 21f は raw を無加工正典化する — webp は pattern 上許容の将来拡張)。",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["graphic_id", "file"],
+                "properties": {
+                  "graphic_id": { "type": "string" },
+                  "file": {
+                    "type": "string",
+                    "pattern": "^(graphics/raw/[a-z0-9]([a-z0-9-]*[a-z0-9])?\\.png|screens/_shared/graphics/[a-z0-9]([a-z0-9-]*[a-z0-9])?\\.(png|webp))$",
+                    "description": "21e 直後は graphics/raw/{graphic_id}.png、21f 正典化後は screens/_shared/graphics/{graphic_id}.{webp|png} のみ。pattern は path traversal / 接尾辞すり替えを拒否する形 — さらに「{graphic_id} が当該 entry 自身の id と一致」までは schema で表現できないため、21f preflight (computeTargets) が完全一致で runtime 検証する (POCTEAMA-189)。"
+                  },
+                  "generated_at": { "type": "string" },
+                  "source_digest": { "type": "string" }
+                }
+              }
+            },
+            "excluded_slots": {
+              "type": "array",
+              "description": "21e 生成失敗 / 21f 後処理失敗 degrade「当該 slot を除外」の記録 (設計 §8-4、POCTEAMA-188/189)。pending / 埋め込み対象集合から除かれる (記録なしの除外は当該 slot が永久 pending 化する)。",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["graphic_id", "reason", "excluded_at"],
+                "properties": {
+                  "graphic_id": { "type": "string" },
+                  "reason": { "type": "string" },
+                  "excluded_at": { "type": "string" }
+                }
+              }
+            },
+            "transparency_waived": {
+              "type": "array",
+              "description": "POCTEAMA-189: 21f 透過検証 fail を user が「そのまま採用」した受諾記録 (チケット fallback 方針「ラベルをつけて代わりの方法を提案」のラベル実体)。source_digest + raw_sha256 の複合単位 — 当該 prompts entry の digest と raw 画像バイトの sha256 が共に一致する場合のみ有効で、プロンプト改訂 (digest 変化) でも同 prompt の再抽選 (raw バイト変化 — 21g 品質差し戻し経路の再生成) でも失効し degrade 質問に戻る (受諾した当のバイト以外の画像に旧受諾を自動適用しない — PR #185 レビュー指摘)。writer は 21f commit-degrade (waive、同 slot の旧記録は置換 — 1 slot 1 記録) のみ、retry 時は当該 graphic_id の記録を除去する。21f postprocess が消費し、正典化時に postprocess-manifest.json へ transparency: 'waived' を記録する (21g の配置判断材料)。",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["graphic_id", "source_digest", "raw_sha256", "reason", "waived_at"],
+                "properties": {
+                  "graphic_id": { "type": "string" },
+                  "source_digest": { "type": "string" },
+                  "raw_sha256": { "type": "string", "description": "受諾対象の raw 画像バイトの sha256 (バイト束縛 — findWaiver はこの一致まで要求する)" },
+                  "reason": { "type": "string" },
+                  "waived_at": { "type": "string" }
+                }
+              }
+            },
+            "rework_pending": {
+              "type": "array",
+              "description": "21g 差し戻し (プロンプト起因) の per-slot 指示 queue (設計 §9-2b)。orchestrator が prompts_confirmed_at クリアと同一 Write で append し、21d が消費して除去する。",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["graphic_id", "instruction"],
+                "properties": {
+                  "graphic_id": { "type": "string" },
+                  "instruction": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "state_pattern_skipped": {
+          "type": "boolean",
+          "description": "25a-state-pattern-plan で user が「不要 (default のみで完了)」を選択した場合 true。本フィールドが true のとき 25b-25e は skip される。完走後 Phase (retro/delta 等) の起動条件には関与しない — 本フィールドが立つときは必ず final_approved == true も立つため (25a 前提条件、skills/25a-state-pattern-plan/SKILL.md「前提条件」節)。完走判定の SoT は CLAUDE.md § 完走後 Phase 共通 Entry Guard。本フラグは Phase 3 内部の sub-state skip 表明 + 28-impact-analysis の sub_state_aware=false 判定に使う。"
+        },
+        "step25a_completed_at": { "type": "string", "description": "25a (state-pattern-plan) 完了時刻 (ISO 8601)。skip 選択時も完了扱いとして記録される。" },
+        "step25b": {
+          "type": "object",
+          "description": "25b (state-pattern-gen) の進捗追跡 (ファイル単位 resume 用)。",
+          "additionalProperties": false,
+          "properties": {
+            "started_at": { "type": "string", "description": "25b 着手時刻 (ISO 8601)。" },
+            "completed_at": { "type": "string", "description": "25b 完了時刻 (ISO 8601)。" },
+            "expected_count": { "type": "integer", "minimum": 0, "description": "state-pattern-plan.json から計算した生成すべき HTML ファイル総数。" },
+            "completed_count": { "type": "integer", "minimum": 0, "description": "実際に生成完了した HTML ファイル数。expected_count と一致したら完了。" },
+            "completed_files": {
+              "type": "array",
+              "description": "生成完了した HTML ファイルの相対パス一覧 (例: \"screens/web/01-login--loading.html\")。次セッション再開時は expected − completed の差集合のみ再生成。",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "step25c": {
+          "type": "object",
+          "description": "25c (state-pattern-score) の最新採点結果サマリ。**attempt 累積数は専用 field を持たない** (docs/artifact-file-responsibility.md § 設計原則 2 「ループ不変量 / 履歴の分離」原則: `state-pattern-scores.json.attempts.length` から導出する)。",
+          "additionalProperties": false,
+          "properties": {
+            "completed_at": { "type": "string", "description": "25c 最新 attempt の採点完了時刻 (ISO 8601)。" },
+            "score": { "type": "integer", "minimum": 0, "maximum": 100, "description": "最新 attempt の Sub-state 採点スコア (0-100)。" }
+          }
+        },
+        "step25d": {
+          "type": "object",
+          "description": "25d (state-pattern-approval) 人間ゲートの判定結果。",
+          "additionalProperties": false,
+          "properties": {
+            "completed_at": { "type": "string", "description": "25d 完了時刻 (ISO 8601)。" },
+            "approved": { "type": "boolean", "description": "user が承認した場合 true。修正 / skip 選択時は false。" },
+            "decision": {
+              "type": "string",
+              "enum": ["approve", "revise", "skip_without_figma"],
+              "description": "user の決定。approve = 25e へ / revise = 25b へ戻る / skip_without_figma = Figma 追加なしで Phase 3 完了。"
+            }
+          }
+        },
+        "step25e": {
+          "type": "object",
+          "description": "25e (figma-pattern-export) の完了状態。",
+          "additionalProperties": false,
+          "properties": {
+            "completed_at": { "type": "string", "description": "25e 完了時刻 (ISO 8601)。" },
+            "figma_status": {
+              "type": "string",
+              "enum": ["success", "partial_success", "skipped_stub_mode"],
+              "description": "Figma 追加 capture の最終状態。success = 全件 / partial_success = deferred あり / skipped_stub_mode = FIGMA_MCP_ENABLED=false で skip。"
+            },
+            "partial_attempt_count": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "デッドロック対策: partial_success のたびに加算する。25e skill の反復 partial_success 対策 (SKILL.md L243-254) で、3 回連続で抜けられない場合に user escalation を起動する判定に使用。Figma MCP 長期障害時の Phase 4 retro 進行不能を回避する。"
+            },
+            "figma_sync_status": {
+              "type": "string",
+              "enum": ["complete", "skipped_by_user", "partial"],
+              "description": "Figma との同期実態を表す独立フラグ。`complete` = sub-state frame が全件 Figma に存在 / `skipped_by_user` = 反復 partial_success のデッドロック対策で user が Option 2 (Figma スキップ) を選択した状態。`completed_at_states` は立つが Figma には sub-state frame が無い / `partial` = deferred 残あり (resume で再試行)。Phase 5 delta (Step 28 / Step 30) は本フィールドを Read し、`complete` 以外のとき `sub_state_aware` を false に強制 downgrade して存在しない node_id 参照を回避する。"
+            }
+          }
+        }
+      }
+    },
+    "confluence": {
+      "type": "object",
+      "description": "Confluence 連携で生成された page_id 群。phase ごとに名前空間を分ける。",
+      "additionalProperties": false,
+      "properties": {
+        "requirements": {
+          "type": "object",
+          "description": "06-confluence-save-req が書き込む。",
+          "additionalProperties": false,
+          "properties": {
+            "page_id": {
+              "type": ["string", "null"],
+              "description": "プロジェクトのメインページ ID。confluence_parent_id の子として作成される。"
+            },
+            "doc_page_ids": {
+              "type": "object",
+              "description": "要件定義 8 ファイル (01-overview.md ～ 08-constraints.md) の Confluence ページ ID。",
+              "additionalProperties": { "type": "string" }
+            },
+            "save_status": {
+              "type": "string",
+              "enum": ["pending", "success", "failed", "skipped"],
+              "description": "success は Step 3.5 read-back 漏れチェックで欠落未検出であることを含意する (verification.status == passed、または read-back 不可の fail-open で unverified)。漏れ検出時は failed。"
+            },
+            "verification": {
+              "type": "object",
+              "description": "Step 06 保存後の read-back 漏れチェック結果。保存内容を Confluence から読み戻し、ローカル MD の構造指紋 (見出し / 項目 ID / 本文長比) と突合した結果を記録する。パラメータの SoT は pipeline.yaml → requirements.confluence_save.verification。",
+              "additionalProperties": false,
+              "properties": {
+                "checked_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "検証実行時刻 (ISO 8601)"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["passed", "failed", "unverified"],
+                  "description": "全体サマリ。passed = 全ページ通過 / failed = 1 ページ以上で漏れ検出 (再保存でも回復せず) / unverified = 検証未実施 (事由は reason 参照)"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": ["disabled_by_config", "read_back_unavailable"],
+                  "description": "status == unverified の事由。disabled_by_config = pipeline.yaml → requirements.confluence_save.verification.enabled: false で意図的に OFF / read_back_unavailable = read 系・export 系ツールとも利用不可の fail-open。表示文言の分岐 (skill 06 Step 4 / skill 07) に使う。"
+                },
+                "pages": {
+                  "type": "object",
+                  "description": "doc_key ごとの判定結果",
+                  "additionalProperties": {
+                    "type": "string",
+                    "enum": ["passed", "failed", "unverified"]
+                  }
+                },
+                "missing": {
+                  "type": "object",
+                  "description": "failed ページの漏れ指紋一覧 (「見出し: {text}」「ID: {id}」形式)。人間が Confluence 側を目視確認する手がかり。",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "design": {
+          "type": "object",
+          "description": "15-confluence-save-design が書き込む。post_loop_reexecute で 2 回保存される (1 回目: 画面リスト+遷移マップ、2 回目: screens/*.md フル仕様)。",
+          "additionalProperties": false,
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "デザイン親ページ ID。requirements.page_id の子として作成される。"
+            },
+            "doc_page_ids": {
+              "type": "object",
+              "description": "デザインドキュメント (00-screen-list / 00-transition-map / 各画面) の Confluence ページ ID。",
+              "additionalProperties": { "type": "string" }
+            },
+            "save_status": {
+              "type": "string",
+              "enum": ["pending", "success", "failed", "skipped"]
+            },
+            "save_count": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "保存実行回数。最大 2 (1 回目: 14 直後、2 回目: 21 承認後の post_loop_reexecute)。"
+            }
+          }
+        }
+      }
+    },
+    "delta": {
+      "type": "object",
+      "description": "Phase 5 (ayatori-delta) の実行履歴。runs[] に delta ごとのエントリを append していく。設計原則: 既存エントリは上書きしない。",
+      "additionalProperties": false,
+      "properties": {
+        "runs": {
+          "type": "array",
+          "description": "delta 実行ごとのサマリー。27-change-detect / 27b-screen-edit-detect が初回エントリを作成し、28 / 29 / 29b / 30 が各承認時刻 (impact/screens/figma_approved_at) を追記する。score_total は 29b (screen-edit scoped scoring)、req_promotion は 29c (要件昇格の完了記録) のみが書く。",
+          "items": {
+            "type": "object",
+            "required": ["run_id", "change_description", "initiated_at"],
+            "unevaluatedProperties": false,
+            "properties": {
+              "run_id": {
+                "type": "string",
+                "description": "change-manifest.json.run_id と一致。YYYY-MM-DD-NNN または UUID。"
+              },
+              "change_description": {
+                "type": "string",
+                "description": "Step 27 Q1 の自由記述回答。"
+              },
+              "initiated_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "change-manifest.json.created_at (ISO 8601)。"
+              },
+              "affected_screens": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "impact-analysis で affected と分類された画面名一覧。"
+              },
+              "new_screens": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "impact-analysis で new と分類された画面名一覧。"
+              },
+              "removed_screens": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "impact-analysis で removed と分類された画面名一覧。"
+              },
+              "state_added_screens": {
+                "type": "array",
+                "description": "impact-analysis で state_added と分類された画面群。default HTML / Figma frame を preserve しつつ追加 sub-state file (`{screen}--{state}.html`) のみを新規生成する provisional UI 系の運用パターン。plan-driven の sub-state pattern (state-pattern-plan.json から駆動) とは独立した delta-driven ad-hoc state-per-file。",
+                "items": {
+                  "type": "object",
+                  "required": ["screen", "added_states"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "screen": {
+                      "type": "string",
+                      "description": "対象画面ファイル名 (拡張子なし)。screens/{platform}/{screen}.html と一致。"
+                    },
+                    "added_states": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "minItems": 1,
+                      "uniqueItems": true,
+                      "description": "本画面に追加する新規 sub-state 名のリスト (例: [\"cancel-window\"])。Phase 3 既存の sub-state や theme suffix と衝突しない名前を選ぶ。"
+                    }
+                  }
+                }
+              },
+              "impact_approved_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "28-impact-analysis 人間ゲート承認時刻 (ISO 8601)。Step 28 が書き込む。"
+              },
+              "screens_approved_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "29-partial-screen-regen 人間ゲート承認時刻 (ISO 8601)。Step 29 が書き込む。"
+              },
+              "figma_approved_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "30-partial-figma-update 人間ゲート承認時刻 (ISO 8601)。Step 30 が書き込む。delta phase 完了の合図。retro (Phase 6) は別 phase で実行する。"
+              },
+              "figma_status": {
+                "type": "string",
+                "description": "Step 30 Fallback (FIGMA_MCP_ENABLED == false / figma-state.json 不在 / screen-edit zero-scope) 時に 'skipped_stub_mode' が書き込まれる。通常実行時は省略。"
+              },
+              "cancelled_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Step 28/29/30 の Option C/D でユーザーが中止した時刻 (ISO 8601)。設定されている場合、次回 preamble は新規 run として Step 27 に進む。"
+              },
+              "cancel_reason": {
+                "type": "string",
+                "enum": ["user_abort", "design_system_required"],
+                "description": "中止理由。'user_abort' = Option C / 'design_system_required' = Option D（デザインシステム変更が必要）。"
+              },
+              "sub_state_aware": {
+                "type": "boolean",
+                "description": "本プロジェクトが sub-state HTML を生成済みかを Step 28 が判定して書き込む。`true` の場合、Step 29 は affected/new 画面の sub-state HTML も再生成し、Step 30 は figma-capture-runner を mode: substate でも追加起動して sub-state Figma frame も更新する。preserved 画面の sub-state HTML / Figma frame は値に関わらず絶対に触れない。"
+              },
+              "mode": {
+                "type": "string",
+                "enum": ["requirement", "screen_edit"],
+                "description": "delta の起点モード。'requirement' = 要件変更起点 (従来の Step 27 経路)。'screen_edit' = 完成後の画面 HTML 手編集起点 (HTML→画面仕様書 .md への逆伝播 + 編集画面のみ採点)。欠落時は後方互換のため 'requirement' とみなす。"
+              },
+              "edited_screens": {
+                "type": "array",
+                "description": "mode == 'screen_edit' のみ: ユーザーが手編集し本 run で反映対象として確定した画面。検知は編集台帳 (artifacts/{app_name}/delta/edited-screens.json) + 画面の手動選択 (git 非依存)、人間確認で確定する。",
+                "items": {
+                  "type": "object",
+                  "required": ["screen", "platform", "path"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "screen": { "type": "string", "description": "画面 ID (HTML ファイル名から拡張子を除いたもの)。" },
+                    "platform": { "type": "string", "enum": ["web", "web-sm", "mobile"], "description": "出力プラットフォーム (web-sm = Web スマホ幅)。" },
+                    "path": { "type": "string", "description": "app ルートからの相対パス (例: screens/mobile/03-home.html)。" }
+                  }
+                }
+              },
+              "score_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "mode == 'screen_edit' のみ: 編集画面に対する scoped 採点 (Step 19 ルーブリック) を実行した時刻 (ISO 8601)。"
+              },
+              "score_total": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "mode == 'screen_edit' のみ: 編集画面の scoped 採点合計 (0-100)。詳細は scores.json。"
+              },
+              "req_promotion": {
+                "type": "object",
+                "description": "mode == 'screen_edit' のみ: Step 29c が「要件に昇格」逸脱を requirements/*.md へ反映した完了記録。昇格 0 件の run では省略。",
+                "required": ["completed_at", "promoted", "docs"],
+                "additionalProperties": false,
+                "properties": {
+                  "completed_at": { "type": "string", "format": "date-time", "description": "反映完了時刻 (ISO 8601)。" },
+                  "promoted": { "type": "integer", "minimum": 1, "description": "反映した昇格逸脱の件数。" },
+                  "docs": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "改訂した要件文書名 (例: 05-features.md)。" }
+                }
+              }
+            },
+            "allOf": [
+              { "$ref": "#/$defs/mini_retro_fields" }
+            ]
+          }
+        }
+      }
+    },
+    "reverse_verify": {
+      "type": "object",
+      "description": "Phase 0c (ayatori-reverse-verify) の実行履歴。改修対象を名指しして、その関連範囲だけを 3 証拠ソース (実コード / 文書アーカイブ / Figma capture) と突合し、承認された食い違いを要件文書・画面仕様へ反映した記録。runs[] に実行ごとのエントリを append する (既存エントリは上書きしない)。\n\n本 phase は要件文書の記述を正すだけで、承認フラグ (approvals.*) は一切書かない — 完走判定・入場判定の SoT を汚さないため。Phase 6 の軽量振り返り (delta-mini) の対象にも含めない (mini_retro_fields を持たない)。",
+      "additionalProperties": false,
+      "properties": {
+        "runs": {
+          "type": "array",
+          "description": "突合実行ごとのサマリー。writer と書く時点: 01-target-scope が scope-manifest.json の書き出し時に run stub を append し (範囲ゲート提示中に中断しても ゲートから再開できるようにするため)、承認時に scope_approved_at を足す / 02-targeted-crosscheck が crosscheck_completed_at + findings_total / 03-discrepancy-gate が findings_resolved_at 以降 / phase の Completion が completed_at / 中止は 01-target-scope の範囲ゲート (Option C) と phase Preamble の中断 run 破棄が cancelled_at + cancel_reason を書く。",
+          "items": {
+            "type": "object",
+            "required": ["run_id", "target_description", "initiated_at"],
+            "additionalProperties": false,
+            "properties": {
+              "run_id": {
+                "type": "string",
+                "description": "YYYY-MM-DD-NNN または UUID。reverse-verify/scope-manifest.json.run_id、および requirement-deviations.json の phase == \"reverse_verify\" entry の run_id と一致 (reconcile を自 run に絞るキー)。"
+              },
+              "target_description": {
+                "type": "string",
+                "description": "ユーザーが名指しした改修対象 (機能名 / 画面名) の記述。"
+              },
+              "jira_issue_key": {
+                "type": "string",
+                "description": "対象の手がかりとして受け取った Jira 課題キー (任意)。証拠としては扱わない — 突合の根拠は ground-truth/ のアーカイブ実物のみ。"
+              },
+              "initiated_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "run 開始時刻 (ISO 8601)。scope-manifest.json.created_at と一致。"
+              },
+              "sources_present": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["code", "docs", "figma"] },
+                "uniqueItems": true,
+                "description": "本 run で実在を確認できた証拠ソースの種別。縮退 (code 不在等) を後から読み取れるようにする — 「未収集」と「不在」を混同しないため、実測結果のみを書く。"
+              },
+              "scope_approved_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "01-target-scope の範囲承認ゲート通過時刻 (ISO 8601)。ここが未設定の間は突合を始めない。"
+              },
+              "crosscheck_completed_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "02-targeted-crosscheck 完了時刻 (ISO 8601)。人間ゲートではなく機械検査 (引用検証) 通過の記録。"
+              },
+              "findings_total": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "02-targeted-crosscheck が検出した食い違いの件数 (0 件も記録する — 突合したが差が無かったことと、突合していないことを区別するため)。"
+              },
+              "findings_resolved_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "03-discrepancy-gate が全件の人間判断 (修正 / 容認 / 保留) を受領し、**承認された訂正の反映と台帳への書き戻しまで完了した**時刻 (ISO 8601)。step の実行順が 反映 → 台帳 → 本 stamp のため、この印が立っている run に残っているのは phase Completion (completed_at) だけ — resume で V3 へ戻してはならない (スナップショットが訂正後の内容で上書きされ、マーカー検査の基準線が壊れる)。"
+              },
+              "corrections_applied": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "承認を受けて要件文書・画面仕様へ反映した修正の件数。"
+              },
+              "corrections_docs": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "修正した文書名一覧 (例: 05-features.md / screens/03-search.md)。マーカー保持検査に「触った文書」として渡した集合と一致させる。"
+              },
+              "markers_cleared": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "人間の承認を得て `※ 推測 (inferred)` / `※ 不明 (unknown)` マーカーを外した件数。マーカーを外すことは推測を確定事実へ昇格させる行為なので、AI 単独では行わず 03-discrepancy-gate の承認を通す (件数を残すのは、後から「この run で何件が確定へ昇格したか」を追えるようにするため)。食い違いの訂正とは別カウント — corrections_applied には含めない。"
+              },
+              "findings_deferred": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "保留にした件数 (台帳で未 resolved のまま残り、同じ対象を再度 scope した run で再提示される)。"
+              },
+              "completed_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "run 完了時刻 (ISO 8601)。resume ladder の先頭段 — ここが立っていれば次は新規 run。"
+              },
+              "cancelled_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ユーザーが中止した時刻 (ISO 8601)。"
+              },
+              "cancel_reason": {
+                "type": "string",
+                "enum": ["user_abort"],
+                "description": "中止理由。"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

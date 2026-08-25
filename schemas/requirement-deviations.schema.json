@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/requirement-deviations.schema.json",
+  "title": "requirement-deviations.json — 要件外追加監査リスト (output-side)",
+  "$comment": "本 schema は **ローカル JSON Schema 検証専用** (Draft 2020-12、.claude/hooks/schema-light-check.sh の jq 経路 R6 で使う)。Anthropic API の Structured Outputs / tool_use の strict mode には **投入しない** — 公式 doc で if/then は非サポートのため、本 schema の allOf+if/then (resolved_at→resolution 整合) は API 経由では reject される (pending-questions / generation-provenance schema と同じ扱い、3 schema で統一)。",
+  "description": "AI が『合意済み requirements.json / user 確定 input に記載が無いのに想像で補完した仕様 / UI』を、生成後の review/gate pass が監査して記録するリスト (output 側)。input 側の pending-questions.json (生成前/ヒアリングの曖昧さ + 確定済み decisions ledger) と対をなす。\n\n**目的**: 想像補完を完全に防ぐのは確率的に不可能なため (Operating Principle 4 の self-reflection は prompt-level)、せめて『要件定義に無いのに勝手に足したもの一覧』を出力し、人間が目視全確認せず本リストだけ見て修正依頼を出せるようにする (user 要望)。\n\n**書き込み (writer)**: 各生成 phase の review/gate pass が『生成物 ⇄ 上流の確定情報』を突合し、トレースできない要素を entries に append する。生成 step 自身ではなく review pass が書く (= 他人レビュー効果 + 生成オーバーヘッドを増やさない、PR #79 参照)。Phase 1b requirements = Step 07 gate、Phase 2 design = Step 13、Phase 3 screens = Step 18 が writer。requirements 層の突合先は requirements.json 自体ではなく『user 確定 input』(= confirmed-decisions ledger [pending-questions.json の resolved entries] + 00-raw-input.md + requirements.json の 7 軸 hearing fields)。requirements が監査対象に追加された経緯: E2E 検証 (OhiruMeshi) で『AI が発明したスコアリング式 (×2.0/×-1.0/×0.1 等) を requirements に確定事実として記述 → downstream の design/screens 監査は requirements を正とするため laundering で検出不可』が実証され、『input 側 (01/02/00c) でカバー済』の旧前提が falsify された。\n\n**reader**: 人間ゲート (Step 07 / 13 / 21) が requirement-deviations-view.html (本 JSON から派生) を提示。user が確認し修正依頼 / 容認を判断。resolved_at / resolution は main session が user 判断後に書き戻す。\n\n**機械検出ではなく semantic 判断**: 『要件にトレースできるか』は review AI の意味判断であり確率的。完全網羅は保証しない (本リスト自体が best-effort の安全網)。\n\n**lazy 初期化**: 最初の writer が init stub { app_name, entries: [] } から start。Read or init-stub → append → Write back。",
+  "type": "object",
+  "required": ["app_name", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "entries": {
+      "type": "array",
+      "description": "要件外追加の検出エントリ。review/gate pass が append-only。resolved 後も保持 (修正依頼の追跡 + retro 集計用)。",
+      "items": { "$ref": "#/$defs/deviationEntry" }
+    },
+    "coverage": {
+      "type": "array",
+      "description": "forced-enumeration: 各 review pass が機械列挙した spec-level 要素の総数を記録。view が『何件突合 / 何件 flag』のカバレッジと盲点を出すために使う (一覧が空でも『要件外ゼロ』とは限らないことを人間に示す)。optional。",
+      "items": {
+        "type": "object",
+        "required": ["phase", "raised_by_step", "enumerated_count"],
+        "additionalProperties": false,
+        "properties": {
+          "phase": { "type": "string", "enum": ["requirements", "design", "screens", "delta", "substate", "reverse", "reverse_verify"] },
+          "raised_by_step": { "type": "string" },
+          "run_id": { "type": "string", "description": "run 単位で reconcile する層 (reverse_verify) のみ書く。同一 run の coverage 記録を特定するキー — 他 run の記録に触れずに upsert するために使う。" },
+          "enumerated_count": { "type": "integer", "minimum": 0, "description": "機械列挙した spec-level 要素の総数 (= 全件マップの分母)。requirements 層は load-bearing specifics (定量値/式/閾値・外部依存・データ enum/field) の総数。⚠️ 列挙は LLM semantic 判断のため run 間で変動しうる (非決定的)。件数単独では run 間比較・回帰検知に使えないため、再現性が要る用途では enumerated_refs の集合 diff を使う。" },
+          "enumerated_refs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "機械列挙した各要素の識別子 list (例: 'F-01.algorithm_ratio' / delta(screens) layer は component/挙動の識別子)。enumerated_count の非決定性を補い、run 間の列挙集合 diff (Jaccard 等) を可能にする。optional だが auditor subagent は返すことを推奨。"
+          },
+          "checked_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "deviationEntry": {
+      "type": "object",
+      "required": ["phase", "raised_by_step", "artifact", "element", "deviation_kind", "detected_at"],
+      "additionalProperties": false,
+      "description": "1 件 = 1 つの『要件に無いのに生成物へ入った要素/仕様』。",
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": ["requirements", "design", "screens", "delta", "substate", "reverse", "reverse_verify"],
+          "description": "検出された生成/再生成 phase。requirements=Phase1b(02 生成→Step07 gate の forced-enum review pass、突合先は user 確定 input) / design=Phase2(08/12→Step13) / screens=Phase3(17→Step18→21) / delta=Phase5 部分再生成(29、Step18 を経由しない独自 gate) / substate=sub-state 生成(25b→25c→25d) / reverse=Phase0b リバース生成(Step 03→Step 04↔Step 06 間の reverse review gate、突合先は input-sources/{stack}/ 実コード file:line) / reverse_verify=Phase0c 対象限定突合(02-targeted-crosscheck が append→03-discrepancy-gate が resolve、突合先は承認範囲内の 3 証拠ソース実物)。req-delta(1c) / add-feature(1d) も同じ『requirements 生成 path』なので同パターンの laundering 脆弱性を持つ follow-up 対象 (現状未配線)。\n\n⚠️ **reconcile の射程**: 各層の reconcile は自層の entry だけを prune / update 対象にする。reverse_verify は run ごとに実行されるため、さらに run_id で絞る (同一 phase の他 run entry を消さない)。"
+        },
+        "first_run_id": {
+          "type": "string",
+          "description": "run 単位で reconcile する層 (reverse_verify) で、この項目を **最初に検出した** run の識別子。**phase == \"reverse_verify\" の entry では run_id と併せて必須** (hook R6 が enforce — 欠けると prune / run 破棄の掃除 / ゲート提示の全フィルタから漏れ、resolve 経路の無い永久未解決になる)。初回 append 時に `run_id` と同値で書き、**引き継ぎ (run_id の付け替え) では変更しない**。\n\n用途は prune の判別: 「`first_run_id != run_id` = 過去 run から引き継いだ項目 = 再列挙で現れなくても prune しない」(人間が保留した項目を、次 run の列挙揺れで黙って消さないため)。時刻の前後比較で代用してはならない — `detected_at` は LLM 記載でローカルオフセット、run の stamp は UTC と、実 artifact でオフセット規約が混在しており比較が反転しうる。欠落時は「引き継ぎかどうか不明」= 安全側 (prune しない) に倒す。"
+        },
+        "run_id": {
+          "type": "string",
+          "description": "run 単位で reconcile する層 (reverse_verify) の run 識別子。**当該層では first_run_id と併せて必須** (hook R6 が enforce)。pipeline-state.json の当該 phase の runs[].run_id と一致。reconcile の prune 範囲を『同 phase かつ同 run』に絞るためのキーで、過去 run で容認済みの項目を新 run が消したり再質問したりしないために使う。run 概念を持たない層 (requirements / design / screens / substate / reverse) は書かない。\n\n⚠️ **未解決 entry の引き継ぎ**: 過去 run で unresolved のまま残った entry を新しい run が再検出した場合は、新規 entry を作らず本 field を新 run へ **書き換える** (1 つの食い違い = 1 entry を保ち、run ごとの重複を積み上げない)。したがって本 field は『その項目を現在担当している run』を指す。"
+        },
+        "raised_by_step": {
+          "type": "string",
+          "description": "検出した review/gate step id (例: '18-design-review', '13-human-gate-design')。retro が by-step 集計に使う。"
+        },
+        "artifact": {
+          "type": "string",
+          "description": "対象成果物のパス (例: 'screens/web/05-video-detail.html', 'design-brief.yaml', 'tokens.json')。"
+        },
+        "element": {
+          "type": "string",
+          "description": "要件に無いのに追加された要素 / 仕様 (例: 'グラフ Y 軸ラベル \"売上\"', 'パスワード強度メーター', 'API 経由のデータ取得前提')。"
+        },
+        "ref": {
+          "type": ["string", "null"],
+          "description": "provenance 台帳 (generation-provenance.json / reverse-provenance.json) の specifics[].ref との対応キー (任意)。監査 candidate が cross-check で突合した specific の ref を main が転記し、reverse review gate の upsert が identity key (ref、無ければ artifact::element) として読む — 監査 flag と生成側 inferred 申告の二検出器が同一項目を別エントリ化しないための合流キー。台帳に該当の無い検出は省略または null。"
+        },
+        "deviation_kind": {
+          "type": "string",
+          "enum": ["要件外追加", "根拠薄弱", "想像デフォルト", "要件矛盾", "要件削除"],
+          "description": "逸脱の種類。要件外追加=要件に全く無い要素を足した / 根拠薄弱=関連要件はあるが当該詳細を正当化しない / 想像デフォルト=明示なしに一般論で決め打ち (例 API があると仮定) / 要件矛盾=既存要件の記述と衝突する変更 (例: ハードコード色禁止の要件に対する literal 色指定。screen-edit 逆方向監査用) / 要件削除=要件上必須の要素を画面から取り除いた (screen-edit 逆方向監査用)。"
+        },
+        "description": {
+          "type": "string",
+          "description": "なぜ要件外か / どう補完したか の説明。人間が修正要否を判断できる粒度で書く。"
+        },
+        "requirement_ref": {
+          "type": ["string", "null"],
+          "description": "トレースを試みた結果の要件参照。完全に要件外なら null。関連はあるが薄い場合はその参照 (例: 'requirements/05-features.md F-12') + deviation_kind=根拠薄弱。"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "影響度の目安 (任意)。新設要素の該当有無で機械判定する (AI の「含意」主観でなく)。high = 個人情報・認証・権限 / 課金・決済 / 法的表示・コンプライアンス / データ削除・送信等の不可逆操作 のいずれかを新たに扱う (見た目トリビアルでも high)。medium (high 以外) = Must 機能に直接紐づく数値・式・閾値を新設、または Must 機能が依存する外部 API・ライブラリを新設。low = 上記以外 (表示のみの装飾的補完・慣例的デフォルト)。人間トリアージ用。"
+        },
+        "detected_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601。検出時刻。run 単位で reconcile する層 (reverse_verify) で項目を引き継ぐ (run_id を付け替える) 場合は **最初の検出時刻のまま維持する** — 「いつから未解決なのか」の記録であるため。⚠️ 本 field を他の時刻 field と前後比較して分岐を作らないこと: 実 artifact では LLM 記載のローカルオフセット (+09:00 等) と script 生成の UTC (+00:00) が混在しており、比較が反転しうる。引き継ぎ判別が必要なら first_run_id を使う。"
+        },
+        "resolved_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "main session が user 判断 (修正 or 容認) を反映した時刻。retro まで保持。"
+        },
+        "resolution": {
+          "type": "string",
+          "enum": ["修正依頼", "容認", "要件に昇格"],
+          "description": "user 判断。修正依頼=該当生成物を直す / 容認=このままで OK / 要件に昇格=requirements/*.md へ正式反映 (= 今後は要件内。requirements.json は INPUT 専用のため不変)。⚠️ 昇格の 2 段階 stamp (ゲートで resolution のみ先に書き、md への反映完了後に反映 skill が resolved_at を stamp。resolution=要件に昇格 かつ resolved_at 未設定 = 反映待ち) は **screen-edit 逆方向 (raised_by_step == '29b-reverse-propagate') 限定の契約** — 29b ゲートが resolution を書き 29c が反映後に resolved_at を stamp する。反映 skill を持たない他 layer のゲート (Step 07 / 21 等) は従来どおりゲートで resolved_at まで即時 stamp する。"
+        },
+        "resolution_mode": {
+          "type": "string",
+          "enum": ["individual", "bulk"],
+          "description": "resolution がどの導線で決まったかの記録。individual = 人間が当該 entry を 1 件ずつ (AskUserQuestion の per-item 質問、または番号 #N の名指し指定) 判断した / bulk = 「全件容認 (N 件)」等の一括操作でまとめて resolve された。⚠️ 読み取りの射程: 個別 entry の bulk を「その 1 件を見ずに素通しした証拠」として読んではならない (「全件容認 (N 件)」は件数を明記した意識的な明示選択であり、中身を確認したうえで一括で裁いた場合も bulk になる)。読めるのは母数の大きい集計傾向まで。consumer 別の使い分けは docs/principle4-disambiguation.md §5.5 の表が SoT。resolution と同時に書く (導線の SoT は docs/principle4-disambiguation.md §5.5)。本 field 導入以前の resolved entry には存在しない — 欠落 = 記録なし (改修前) であり bulk と同義に扱わないこと。"
+        },
+        "promotion_target": {
+          "type": "object",
+          "description": "要件に昇格する場合の反映先候補。逆方向監査 (screen-edit) が候補を書き、要件反映 skill が反映先として使う。",
+          "required": ["doc", "section"],
+          "additionalProperties": false,
+          "properties": {
+            "doc": {
+              "type": "string",
+              "description": "反映先の要件文書 (app ルートからの相対パス。例: requirements/05-features.md)。"
+            },
+            "section": {
+              "type": "string",
+              "description": "反映先セクションの見出し (例: '## F-01: 契約一覧表示'。新規セクション追加が妥当な場合は '(新規)' + 想定見出し)。"
+            }
+          }
+        },
+        "self_bias_signal": {
+          "type": "boolean",
+          "description": "F-3b: requirements 層で ayatori-requirements-auditor が generation-provenance との cross-check により『生成側が derived/user_verbatim と誤申告した or 列挙し損ねた』を検出したとき true (= self-bias を catch した記録)。retro が `phase=requirements && self_bias_signal=true` で構造集計し、Sunset Condition (Pattern D 件数) 判定にも使う。delta 層・provenance 不在時は付けない (省略)。生成側申告ラベル (claimed_provenance) 自体は schema を汚さないため description に折り込む。"
+        }
+      },
+      "allOf": [
+        {
+          "description": "resolved 時は resolution を併記すること",
+          "if": { "required": ["resolved_at"] },
+          "then": { "required": ["phase", "raised_by_step", "artifact", "element", "deviation_kind", "detected_at", "resolved_at", "resolution"] }
+        }
+      ]
+    }
+  }
+}

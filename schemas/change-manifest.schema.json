@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/change-manifest.schema.json",
+  "title": "change-manifest.json — delta / req-delta 変更情報",
+  "description": "Step 27 (Phase 5 delta) / Step 31 (Phase 1c req-delta) / Step 01b (Phase 1d add-feature) が生成する変更マニフェスト。source == \"skill-01b\" の場合は change_type / feature_add の強制なし（Phase 1d は独自の 7 軸ヒアリングを持つ）。それ以外は change_type が必須で、feature_addition の場合は feature_add ブロックが必須。Phase 5 は changed_docs+baseline、Phase 1c / Phase 1d は directly_changed_docs を使用。",
+  "type": "object",
+  "required": ["run_id", "app_name", "created_at", "requirement_changes"],
+  "additionalProperties": false,
+  "if": {
+    "properties": { "source": { "const": "skill-01b" } },
+    "required": ["source"]
+  },
+  "then": {
+    "required": ["change_description"],
+    "description": "skill-01b manifest: change_type / feature_add は不要。change_description は Step 32/33 が参照するため必須。Phase 1d は独自の 7 軸ヒアリングを持ち feature-add-interview.md を経由しない。"
+  },
+  "else": {
+    "required": ["change_type", "change_description"],
+    "if": {
+      "properties": { "change_type": { "const": "feature_addition" } },
+      "required": ["change_type"]
+    },
+    "then": {
+      "required": ["feature_add"],
+      "description": "feature_addition の場合は feature_add ブロックが必須。"
+    },
+    "else": {
+      "not": { "required": ["feature_add"] },
+      "description": "feature_addition 以外の場合は feature_add キーを禁止する。"
+    }
+  },
+  "oneOf": [
+    { "required": ["changed_docs", "baseline"], "properties": { "directly_changed_docs": false }, "description": "Phase 5 (delta) manifest には changed_docs と baseline が必須。directly_changed_docs は含まない。" },
+    { "required": ["directly_changed_docs"], "properties": { "baseline": false, "changed_docs": false }, "allOf": [{ "properties": { "requirement_changes": { "items": { "required": ["dependency_category"] } } } }], "description": "Phase 1c / Phase 1d manifest には directly_changed_docs が必須。changed_docs / baseline は含まない。requirement_changes 各エントリに dependency_category が必須 (Step 32 が参照)。" }
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた残存値が配布先の artifacts に存在しうる (artifacts は配布先ごとに異なり、走査で全数を確定できない) ため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["skill-01b", "screen_edit"],
+      "description": "manifest の生成経路センチネル。'skill-01b' = Phase 1d (Step 01b) で付与し change_type / feature_add の必須制約を免除する。'screen_edit' = Phase 5 delta の screen-edit モード (完成後の画面 HTML 手編集起点)。screen_edit は change_type='spec_change' + changed_docs + baseline を用いる通常の Phase 5 manifest として扱われる (skill-01b 専用の免除分岐には入らない)。"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "YYYY-MM-DD-NNN 形式。pipeline-state.json の delta.runs[].run_id または req_delta.runs[].run_id と一致。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "manifest 生成時刻 (ISO 8601)。pipeline-state の initiated_at にコピーされる。"
+    },
+    "change_type": {
+      "type": "string",
+      "enum": ["feature_addition", "spec_change", "bug_fix", "removal", "other"],
+      "description": "変更タイプ。Step 1a でユーザーが選択。"
+    },
+    "change_description": {
+      "type": "string",
+      "description": "変更の一言説明。feature_addition の場合は feature_add.feature_name と同じ値。pipeline-state.runs[].change_description にコピーされる。"
+    },
+    "changed_docs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Phase 5 (Step 27) のみ: 変更に関係する要件ドキュメントのパス一覧。"
+    },
+    "directly_changed_docs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Phase 1c (Step 31) / Phase 1d (Step 01b) のみ: 直接変更した要件ドキュメントのパス一覧。Step 32 の依存マップで使用される。"
+    },
+    "requirement_changes": {
+      "type": "array",
+      "minItems": 1,
+      "description": "変更箇所の構造化記録。各エントリは変更された requirement doc のセクションを表す。",
+      "items": {
+        "type": "object",
+        "required": ["doc", "section", "type", "summary", "impact_hint"],
+        "additionalProperties": true,
+        "properties": {
+          "doc": { "type": "string", "description": "対象ドキュメント名 (例: 05-features.md)" },
+          "section": { "type": "string", "description": "変更されたセクション名 (## 見出し)" },
+          "type": {
+            "type": "string",
+            "enum": ["added", "modified", "removed"],
+            "description": "変更の種類。"
+          },
+          "dependency_category": {
+            "type": "string",
+            "enum": ["user_type_role", "feature_flow", "data_entity", "scope", "nfr", "constraint", "hardware_platform_feature", "other"],
+            "description": "Step 32 の依存マップで使用するセマンティックカテゴリ。hardware_platform_feature は OS API / 権限 / 外部通信 / デバイス間通信を伴う機能。"
+          },
+          "summary": { "type": "string", "description": "変更内容の要約。" },
+          "impact_hint": { "type": "string", "description": "影響範囲のヒント。Step 28 / 32 の入力として使用される。" }
+        }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "description": "Phase 5 (Step 27) のみ: 直前の Phase 3 / Figma export 完了時刻。nullable フィールドを含む。",
+      "additionalProperties": true,
+      "properties": {
+        "screens_last_generated_at": { "type": ["string", "null"], "description": "Phase 3 最終実行時刻。" },
+        "figma_last_exported_at": { "type": ["string", "null"], "description": "Figma export 最終実行時刻。" }
+      }
+    },
+    "feature_add": {
+      "type": "object",
+      "description": "機能追加ヒアリング結果。change_type == feature_addition の場合のみ存在。refs/feature-add-interview.md のヒアリング回答から構築される。",
+      "required": ["feature_name", "user_value", "situation", "usage_frequency", "demand_evidence", "usage_scene", "user_flow", "existing_overlap", "positioning", "positioning_supplement"],
+      "additionalProperties": false,
+      "if": {
+        "properties": { "positioning": { "enum": ["improvement_extension", "undecided"] } },
+        "required": ["positioning"]
+      },
+      "then": {
+        "properties": { "positioning_supplement": { "type": "string" } },
+        "description": "improvement_extension / undecided の場合は positioning_supplement が非 null 文字列必須。"
+      },
+      "else": {
+        "properties": { "positioning_supplement": { "type": "null" } },
+        "description": "new_feature / separate_new の場合は positioning_supplement が null 必須。"
+      },
+      "properties": {
+        "feature_name": {
+          "type": "string",
+          "description": "追加したい機能の一言説明（Q1）。"
+        },
+        "user_value": {
+          "type": "string",
+          "description": "ユーザーへの具体的価値（Q2-1）。"
+        },
+        "situation": {
+          "type": "string",
+          "description": "機能が必要になるシチュエーション（Q2-2）。"
+        },
+        "usage_frequency": {
+          "type": "string",
+          "enum": ["daily", "weekly", "monthly", "occasional"],
+          "description": "想定利用頻度（Q2-3）。"
+        },
+        "demand_evidence": {
+          "type": ["string", "null"],
+          "description": "需要根拠（Q2-4）。根拠なしの場合は null。"
+        },
+        "usage_scene": {
+          "type": "string",
+          "description": "使う場面（いつ・どこで）（Q3-1）。"
+        },
+        "user_flow": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "ユーザーの操作フロー（Q3-2）。各ステップを文字列として格納。"
+        },
+        "existing_overlap": {
+          "type": "string",
+          "description": "既存機能との重なり（Q4）。重なりなしの場合は \"none\"、あれば機能名。"
+        },
+        "positioning": {
+          "type": "string",
+          "enum": ["new_feature", "separate_new", "improvement_extension", "undecided"],
+          "description": "機能の位置づけ（Q5）。"
+        },
+        "positioning_supplement": {
+          "type": ["string", "null"],
+          "description": "位置づけの補足（Q5 の追加回答）。不要な場合は null。"
+        }
+      }
+    }
+  }
+}

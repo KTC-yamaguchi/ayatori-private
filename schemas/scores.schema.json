@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/scores.schema.json",
+  "title": "scores.json — デザイン採点結果 (3 層 100 点)",
+  "description": "Phase 3 (画面デザイン) の 3 層ルーブリック採点結果。⑭ ルーブリック採点 (skills/19-rubric-score) が更新する。⑮ ループ判定および ⑰ 振り返りエージェント (skills/26-retro) の入力となる。",
+  "type": "object",
+  "required": ["current"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた実例が artifacts に存在するため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "current": { "$ref": "#/$defs/attempt" },
+    "attempt_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "⑯-3 → ⑬ → ⑭ → ⑮ ループの試行回数。0 始まり。"
+    },
+    "escalated": {
+      "type": "boolean",
+      "description": "⑮ ループが max_attempts (3) を消化しても ai_improvable_deductions > 0 の場合、または改善限界に達した場合 true。⑮-2 / ⑮-4 にエスカレーション。"
+    },
+    "history": {
+      "type": "array",
+      "description": "(optional) 過去 attempt の lightweight summary (full attempt 構造ではなく attempt / evaluated_at / total / ai_improvable_deductions / summary だけ)。docs/artifact-file-responsibility.md の責務マップ (scores.json 行)は 'current snapshot のみ' だが、skill 19 が retrospective 用に append する運用が複数 artifact (Draughts 等) に存在するため optional field として schema 化。新規プロジェクトで本 field を使わない場合は省略してよい。",
+      "items": {
+        "type": "object",
+        "required": ["attempt", "total"],
+        "additionalProperties": false,
+        "properties": {
+          "attempt": { "type": "integer", "minimum": 1 },
+          "evaluated_at": { "type": "string", "description": "ISO 8601 datetime" },
+          "total": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "ai_improvable_deductions": { "type": "integer", "minimum": 0 },
+          "summary": { "type": "string", "description": "1 行サマリ (例: 'Layer 1 40/40, Layer 2 30/30, Layer 3 29/30')" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "attempt": {
+      "type": "object",
+      "required": ["layer1", "layer2", "layer3", "total"],
+      "additionalProperties": false,
+      "properties": {
+        "evaluated_at": { "type": "string", "description": "ISO 8601 datetime — 本 attempt の採点実行時刻。" },
+        "attempt_count": { "type": "integer", "minimum": 1, "description": "Phase 3 ループの何回目の attempt か (1-indexed)。`history[]` の最終 attempt と一致。" },
+        "layer1": { "$ref": "#/$defs/layer", "description": "技術・アクセシビリティ (40 点)" },
+        "layer2": { "$ref": "#/$defs/layer", "description": "ユーザビリティ・マルチプラットフォーム (30 点)" },
+        "layer3": { "$ref": "#/$defs/layer", "description": "デザイン性・ビジネス (30 点)" },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "coverage_check": {
+          "type": "object",
+          "description": "Step 19 が画面 HTML に対して L1〜L4 網羅性を再評価した結果。scores.json.current にスナップショット。screens/00-coverage-check.json (Step 14 の初期チェック) と構造が一部共通だが、本 field は Step 19 評価後の値。",
+          "additionalProperties": false,
+          "properties": {
+            "evaluated_at": { "type": "string" },
+            "scope": { "type": "string", "enum": ["screen_list", "full_html"] },
+            "missing": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "l1": { "type": "integer", "minimum": 0 },
+                "l2": { "type": "integer", "minimum": 0 },
+                "l3": { "type": "integer", "minimum": 0 },
+                "l4": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "deductions_applied": { "type": "integer" },
+            "overflow_deduction": { "type": "integer", "minimum": 0 },
+            "details": {
+              "type": "array",
+              "description": "減点ごとの根拠 (L1〜L4 のどの layer / どの画面 / どの issue / 分類 / 減点幅)。skill 19 spec の例示と整合。",
+              "items": {
+                "type": "object",
+                "required": ["layer", "screen", "issue", "classification", "deduction"],
+                "additionalProperties": false,
+                "properties": {
+                  "layer":          { "type": "string", "enum": ["l1", "l2", "l3", "l4"] },
+                  "screen":         { "type": "string", "description": "問題のある画面名 (例: 'パスワード再設定')" },
+                  "issue":          { "type": "string", "description": "1 文の issue 説明 (例: '再設定完了画面が抜けている')" },
+                  "classification": { "type": "string", "enum": ["個別画面化", "テンプレート代表1枚"] },
+                  "deduction":      { "type": "integer", "maximum": 0, "description": "減点幅 (負値)" }
+                }
+              }
+            }
+          }
+        },
+        "connectivity_check": {
+          "type": "object",
+          "description": "Step 19 が生成 HTML + .mmd に対して L5 connectivity (各画面の入口/出口の存在) を再評価した結果のスナップショット。screens/00-coverage-check.json の layers.l5_connectivity (Step 14 / 29 / 29b の検出結果) を起点に再評価する。**HTML 修正可能 (fix_hint=back_affordance) な減点のみ deductions_applied に計上し ai_improvable_deductions に加算する**。.mmd 構造修正が必要な defect (fix_hint=mmd_edge / wire_new_screen) は Step 20 の HTML 再生成ループで直せないため deductions_applied には含めず、tags[] に fix_location=mmd_structure として記録し Step 14 へ route する (chrome_plan と同型)。",
+          "additionalProperties": false,
+          "properties": {
+            "evaluated_at": { "type": "string" },
+            "defects": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "defect_kind ごとの件数。",
+              "properties": {
+                "dangling_edge":       { "type": "integer", "minimum": 0 },
+                "orphan_in_list":      { "type": "integer", "minimum": 0 },
+                "unreachable":         { "type": "integer", "minimum": 0 },
+                "dead_end":            { "type": "integer", "minimum": 0 },
+                "back_target_missing": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "deductions_applied": {
+              "type": "integer",
+              "maximum": 0,
+              "description": "fix_hint=back_affordance (HTML 修正可能) な L5 defect の減点合計 (負値)。ai_improvable_deductions に絶対値で加算される。.mmd 構造系 defect はここに含めない (Step 14 へ route)。"
+            },
+            "details": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["screen", "defect_kind"],
+                "additionalProperties": false,
+                "properties": {
+                  "screen":      { "type": "string" },
+                  "defect_kind": { "type": "string", "enum": ["dangling_edge", "orphan_in_list", "unreachable", "dead_end", "back_target_missing"] },
+                  "detail":      { "type": "string" },
+                  "fix_hint":    { "type": "string", "enum": ["mmd_edge", "wire_new_screen", "back_affordance"] },
+                  "deduction":   { "type": "integer", "maximum": 0, "description": "本 defect の減点幅 (負値)。.mmd 構造系で route のみの場合は 0 または省略。" }
+                }
+              }
+            }
+          }
+        },
+        "ai_improvable_deductions": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "⑮ ループ判定の閾値。0 で合格。**公式の SoT は skills/19-rubric-score/SKILL.md (本 skill 内の単一 SoT、5 項式: layer1.score / layer2.score / coverage_check.overflow_deduction / nfr_coverage.deductions_applied / connectivity_check.deductions_applied)** を参照。本 schema description では drift 防止のため公式を再掲しない (項名のみ列挙)。overflow_deduction は Layer 2「状態可視性」軸 (6pt) を超える画面カバレッジ減点の超過分。nfr_coverage.deductions_applied は requirements/06-non-functional.md の全 NFR を 4 値 (automated_verified / human_attested / deferred / unaddressed) で評価し unaddressed のみ計上した減点 (dual-theme × domain 拡張で追加)。connectivity_check.deductions_applied は L5 connectivity の HTML 修正可能 (back_affordance) 分の減点。"
+        },
+        "nfr_coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "dual-theme × domain 拡張: requirements/06-non-functional.md の全 NFR を 1 件ずつ評価。pipeline で機械検証されたもの (automated_verified)、生成 HTML で目視可能なもの (human_attested、Step 21 で人間レビュー)、Phase 4 以降に持ち越し (deferred)、検証メカニズムが一切無いもの (unaddressed、ai_improvable_deductions に計上して loop trigger) の 4 値で分類する。skills/19-rubric-score Phase 別評価ロジック参照。",
+          "required": ["evaluated_at", "source", "summary", "deductions_applied", "details"],
+          "properties": {
+            "evaluated_at": { "type": "string", "description": "ISO 8601 datetime" },
+            "source": { "type": "string", "description": "走査対象パス (例: requirements/06-non-functional.md)" },
+            "summary": {
+              "type": "object",
+              "required": ["total_nfrs", "automated_verified", "human_attested", "deferred", "unaddressed"],
+              "additionalProperties": false,
+              "properties": {
+                "total_nfrs": { "type": "integer", "minimum": 0 },
+                "automated_verified": { "type": "integer", "minimum": 0 },
+                "human_attested": { "type": "integer", "minimum": 0 },
+                "deferred": { "type": "integer", "minimum": 0 },
+                "unaddressed": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "deductions_applied": {
+              "type": "integer",
+              "maximum": 0,
+              "description": "unaddressed 件数に基づく減点 (負値)。ai_improvable_deductions に絶対値で加算される。human_attested / deferred は計上しない (前者は Step 21 ゲート、後者は Phase 4 retro 対象)。"
+            },
+            "details": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["nfr_id", "status"],
+                "additionalProperties": false,
+                "properties": {
+                  "nfr_id": { "type": "string", "description": "例: 'NFR-16'" },
+                  "title": { "type": "string", "description": "NFR の要約 (1 文)。requirements/06-non-functional.md の表セルから抽出" },
+                  "status": {
+                    "type": "string",
+                    "enum": ["automated_verified", "human_attested", "deferred", "unaddressed"]
+                  },
+                  "evidence": { "type": "string", "description": "automated_verified なら検証 artifact のパス / human_attested なら確認方法 / deferred なら理由 / unaddressed なら不在の説明" },
+                  "phase_target": { "type": "string", "description": "deferred の場合の検証想定 phase (例: 'Phase 4')" },
+                  "note": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "human_required_deductions": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "(30 − layer3.score)。⑮-2 人間ゲートで確認する量。"
+        },
+        "tags": {
+          "type": "array",
+          "description": "減点項目ごとの AI/人間タグ。",
+          "items": {
+            "type": "object",
+            "required": ["item", "type"],
+            "additionalProperties": false,
+            "properties": {
+              "item": { "type": "string", "description": "減点項目の識別子 (例: interaction_focus_ring)" },
+              "type": { "type": "string", "enum": ["AI改善可能", "人間対応必要", "要追加情報"], "description": "第 3 値 '要追加情報' を追加。scoring evidence の引用元 (source) を確証できない場合、AI改善可能 (= AI が再生成) に寄せずに本値を選ぶことで pending-questions.json への push trigger となる (CLAUDE.md Principle 4 / pipeline.yaml P4-06)。" },
+              "detail": { "type": "string" },
+              "fix_location": {
+                "type": "string",
+                "enum": ["chrome_canon", "chrome_plan", "mmd_structure"],
+                "description": "共通部品 (chrome = ボトムメニュー/ヘッダー) 由来の減点でのみ付与する修正先。chrome_canon = _shared/components.html|css (or root-variables.css) を正典で直す (見た目/品質、type=AI改善可能)。chrome_plan = 00-screen-list.md 共通部品定義を人間が更新 (IA、type=人間対応必要、ai_improvable に積まない)。**mmd_structure = L5 connectivity の .mmd 構造系 defect (fix_hint=mmd_edge / wire_new_screen)。Step 20 の HTML 再生成ループでは直せず Step 14 (.mmd 所有) へ route。chrome_plan と同様 ai_improvable に積まない**。chrome / connectivity 以外の減点では省略。詳細は docs/html-generation-rules.md §11.6 / docs/screen-coverage-check.md §L5。"
+              }
+            }
+          }
+        }
+      }
+    },
+    "layer": {
+      "type": "object",
+      "required": ["score", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "score": { "type": "integer", "minimum": 0 },
+        "max": { "type": "integer", "enum": [30, 40] },
+        "breakdown": {
+          "type": "object",
+          "description": "評価項目ごとの獲得点。キーは skills/19-rubric-score/SKILL.md 参照。",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "notes": {
+          "type": "array",
+          "description": "Step 19 採点時の根拠メモ (各 layer につき複数行可能)。retro 時のドリル必要。",
+          "items": { "type": "string" }
+        },
+        "evidence": {
+          "type": "string",
+          "description": "Legacy フィールド (AmidaPick-vol1 等で使用)。新規プロジェクトは `notes` (array) を使う。"
+        }
+      }
+    }
+  }
+}

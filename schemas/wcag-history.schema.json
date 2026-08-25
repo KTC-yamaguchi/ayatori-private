@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/wcag-history.schema.json",
+  "title": "wcag-history.json — Phase 2 WCAG 違反履歴",
+  "description": "Phase 2 デザインループの attempt ごとの WCAG 違反履歴を保持するファイル (W4 設計判断、lean schema)。11-wcag-mapping が attempt ごとに 1 件 append する単一所有権モデル。`attempt_count` は `len(attempts) - 1` で導出される (旧 wcag_loop.attempt_count は消滅)。`max_attempts` は pipeline.yaml.design.loop.max_attempts で参照される。26-retro が読込んでループ収束過程を分析する。",
+  "type": "object",
+  "required": ["app_name", "attempts"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた実例が artifacts に存在するため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "attempts": {
+      "type": "array",
+      "minItems": 0,
+      "description": "ループ試行の時系列ログ。先頭が最古 (attempt_count=0)、末尾が最新。",
+      "items": {
+        "type": "object",
+        "required": ["attempt_count", "timestamp", "violations"],
+        "additionalProperties": false,
+        "properties": {
+          "attempt_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "0 始まりの試行番号。配列 index と一致。"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 (date or date-time)。attempt 完了時刻。"
+          },
+          "violations": {
+            "type": "array",
+            "description": "本 attempt で検出された contrast 違反。空配列なら全 palette が AA 準拠。",
+            "items": {
+              "type": "object",
+              "required": ["candidate_id", "criterion_id", "pair", "actual_ratio", "required_ratio"],
+              "additionalProperties": false,
+              "properties": {
+                "candidate_id": {
+                  "type": "string",
+                  "description": "design-brief.yaml.cases[].id (a/b/c)。"
+                },
+                "criterion_id": {
+                  "type": "string",
+                  "description": "WCAG 2.2 基準番号 (例: \"1.4.3\")。"
+                },
+                "pair_kind": {
+                  "type": "string",
+                  "enum": ["palette", "state_colors", "domain_surface", "schema_violation"],
+                  "default": "palette",
+                  "description": "B-3 + dual-theme × domain 拡張: contrast pair の分類。'palette' = pairs 1-7 (主要 palette、Phase 2 loop trigger 対象) / 'state_colors' = pairs 8-15 (warn-only、Phase 2 loop 除外、Step 21 human gate で再判断) / 'domain_surface' = skill 08 Phase 3-domain で導出した domain-specific pair (Phase 2 loop trigger 対象、palette と同等扱い) / 'schema_violation' = skill 11 Phase 5.5 safety net (domain_surfaces 空配列 + rationale 未記載の不整合を 1 件として記録)。未指定は legacy データ扱いで 'palette' とみなす (安全側に倒す)。phases/design/SKILL.md ⚙️ Loop Decision が SoT。NFR との対応関係は scores.json.current.nfr_coverage で集中管理 (本 schema には nfr_origin field を持たない)。"
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": ["dark", "light"],
+                  "description": "contrast 検証時の mode 種別。design-brief.yaml の common.themes_required が ['dark','light'] のとき、各 case の pair を mode ごとに独立計算する。単一モードの場合も skill 契約上は `mode` を明示的に記録する運用に統一する (skills/11-wcag-mapping/SKILL.md L81 参照)。なお、本 field 自体は legacy データ互換のため optional のままとする。"
+                },
+                "pair": {
+                  "type": "object",
+                  "required": ["fg_token", "bg_token"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "fg_token": { "type": "string" },
+                    "bg_token": { "type": "string" }
+                  }
+                },
+                "fg_hex": { "type": "string" },
+                "bg_hex": { "type": "string" },
+                "actual_ratio": { "type": "number", "minimum": 1 },
+                "required_ratio": { "type": "number", "minimum": 1 },
+                "suggested_correction": {
+                  "type": ["string", "null"],
+                  "description": "OKLCH 補正提案 (L のみ、または L+C 削減 — scripts/oklch-color.mjs solve の summary 逐語転写)。補正不能なら null または用途変更案を文字列で記述。"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/figma-state.schema.json",
+  "title": "figma-state.json — Figma MCP 連携 state",
+  "description": "FIGMA_MCP_ENABLED=true のときのみ生成・更新される feature state ファイル (旧 figma-nodes.json から rename)。Figma MCP 経由で生成された node_id / variable_id / variable_collection_id 等を保持する。Phase 3 の 17-screen-gen / 22-figma-export / 24-design-system-update / 25-component-build が書き込む (Phase 2 の 12-design-system はコード生成のみで Figma を触らないため writer に含まれない)。FIGMA_MCP_ENABLED=false 時はファイル自体が存在しない。",
+  "type": "object",
+  "required": ["app_name", "file_key"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた実例が artifacts に存在するため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "figma_mode_detect": {
+      "type": "object",
+      "description": "00-figma-mode-detect skill の検出結果スナップショット。",
+      "additionalProperties": true
+    },
+    "file_key": {
+      "type": "string",
+      "description": "Figma file key (URL の /design/{key}/... から抽出)。"
+    },
+    "page_id": {
+      "type": "string",
+      "description": "プロジェクト専用 Figma ページの node_id (\"0:1\" 形式)。"
+    },
+    "page_name": {
+      "type": "string",
+      "description": "プロジェクト専用 Figma ページ名 ({app_name} と通常一致)。"
+    },
+    "scope": {
+      "type": "object",
+      "description": "Step 22 figma_export スコープと進捗の永続化ブロック (string→object 化済)。skills/22-figma-export/SKILL.md の Step 4 schema および .claude/agents/figma-capture-runner.md が writer。Resume mode (P-15) は本ブロックを Read して deferred_remaining + user_selected を復元する。10 field を全件 required。",
+      "additionalProperties": false,
+      "required": [
+        "user_selected",
+        "html_files_total_in_screens_dir",
+        "html_files_targeted_by_user",
+        "html_files_captured",
+        "status",
+        "deferred_remaining",
+        "stale_regenerated_count",
+        "resume_layout_mode",
+        "layout_status",
+        "last_updated_at"
+      ],
+      "properties": {
+        "user_selected": {
+          "type": "object",
+          "description": "Step 22 Step 2.0 で AskUserQuestion により取得した Q1/Q2 答え。Resume mode 時は再質問せず本値を復元して使う。",
+          "additionalProperties": false,
+          "required": ["platforms", "states"],
+          "properties": {
+            "platforms": {
+              "type": "array",
+              "description": "Q1: 出力プラットフォーム。subset of [\"web\", \"web-sm\", \"mobile\"] (固定順。web-sm = Web スマホ幅 screens/web-sm/)。例: Web のみ → [\"web\"] / Web + スマホ幅 → [\"web\",\"web-sm\"] / 全部 → [\"web\",\"web-sm\",\"mobile\"]。",
+              "items": { "type": "string", "enum": ["web", "web-sm", "mobile"] },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "states": {
+              "type": "array",
+              "description": "Q2: 状態粒度。Step 22 では `[\"default\"]` 固定 (main HTML のみ Figma 出力)。Sub-state (empty/loading/error 等) は Step 25e (figma-pattern-export) が同 figma-state.json に append-only で追加する。Step 25e は `nodes.screens.{画面名}.{state}` キーを追記し、default キーには絶対に触らない。requirements.state_pattern の追加状態 (reset-dialog 等) を含める場合もここに列挙する (free string allowed)。Step 22 単体実行 (legacy) では 4 状態を含めることが可能だが、新フローでは推奨されない。",
+              "items": { "type": "string" },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          }
+        },
+        "html_files_total_in_screens_dir": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "artifacts/{app_name}/screens/ 配下の HTML 総数 (全 platform / 全 state / 全 theme 合計)。Step 22 Step 2.1 の物理スキャン結果。"
+        },
+        "html_files_targeted_by_user": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "user_selected の scope (Q1 × Q2 × screens) に該当する HTML ファイル数。Step 22 Step 2.1 で計算した target_files.length。"
+        },
+        "html_files_captured": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Step 22 capture loop で Figma 上に node 化できた件数。partial_success / in_progress 時は < targeted_by_user。"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "in_progress", "partial_success", "success", "blocked"],
+          "description": "Step 22 capture loop の最終状態。pending=未着手 / in_progress=実行中 (中断検知前) / partial_success=一部完了 (deferred_remaining あり) / success=全件完了 / blocked=permission_denied や port_unavailable 等で開始不能。Resume mode は in_progress / partial_success / blocked を検出 → deferred を再 capture。"
+        },
+        "deferred_remaining": {
+          "type": "array",
+          "description": "未 capture のまま残った target_files (相対パス、例: \"screens/mobile/board--empty--light.html\")。次セッション Step 22 Resume mode で再 capture 対象になる。success 時は空配列。",
+          "items": { "type": "string" }
+        },
+        "stale_regenerated_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "captureId 発行から captureid_ttl_sec (pipeline.yaml default 300s) を超えて stale と判定し、再発行した件数。離席 / スリープ抑止失敗で増える (10% 以上は要調査)。"
+        },
+        "resume_layout_mode": {
+          "type": ["string", "null"],
+          "enum": ["full", "new_only", "skip", null],
+          "description": "Resume mode 時に AskUserQuestion で取得する grid layout モード (skill 22 Step 2.0a 手順 3)。full=全件再整列 / new_only=新規分のみ移動 (既存 frame の手動位置を保持) / skip=use_figma を呼ばず手動整列に委ねる。初回 run および status==success 時は null。"
+        },
+        "layout_status": {
+          "type": "string",
+          "enum": ["pending", "auto_grid", "user_managed"],
+          "description": "Step 2.5 default grid layout の状態。pending=未実行 / auto_grid=mcp__figma__use_figma で自動配置済 / user_managed=resume_layout_mode == \"skip\" でユーザー手動整列に委ねた (次回 Step 22 では grid 計算しない)。"
+        },
+        "last_updated_at": {
+          "type": "string",
+          "description": "本 scope ブロックを最後に書き込んだ ISO 8601 date-time (例: \"2026-05-21T04:15:51Z\")。Resume mode の age 判定に使う。"
+        }
+      }
+    },
+    "captured_at": {
+      "type": "string",
+      "description": "最新 capture 完了時刻 (ISO 8601)。"
+    },
+    "capture_method": {
+      "type": "string",
+      "description": "capture 方式 (例: \"mcp_generate_figma_design\")。"
+    },
+    "capture_settings": {
+      "type": "object",
+      "description": "Step 22 figma_export 設定スナップショット (parallel_batch_size 等)。",
+      "additionalProperties": true
+    },
+    "nodes": {
+      "type": "object",
+      "description": "Figma 上で生成された node_id の階層マップ。",
+      "additionalProperties": false,
+      "properties": {
+        "screens": {
+          "type": "object",
+          "description": "画面ごとの node_id マップ。**キー形式**: `{platform}/{画面名}` (Step 22 が default 出力時に書く形式、例: \"web/01-login\") または `{platform}/{画面名}--{state}` (Step 25e が sub-state 追加時に書く flat key 形式、例: \"web/01-login--loading\")。値は capture node_id 文字列 + 補助情報のオブジェクト。Step 25e は Step 22 が書いた default key (suffix なし) を絶対に上書きせず、`--{state}` suffix 付きキーのみ append する (figma-capture-runner.md Hard constraint #11 で物理保護)。",
+          "additionalProperties": true
+        },
+        "style-guide": {
+          "type": ["object", "null"],
+          "description": "Figma 上のスタイルガイドフレームの node_id マップ (24-design-system-update が Component Library 構築時に更新。Step 12 はコード生成のみで Figma を触らないため writer ではない)。",
+          "additionalProperties": true
+        },
+        "component-library": {
+          "type": ["object", "null"],
+          "description": "24-design-system-update が構築する Component Library Frame の node_id + name。{node_id, name} オブジェクト形式。skills/24-design-system-update/SKILL.md 完了条件 #3 で「node_id および name 両方が埋まる」と明記されているため、object 形式のときは両 field を required とする (null も許容、その場合は frame 未作成)。",
+          "additionalProperties": false,
+          "required": ["node_id", "name"],
+          "properties": {
+            "node_id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        },
+        "variants-archive": {
+          "type": ["object", "null"],
+          "description": "24 が libraryFrame の外に作る ComponentSet Variants Archive Frame の node_id + name。variants ≤ 1 の app では未作成 (null)。object 形式のときは {node_id, name} 両 field を required (component-library と同じ強度)。",
+          "additionalProperties": false,
+          "required": ["node_id", "name"],
+          "properties": {
+            "node_id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        },
+        "variables": {
+          "type": "object",
+          "description": "24 が Step B で登録する 3 collections の ID + Step 25 が Component Build で報告する binding 結果。",
+          "additionalProperties": false,
+          "properties": {
+            "primitives-collection": { "type": "string" },
+            "semantic-collection": { "type": "string" },
+            "component-collection": { "type": "string" },
+            "bind_status":         { "type": "string", "description": "Step 25 binding 結果 (success / partial / failed)。" },
+            "bound_fills":         { "type": "integer", "minimum": 0, "description": "Step 25 が bind した fill paint の総数。" },
+            "bound_strokes":       { "type": "integer", "minimum": 0, "description": "Step 25 が bind した stroke paint の総数。" },
+            "unbound_remaining":   { "type": "integer", "minimum": 0, "description": "binding 試行後も hard-coded のまま残った hex の数。" },
+            "bound_at":            { "type": "string", "description": "binding 実行日付 (ISO 8601 date or date-time)。" }
+          }
+        },
+        "components": {
+          "type": "object",
+          "description": "24 が Step D で記録する atoms/molecules/organisms 階層の ComponentSet / Component。25 では更新しない。",
+          "additionalProperties": false,
+          "properties": {
+            "atoms":     { "type": "object", "additionalProperties": true, "description": "component 名をキーにした任意 map (dynamic key、別途 patternProperties 化を検討中)。" },
+            "molecules": { "type": "object", "additionalProperties": true, "description": "component 名をキーにした任意 map (同上)。" },
+            "organisms": { "type": "object", "additionalProperties": true, "description": "component 名をキーにした任意 map (同上)。" }
+          }
+        },
+        "transition_map": {
+          "type": "object",
+          "description": "共通 skill 00-transition-figjam-sync が 00-transition-map.mmd (SSoT) から FigJam に単方向同期した結果を記録する。Step 14 (greenfield) と Step 29 (delta) の両方で更新される。FIGMA_MCP_ENABLED=true 時のみ存在。delta はクリーン上書き方式 (旧 diagram を use_figma で削除 → 新規生成) のため履歴フィールドは持たない。複数 flowchart (--- 区切り) を含む場合でも、代表として最初に出現する section / shape の id を 1 つだけ保存する (node_id は string 固定)。",
+          "additionalProperties": false,
+          "required": ["file_key", "node_id", "url", "generated_at"],
+          "properties": {
+            "file_key": {
+              "type": "string",
+              "description": "generate_diagram が作成した FigJam ファイルの key (URL の /board/{key}/... から抽出)。delta 時は不変。"
+            },
+            "node_id": {
+              "type": "string",
+              "description": "FigJam 上の最上位 diagram ノードの ID (\"X:Y\" 形式)。delta クリーン上書き時に新しい値で更新される。"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "FigJam ファイルの URL (https://www.figma.com/board/{file_key})。"
+            },
+            "generated_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "最新の生成 / 同期時刻 (ISO 8601)。"
+            }
+          }
+        }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "description": "Step G Self-Audit の retry / pattern_c 永続化。runAudit() の戻り値.state を main session が Write back。",
+      "additionalProperties": false,
+      "properties": {
+        "retry": {
+          "type": "object",
+          "description": "audit 名ごとの retry count (3 回で Pattern C エスカレート)。",
+          "additionalProperties": { "type": "integer" }
+        },
+        "pattern_c": {
+          "type": ["array", "null"],
+          "description": "3 回再実行しても PASS しない audit 名のリスト。null は正常。",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "variables": {
+      "type": "object",
+      "description": "Figma Variables 定義 (variable_id をキーにした map)。",
+      "additionalProperties": true
+    },
+    "variable_collections": {
+      "type": "object",
+      "description": "Variable Collection 定義 (collection_id をキーにした map)。",
+      "additionalProperties": true
+    },
+    "audit_trail": {
+      "type": "array",
+      "description": "操作ログ (タイムスタンプ + 何をしたか)。各 entry は step/timestamp/action を必須とし (log として本質的)、detail は補足情報のため optional。⚠ TODO (PR #73 follow-up sweep で検出した既存 drift、別 ticket 候補): 旧 description は「Step 17 等が記録する」と書いていたが、全 skill / phase / agent を grep しても本 field を書く writer 実装が存在しない。AmidaPick-vol1 の 8 entries は手動 audit で作成されたものと推測。本 field は現状 optional (root.required に含まれず) のため schema 違反は起きないが、本来は Step 17 / 22 / 24 のいずれかが timestamp 付き操作ログを自動記録する仕組みを別 ticket で整備する必要あり (writer 仕様 + 何を記録するかの design 議論)。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step", "timestamp", "action"],
+        "properties": {
+          "step": { "type": "string" },
+          "timestamp": { "type": "string" },
+          "action": { "type": "string" },
+          "detail": { "type": ["string", "object", "array"] }
+        }
+      }
+    },
+    "phase_3_status": {
+      "type": "object",
+      "description": "Phase 3 進捗の自由記述 (notes 互換)。",
+      "additionalProperties": true
+    },
+    "notes": {
+      "type": "string",
+      "description": "自由記述 note。"
+    }
+  }
+}

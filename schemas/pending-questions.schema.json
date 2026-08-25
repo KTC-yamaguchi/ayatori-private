@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/pending-questions.schema.json",
+  "title": "pending-questions.json — Operating Principle 4 未確定項目キュー",
+  "$comment": "本 schema は **ローカル JSON Schema 検証専用** (Draft 2020-12、python-jsonschema / .claude/hooks/schema-light-check.sh の jq 経路で使う)。Anthropic API の Structured Outputs / tool_use の strict mode には **投入しない** — 公式 doc (docs.claude.com/en/docs/build-with-claude/structured-outputs) で `if/then` / `dependentRequired` は非サポートと明記されているため、本 schema の allOf+if/then 構造は Anthropic API 経由では reject される。将来 API strict 化が必要になった場合は anyOf 分岐への書き換えを検討する (ultrareview 公式 spec 整合 reviewer 指摘)。",
+  "description": "AI が (D) UNCERTAIN を検出した時に append する未確定項目キュー **兼 confirmed-decisions ledger** (E2E 検証由来)。\n\n**二面性 (状態で責務分割)**: `resolved_at` 未設定 entry = 未解決の ask キュー (次 Phase 入口 Pre-flight Gate が batch propose。ただし propose 対象は全件ではなく、`scripts/preflight-partition.mjs` が entry の `reflect_to` × その phase の `target_artifacts` で決定論的に振り分けた **ask 側だけ** — 反映先が当該 phase の書き込み責務外の entry は hold となり ask されず、そのまま次の門へ持ち越される)。`resolved_at` + `resolved_answer` set 済 entry = **確定済 decision の記録 (ledger)** で、Step07 要件トレース監査が「user 確定 input」の突合先に使う + retro Pattern D 集計源。曖昧を inline 解決した瞬間に born-resolved entry を記録する (queue 未経由でも可)。\n\n**書き込み権限 (慣行)**: 設計慣行として **main session orchestrator が単一 writer** として一括 append する。技術的には Write tool を持つ subagent (例: ayatori-sample-html-builder) は直接 append 可能だが、AYATORI の single writer 原則に従い、subagent は `assertion_failed: pending_question` を return し、orchestrator (main session) が間接的に append する形式を採用する (.claude/agents/*.md の Subagent Contract と整合)。\n\n**resolve 権限**: **main session のみ** (`resolved_at` / `resolved_answer` の書き込み)。公式 doc: AskUserQuestion is not available to subagents、Issue #12605。subagent からの resolve は技術的にも不可。\n\n**resolve フロー (propose-then-confirm パターン)**: 次 Phase 入口の Pre-flight Gate で main session が pending-questions.json を Read し、`resolved_at` unset の entries を `scripts/preflight-partition.mjs` で ask / hold に振り分けた上で、**ask 側の entries** を batch AskUserQuestion で一括 propose (Anthropic best practice の `propose 4 directions, ask user to pick one` パターン)。user 回答後、main session が `resolved_at` / `resolved_answer` を書き戻し + 対応 artifact (requirements.json / design-brief.yaml 等) の target を update。\n\n**pipeline-state.json と独立ファイルとする理由** (アーキレビュー C5): pipeline-state は『完了済みイベントの記録』、本ファイルは『未完了タスクのキュー』で責務が異なる。pipeline-state.json には派生値 `pending_questions_open: integer` (counter) のみ保持し、gate 判定は counter で行う。\n\n**lazy 初期化** (docs/artifact-file-responsibility.md 設計原則 4): 最初の writer (= 初回 append を行う main session orchestrator) は init stub `{ \"app_name\": \"{app_name}\", \"entries\": [] }` から start。Read or init-stub → entries に append → Write back パターン。",
+  "type": "object",
+  "required": ["app_name", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "entries": {
+      "type": "array",
+      "description": "未確定項目の list。append-only (writer 規約)。resolved 後も次 retro まで保持し、Phase 4 で Pattern D 集計に使う。",
+      "items": { "$ref": "#/$defs/pendingQuestionEntry" }
+    }
+  },
+  "$defs": {
+    "pendingQuestionEntry": {
+      "type": "object",
+      "required": ["target", "question", "raised_by_step", "raised_at"],
+      "additionalProperties": false,
+      "description": "1 件 = 1 未確定項目。target を literal で dedupe し、同一 session 内で同じ target を 2 回以上 ask しない (pipeline.yaml P4-07、CLAUDE.md Rule 6)。",
+      "properties": {
+        "target": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*(\\.[A-Za-z0-9_-]+|\\[[A-Za-z0-9_-]+\\])*$",
+          "description": "対象 field / 決定点の dot/bracket パス (例: 'design_output_scope.platform_combo', 'cases[0].palette.tokens[primary]', 'feature.F-01.data_source')。dedupe の literal key。正式文法化 — 先頭は識別子、以降 '.key' / '[N]' / '[key]' の連結。RFC 6901 ではない。"
+        },
+        "question": {
+          "type": "string",
+          "description": "user に問う具体的質問文。AskUserQuestion.question にそのまま渡される。"
+        },
+        "header": {
+          "type": "string",
+          "maxLength": 12,
+          "description": "AskUserQuestion.header (最大 12 chars)。"
+        },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "description": "AskUserQuestion.options の literal 配列 (2-4 件)。propose-then-confirm パターンのため、main session は事前に妥当な選択肢を埋めてから ask する。",
+          "items": {
+            "type": "object",
+            "required": ["label", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "label": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "reflect_to": {
+          "type": "string",
+          "description": "user 回答を反映する artifact の `artifacts/{app_name}/` 相対パス。appender が疑問の誕生時に宣言する。Pre-flight Gate はこれを phase の `target_artifacts` と照合し (`scripts/preflight-partition.mjs`)、解決できない entry は ask せず未解決のまま持ち越す。未設定 (legacy) の entry は従来どおり次の phase 入口で ask される。\n\n**未解決 entry 専用 (併記必須)**: `resolved_at` 未設定の entry を append する場合のみ書く。**born-resolved entry (`resolved_at` + `resolved_answer` を同時に書く確定記録) には書かない** — 振り分け script は `resolved_at` が set の entry を読む前に抜けるため値が使われる経路が無い (reader もゼロ)。\n\n**書ける値は次の 7 つに限る** (= いずれかの phase の `target_artifacts` が受け付けるパスの和集合。正本は各 phase preamble の `target_artifacts` 宣言): 'requirements.json' / 'requirements/*.md' / 'design-brief.yaml' / 'tokens.json' / 'screens/00-coverage-check.json' / 'screens/*.md' / 'reverse-engineered/*.md'。リストに無い値 / typo を書くと、その entry はどの門でも ask されず永久に持ち越される。\n\n**加えて「自分より後に通る門」が受け手であること** — リストにある値でも受け手が上流 phase しか無ければ正順の進行では二度と ask されない (例: Phase 3 の skill が 'tokens.json' を宣言すると受け手は Phase 2 design だけ)。その形になる場合は (a) 反映先を持つ phase へ user を戻す resume 指示を併記する か (b) 本 field を書かない (次の門で ask される) の 2 択。詳細は `skills/_shared/preflight-gate.md` § append 経路。"
+        },
+        "ambiguity_kind": {
+          "type": "string",
+          "enum": ["semantic", "softening", "enumeration"],
+          "description": "曖昧さの 3 分類。semantic=複数解釈 / softening=確信度低 / enumeration=開いた列挙。検出は LLM self-reflection (keyword 非依存)。docs/principle4-disambiguation.md §1 参照。"
+        },
+        "raised_by_step": {
+          "type": "string",
+          "description": "発火元 step id (例: '08-design-brainstorm', '17-screen-gen')。Phase 4 retro が by-step 集計に使う。"
+        },
+        "raised_by_role": {
+          "type": "string",
+          "enum": ["main", "subagent"],
+          "description": "main session が直接 push したのか、subagent が assertion_failed: pending_question を return して push したのか。subagent は append のみ可、resolve は main session のみ (公式制約)。"
+        },
+        "raised_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601。append 時刻。"
+        },
+        "resolved_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "main session が user 回答を受領し artifact に書き戻した時刻。set されると次 Phase 入口の gate は本 entry を skip する。retro まで保持。"
+        },
+        "resolved_answer": {
+          "type": "string",
+          "description": "user の選択 label (options[].label のいずれか)、または自由入力時はその text。"
+        }
+      },
+      "allOf": [
+        {
+          "description": "resolved 時は answer を併記すること",
+          "if": { "required": ["resolved_at"] },
+          "then": { "required": ["target", "question", "raised_by_step", "raised_at", "resolved_at", "resolved_answer"] }
+        }
+      ]
+    }
+  }
+}

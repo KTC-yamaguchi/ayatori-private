@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/graphic-plan.schema.json",
+  "title": "graphics/graphic-plan.json — グラフィック slot 計画 (loop 不変量)",
+  "description": "Step 21b (graphic-hearing) が「必要」選択時に**初回のみ**生成する loop 不変量。AI 生成グラフィック (イラスト/キャラクター/写真) を「どの画面のどこに・どんな用途サイズで」入れるかの slot 一覧を確定する。21b で「不要」選択時はファイル自体を生成しない。**ただし本ファイルの存在はブロック有効のシグナルではない** — 21d 全 slot 中止 / 21e ブロック中止 (decision='skip') は本ファイル生成後に起きるため、skip 済みプロジェクトにも本ファイルは残置される。有効判定の SoT は pipeline-state.json の screens.graphics.decision + approvals.graphics_human_approved (state-pattern-plan.json は skip 決定 [25a] がファイル生成前に完結するため「存在 = 有効」が成り立つが、本ファイルはその規約を継承しない — 設計 §9-2b 共通契約)。\n\n**writer 責務 (key 分離)**: 21b が init + `slots[]` を書く。21b は「必要」確定時に全 required field (app_name / created_at / slots) を **1 回の Write で一括生成**する — lazy-init の stub 状態は存在しない (stub は required の created_at / slots [minItems 1] を満たせず本 schema に違反するため)。`taste` オブジェクトは **21c (graphic-taste) のみ**が append する (coverage-check.json の Step 21 `user_indicated_gaps` と同じ key 分離パターン)。21d/21e/21g/29 は READ-ONLY。\n\n設計 SoT: docs/graphic-generation-design.md §7。",
+  "type": "object",
+  "required": ["app_name", "created_at", "slots"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (21b の一括 Write にも含めない)。既存 file に残存する値や旧版 writer が書いた値は受理して無視する。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "21b で本ファイルを初回生成した時刻 (ISO 8601)。"
+    },
+    "recommend_report_ref": {
+      "type": "string",
+      "description": "21a の推奨レポートへの pointer (通常 \"graphics/graphic-recommend.md\")。21a が degrade (fail-open) して素朴ヒアリングに落ちた場合は省略可 — 省略 = 推奨レポートなしで 21b が確定した記録。"
+    },
+    "slots": {
+      "type": "array",
+      "description": "グラフィック挿入 slot の一覧 (21b で人間が確定)。1 slot = 1 画像アセット × 1 画面内配置。同一 graphic_id を複数 slot で再利用する場合 (例: 同じキャラクターを web/mobile 両方に置く) は slot を分けて graphic_id を共有する。**「グラフィック不要」の場合は本ファイル自体を書かない** — 21b は pipeline-state.json に screens.graphics.decision='skip', decided_by='step21b' を記録して 21c-21g を skip する (設計 §8-4 gate_21b)。したがって本ファイルが存在する限り slot は必ず 1 件以上あり、minItems: 1 が成立する (slots: [] という状態は設計上存在しない)。",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["graphic_id", "screen", "platforms", "placement", "size_role", "state"],
+        "additionalProperties": false,
+        "properties": {
+          "graphic_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+            "description": "グラフィック識別子 (kebab-case)。**3 箇所で同一値を使う**: (1) 正典ファイル名 screens/_shared/graphics/{graphic_id}.{png|webp} の stem、(2) 埋め込み <img> の alt 属性 (= Figma のレイヤ名になる、C-26 案)、(3) graphic-prompts.json の対応キー。"
+          },
+          "screen": {
+            "type": "string",
+            "description": "画面ファイル名 (拡張子なし、例: \"01-login\")。screens/{platform}/{screen}.html (main HTML) と一致 (state-pattern-plan.json の screen と同規約)。"
+          },
+          "platforms": {
+            "type": "array",
+            "description": "本 slot を埋め込む platform。requirements.json.design_output_scope.platform_combo + web_viewports の展開結果の範囲内 (web / web-sm / mobile)。",
+            "items": { "type": "string", "enum": ["web", "web-sm", "mobile"] },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "placement": {
+            "type": "string",
+            "description": "画面内の配置の自由記述 (例: \"ヒーロー領域 (ヘッダー直下)\" / \"空カートの illust-placeholder ブロック\")。illustration_policy=illustration_character の既存 placeholder を置き換える場合はその旨を明記する (docs/graphic-generation-design.md §5)。"
+          },
+          "size_role": {
+            "type": "string",
+            "enum": ["hero", "content", "small"],
+            "description": "サイズ用途の 3 区分 (実機検証の 3 サイズに対応する目安: hero≈800×400 / content≈320×200 / small≈64×64)。**最終的な生成ピクセル数はここでは確定しない** — 21d が graphic-prompts.json の size_px で確定する (本 field はヒアリング時点の粒度を保つための用途区分)。"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["default"],
+            "description": "対象の画面 state。**v1 は \"default\" 固定** (main HTML のみ対象。sub-state は 25b の inherit_main で自動継承 — docs/graphic-generation-design.md §4)。sub-state 専用グラフィック (empty 状態のイラスト等) を将来サポートする際は本 enum を広げ、25b が state != \"default\" の slot を消費する (step22_figma_status の単一値 enum と同じ拡張点パターン)。"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "本 slot を設けた根拠の自由記述 (21a 推奨レポートのどの候補 slot 由来か、または user 指示由来かの audit 用)。省略可。"
+          }
+        }
+      }
+    },
+    "taste": {
+      "type": "object",
+      "description": "テイスト確定値。**writer は 21c のみ** (key 分離 — 21b は本キーを書かない)。21d がプロンプト合成時に READ-ONLY で参照する。",
+      "required": ["level1_words", "level2_choice", "style_directive", "confirmed_at"],
+      "additionalProperties": false,
+      "properties": {
+        "level1_words": {
+          "type": "array",
+          "description": "テイスト 1 段階目で user が選択した言葉 (例: [\"手描き風\", \"あたたかい\", \"フラット\"])。",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "level2_choice": {
+          "type": "string",
+          "enum": ["A", "B", "C"],
+          "description": "テイスト 2 段階目のサンプルグラフィック比較で user が選択した案。"
+        },
+        "sample_files": {
+          "type": "array",
+          "description": "2 段階目で提示したサンプル画像の相対パス (例: \"graphics/samples/taste-a.png\")。ILLUSTRATIVE (見本) であり実データに昇格しない。",
+          "items": { "type": "string" }
+        },
+        "style_directive": {
+          "type": "string",
+          "description": "確定テイストをプロンプト合成用に文章化したもの (英語 1 段落。21d が全 slot のプロンプトに共通合成する。同テイスト連続生成の安定性担保)。**必須** — 21c の下流価値そのものであり、これが無い taste は 21d が消費できない (F-3 で required 化)。"
+        },
+        "palette_hints": {
+          "type": "array",
+          "description": "design-brief.yaml / tokens.json 由来のカラーパレットヒント (HEX)。(C) DERIVED — 導出元 token 名を併記する (例: \"#2563EB (primitives.blue.600)\")。グラフィックがデザインシステム側に寄る方向で調和を担保する (docs/graphic-generation-design.md §6)。",
+          "items": { "type": "string" }
+        },
+        "confirmed_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "21c で user がテイストを確定した時刻 (ISO 8601)。pipeline-state.json の screens.graphics.taste_confirmed_at と同値 (resume 判定は pipeline-state 側を読む)。"
+        }
+      }
+    }
+  }
+}

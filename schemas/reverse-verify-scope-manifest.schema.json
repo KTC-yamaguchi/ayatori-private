@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/reverse-verify-scope-manifest.schema.json",
+  "title": "reverse-verify/scope-manifest.json — 対象限定突合の確定範囲",
+  "$comment": "本 schema は **ローカル JSON Schema 検証専用** (Draft 2020-12、.claude/hooks/schema-light-check.sh の jq 経路 R11 で使う)。",
+  "description": "Phase 0c (ayatori-reverse-verify) が「どの改修対象について、どこまでを突合するか」を確定した記述。\n\n**なぜ必要か**: 対象限定突合の価値は範囲を絞ることにあるため、範囲が曖昧なままだと (a) 関係する記述を読み落としたのに『突合済み』と言える、(b) 逆に全範囲へ広がって非効率になる、の両方が起きる。何を見て何を見なかったかを人間承認の時点で固定し、下流の突合 step と報告書がこの集合だけを対象にする。\n\n**writer**: 01-target-scope のみ (単一 writer)。**reader**: 02-targeted-crosscheck / 03-discrepancy-gate。\n\n**承認 stamp は持たない**: 本ファイルは純粋な記述で、範囲承認の時刻は pipeline-state.json の reverse_verify.runs[].scope_approved_at が持つ (state SoT の最小化)。人間ゲートで範囲を修正した場合は本ファイルを直接更新し、導出はやり直さない。\n\n**証拠は書かない**: 本ファイルは『どこを見るか』の指定だけを持ち、突合結果 (食い違い・引用) は crosscheck-report.md と requirement-deviations.json が持つ。",
+  "type": "object",
+  "required": ["app_name", "run_id", "created_at", "target", "scope"],
+  "additionalProperties": false,
+  "properties": {
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "YYYY-MM-DD-NNN または UUID。pipeline-state.json の reverse_verify.runs[].run_id、および requirement-deviations.json の phase == \"reverse_verify\" entry の run_id と一致。"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601。run 開始時刻 (runs[].initiated_at と一致)。"
+    },
+    "target": {
+      "type": "object",
+      "description": "ユーザーが名指しした改修対象。範囲導出の起点。",
+      "required": ["description"],
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "対象の記述 (機能名 / 画面名。ユーザーの言葉をそのまま残す)。"
+        },
+        "jira_issue_key": {
+          "type": "string",
+          "description": "対象の手がかりとして受け取った Jira 課題キー (任意)。**証拠ではなくラベル** — 突合の根拠になるのは ground-truth/jira-{KEY}.md のアーカイブ実物のみで、キーだけでは何も裏取りできない。アーカイブ不在のキーを受け取った場合も本 field には記録する (何を手がかりにしたかを残すため)。"
+        },
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "対象記述から起こした検索語 (機能名の別表記・画面 slug・識別子など)。範囲導出の再現性のために残す — 同じ対象を再度 scope したとき、前回と何が違ったかを説明できる。"
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "description": "本 run で実在を確認できた証拠ソースの実測結果。reverse-engineered/source-inventory.json の申告を鵜呑みにせず、突合の直前に ls で測った値を書く (収集後にディレクトリが消えている場合を『present』のまま進めない)。「未収集」と「不在」を混同させないため、present の判定は必ずファイルの実在に基づく。",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "object",
+          "required": ["present"],
+          "additionalProperties": false,
+          "properties": {
+            "present": { "type": "boolean", "description": "input-sources/{stack}/ に実ファイルがあるか。repo URL の存在は present にしない。" },
+            "stacks": { "type": "array", "items": { "type": "string" }, "description": "実在した {stack} ディレクトリ名 (例: [\"ios-swift\", \"be-python\"])。" }
+          }
+        },
+        "docs": {
+          "type": "object",
+          "required": ["present"],
+          "additionalProperties": false,
+          "properties": {
+            "present": { "type": "boolean", "description": "ground-truth/ 直下に引用可能な文書アーカイブがあるか。" }
+          }
+        },
+        "figma": {
+          "type": "object",
+          "required": ["present"],
+          "additionalProperties": false,
+          "properties": {
+            "present": { "type": "boolean", "description": "ground-truth/figma/ に capture アーカイブがあるか。" }
+          }
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "description": "承認された突合対象の集合。**空の scope は書かない** — どのリストも空なら突合する対象が無く、『突合したが差が無かった』と『何も見ていない』が区別できなくなる (hook R11 が弾く)。present でないソースに対応するリストは空でよい (縮退は報告書の Coverage に明記される)。",
+      "additionalProperties": false,
+      "properties": {
+        "requirement_sections": {
+          "type": "array",
+          "description": "突合対象の要件文書セクション。",
+          "items": {
+            "type": "object",
+            "required": ["doc", "section"],
+            "additionalProperties": false,
+            "properties": {
+              "doc": { "type": "string", "description": "要件文書名 (例: 05-features.md)。" },
+              "section": { "type": "string", "description": "セクション見出し (例: '### F-03: 車両検索')。" },
+              "feature_ids": { "type": "array", "items": { "type": "string" }, "description": "当該セクションが扱う機能 ID (例: [\"F-03\"])。" }
+            }
+          }
+        },
+        "screens": {
+          "type": "array",
+          "description": "突合対象の画面仕様。",
+          "items": {
+            "type": "object",
+            "required": ["slug", "spec_path"],
+            "additionalProperties": false,
+            "properties": {
+              "slug": { "type": "string", "description": "画面 slug (例: 03-search)。" },
+              "spec_path": { "type": "string", "description": "画面仕様のパス (app ルートからの相対。例: screens/03-search.md)。" }
+            }
+          }
+        },
+        "ground_truth_docs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "突合に使う文書アーカイブのファイル名 (ground-truth/ 直下。例: cf-3740237924-spec.md / jira-ABC-123.md)。ground-truth/index.md の content status が引用可能なものだけを入れる (殻・図のみ・テンプレート未記入は根拠にならない)。"
+        },
+        "figma_frames": {
+          "type": "array",
+          "description": "突合に使う Figma capture。",
+          "items": {
+            "type": "object",
+            "required": ["file_key", "node_id"],
+            "additionalProperties": false,
+            "properties": {
+              "file_key": { "type": "string", "description": "Figma file key。" },
+              "node_id": { "type": "string", "description": "frame の node-id。" },
+              "slug": { "type": "string", "description": "アーカイブ名の slug 部分 (例: home)。" }
+            }
+          }
+        },
+        "code_modules": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "再読対象の module key (.code-inventory.json の modules[].module と一致)。code が present でないか、対象に対応する module が見つからなかった場合は空 (その場合 zero_module_fallback で扱いを明示する)。"
+        },
+        "code_estimate": {
+          "type": "object",
+          "description": "code_modules に対する読み取り見積 (build-code-inventory.mjs の preview 由来)。人間が範囲承認の時点でコストを見るために残す。",
+          "additionalProperties": false,
+          "properties": {
+            "files": { "type": "integer", "minimum": 0 },
+            "chars": { "type": "integer", "minimum": 0 },
+            "est_tokens": { "type": "integer", "minimum": 0 },
+            "shards": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "code_read_plan": {
+          "type": "object",
+          "description": "読み取り計画の生成条件 (build-code-inventory.mjs に渡す値)。preview (--stdout) と承認後の確定 (--out) が **同じ条件** で実行されることを、値の出所をここ 1 箇所にすることで担保する — 会話記憶から再構成すると、範囲ゲート再提示からの resume で preview 時の条件を復元できず、承認された見積と違う計画が確定される。code_modules が空の run では省略する。",
+          "additionalProperties": false,
+          "properties": {
+            "require_files": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "範囲導出が引用・grep で名指ししたファイルパス (--require-files に渡す値)。tier 判定に関わらず計画に固定 (pin) される。導出でファイルを 1 件も拾えなかった run では空配列または省略。"
+            },
+            "tiers": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "--tiers に渡す tier csv の配列表現 (zero_module_fallback = tier_fallback を選んだ run のみ)。既定 tier のままの run では省略。"
+            }
+          }
+        }
+      }
+    },
+    "zero_module_fallback": {
+      "type": "string",
+      "enum": ["none", "manual_selection", "tier_fallback", "docs_only"],
+      "description": "code が present なのに対象へ対応する module を機械的に絞れなかったときの扱い。none = 該当なし (module を特定できた、または code 不在) / manual_selection = 人間が module を直接選んだ / tier_fallback = tier 指定に切り替えて絞った / docs_only = code 側を諦め文書・Figma だけで進めた (報告書の Coverage に『code 側 未検証』を明記する)。省略時は none と同義。"
+    }
+  }
+}

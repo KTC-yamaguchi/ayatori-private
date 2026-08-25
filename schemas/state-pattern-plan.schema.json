@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/state-pattern-plan.schema.json",
+  "title": "screens/state-pattern-plan.json — sub-state 生成計画 (loop 不変量)",
+  "description": "Step 25a (state-pattern-plan) が proceed 選択時に**初回のみ**生成する loop 不変量。25b/25c/25d/25e が READ-ONLY で参照し、生成すべき sub-state の scope を確定する。Step 25a で skip 選択時はファイル自体を生成しない (生成有無で 25a-25e 全体の有効/無効を判定可能)。Phase 5 delta (ayatori-delta) も本ファイルを Read して sub-state 再生成スコープを決める。\n\n**dual_theme_mode の取り扱い**: 各 `screens[]` エントリの `themes` 配列が sub-state の theme 軸を表す。`requirements.json.design_output_scope.dual_theme_mode == false` (or 未設定) のとき `themes: [\"default\"]` の単一要素となり、ファイル命名は `{画面名}--{state}.html` (theme suffix なし、現行互換)。`dual_theme_mode == true` のとき `themes: [\"light\", \"dark\"]` の対称配列となり、ファイル命名は `{画面名}--{state}--{theme}.html` (Step 17 dual_theme 命名 `--{theme}` に state suffix を加えた形式)。25b は本配列を read して expected_files を `{screen × state × platform × theme}` の cartesian で算出する。`themes` フィールドが欠落している legacy artifact は `[\"default\"]` 同等として扱い、現行 single-theme 経路の挙動を維持する。",
+  "type": "object",
+  "required": ["app_name", "created_at", "screens"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (25a の一括 Write にも含めない)。既存 file に残存する値や旧版 writer が書いた値は受理して無視する。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "25a で本ファイルを初回生成した時刻 (ISO 8601)。"
+    },
+    "source_enum": {
+      "type": "string",
+      "enum": ["default_only", "required_4_states", "nature_based_extra_states"],
+      "description": "requirements.json.design_output_scope.state_pattern を 25a が読んで本ファイルに転記したもの。25a の AskUserQuestion で推奨デフォルトを提示する根拠。`default_only` (初回フロー既定 = 追加パターンなし推奨) が source_enum でも、user が Q1 で「4 状態すべて」/「個別指定」を明示選択すれば本ファイルは生成される (Branch B)。その場合 source_enum=default_only / user_decision=all_four|individual の組合せになり得る (推奨を覆して作成した記録)。"
+    },
+    "user_decision": {
+      "type": "string",
+      "enum": ["all_four", "individual", "nature_based"],
+      "description": "25a の Q1 で user が選択した結果。all_four = empty/loading/error 全部 / individual = Q2 で個別選択 / nature_based = source_enum=nature_based_extra_states の場合の追加状態込みフルセット。"
+    },
+    "screens": {
+      "type": "array",
+      "description": "生成計画。各画面ごとに生成する state と platform の組合せを列挙する。",
+      "items": {
+        "type": "object",
+        "required": ["screen", "states", "platforms"],
+        "additionalProperties": false,
+        "properties": {
+          "screen": {
+            "type": "string",
+            "description": "画面ファイル名 (拡張子なし、例: \"01-login\")。screens/{platform}/{screen}.html (main HTML) と一致。"
+          },
+          "states": {
+            "type": "array",
+            "description": "本画面で生成する sub-state 名のリスト (例: [\"empty\", \"loading\", \"error\"])。default は **含めない** (main HTML として Step 17 で生成済のため)。",
+            "items": { "type": "string" },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "platforms": {
+            "type": "array",
+            "description": "本画面の sub-state を生成する platform dir。requirements.json.design_output_scope.platform_combo + web_viewports の展開結果に従う (web / web-sm / mobile。web-sm = Web スマホ幅)。",
+            "items": { "type": "string", "enum": ["web", "web-sm", "mobile"] },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "themes": {
+            "type": "array",
+            "description": "本画面の sub-state を生成する theme。requirements.json.design_output_scope.dual_theme_mode に従う: false → [\"default\"] 単一要素 (ファイル命名は theme suffix なし `{画面名}--{state}.html`、現行 single-theme と完全互換) / true → [\"light\", \"dark\"] の対称配列 (ファイル命名は `{画面名}--{state}--{theme}.html`、Step 17 の dual_theme 命名規約と整合)。25b はこれを read して expected_files を {screen × state × platform × theme} の cartesian で算出する。**フィールド省略時 (legacy plan)**: reader は `[\"default\"]` と解釈し、現行 single-theme 経路の path 形式 (theme suffix なし) を維持する。",
+            "items": { "type": "string", "enum": ["default", "light", "dark"] },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "rationale": {
+            "type": "string",
+            "description": "nature_based_extra_states で追加 state (modal/dialog 等) を含めた理由の自由記述 (audit 用)。省略可。"
+          }
+        }
+      }
+    },
+    "user_approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "25a の AskUserQuestion で user が plan を承認した時刻 (ISO 8601)。本フィールドが立った時点で本ファイルが loop 不変量として確定したと見做す。"
+    }
+  }
+}

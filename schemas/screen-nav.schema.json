@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/screen-nav.schema.json",
+  "title": "screens/00-screen-nav.json — 各画面の入口/出口 (遷移元・戻り先) 派生ビュー",
+  "description": "各画面の入口 (遷移元) / 出口 (戻り先・前方遷移) を per-screen に正規化した機械可読ビュー。**SoT ではなく 00-transition-map.mmd (SSoT) から決定論的に導出する派生物** (00-transition-map.html と同じ位置づけ)。authored content を持たず、.mmd を直せば次回 Step 14 / 29 / 29b (screen-edit delta の nav 変更時) で再生成される。L5 connectivity validator の正規化入力 + 人間がフロー図全体を読まずに 1 画面の入口/出口を把握するための per-screen view + delta 差分の比較元として使う。判定基準の単一正典は docs/screen-coverage-check.md §L5。",
+  "type": "object",
+  "required": ["app_name", "screens"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (.mmd からの導出出力にも含めない)。既存 file に残存する値は受理して無視する (丸ごと再生成で自然に消える)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "description": "プロジェクト識別子。artifacts/{app_name}/ と一致。"
+    },
+    "derived_from": {
+      "type": "string",
+      "description": "導出元 SoT のパス。常に 'screens/00-transition-map.mmd'。",
+      "default": "screens/00-transition-map.mmd"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "本派生ビューの生成時刻 (ISO8601)。"
+    },
+    "screens": {
+      "type": "object",
+      "description": "ノード ID (.mmd の camelCase ノード ID、例: scrDetail) をキーとする per-screen 入口/出口レコード。screen 形状ノード (rect) のみを対象とし、modal (stadium) / external (trapezoid) / entry (start) 疑似ノードは entries/exits の端点としては現れるが、本マップのトップレベル key には原則含めない (画面ではないため)。",
+      "additionalProperties": { "$ref": "#/$defs/screen_nav" }
+    }
+  },
+  "$defs": {
+    "screen_nav": {
+      "type": "object",
+      "required": ["entries", "exits"],
+      "additionalProperties": false,
+      "properties": {
+        "screen_ref": {
+          "type": "string",
+          "description": "00-screen-list.md の画面行と対応する論理 screen 名 (例: '02-detail')。screen-list との突合キー。"
+        },
+        "is_entry_point": {
+          "type": "boolean",
+          "default": false,
+          "description": "起動 / deeplink / スプラッシュ等から直接入る画面。true の場合 validator の unreachable (inbound 0) 検査を免除する。"
+        },
+        "is_terminal": {
+          "type": "boolean",
+          "default": false,
+          "description": "外部遷移 / アプリ終了等で出口を持たない終端画面。true の場合 validator の dead_end (outbound 0) 検査を免除する。"
+        },
+        "chrome": {
+          "type": "string",
+          "enum": ["A", "B", "なし"],
+          "description": "00-screen-list.md の chrome 割り当て。A=タブ親 (ボトムナビ着地) / B=子画面 (戻る付き) / なし=chrome 不要画面。validator が chrome 由来の暗黙到達性・暗黙戻りを判定するために参照する。"
+        },
+        "entries": {
+          "type": "array",
+          "description": ".mmd の inbound エッジから導出した入口 (遷移元) 一覧。",
+          "items": { "$ref": "#/$defs/entry_edge" }
+        },
+        "exits": {
+          "type": "array",
+          "description": ".mmd の outbound エッジから導出した出口 (前方遷移・戻り・閉じる・外部遷移) 一覧。",
+          "items": { "$ref": "#/$defs/exit_edge" }
+        }
+      }
+    },
+    "entry_edge": {
+      "type": "object",
+      "description": "entries[] 要素。inbound エッジなので遷移元 from が必須 (Copilot review #1: from/to 欠落エッジを弾くため entry/exit で別 schema に分割)。",
+      "required": ["from", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "遷移元ノード ID (.mmd の camelCase ID)。アプリ起動からの入口の場合は 'start'。"
+        },
+        "via": { "$ref": "#/$defs/edge_via" },
+        "kind": { "$ref": "#/$defs/edge_kind" }
+      }
+    },
+    "exit_edge": {
+      "type": "object",
+      "description": "exits[] 要素。outbound エッジなので遷移先 to が必須 (Copilot review #1)。",
+      "required": ["to", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "to": {
+          "type": "string",
+          "description": "遷移先ノード ID (.mmd の camelCase ID)。外部遷移の場合は external 疑似ノード ID。"
+        },
+        "via": { "$ref": "#/$defs/edge_via" },
+        "kind": { "$ref": "#/$defs/edge_kind" }
+      }
+    },
+    "edge_via": {
+      "type": "string",
+      "description": ".mmd エッジのラベル (アクション名、例: '詳細' / '戻る')。無ラベルエッジでは省略。"
+    },
+    "edge_kind": {
+      "type": "string",
+      "enum": ["forward", "back", "close", "external", "terminal"],
+      "description": "エッジ種別。ラベルが 戻る/キャンセル/閉じる 系 or bidirectional <--> → back/close、外部遷移 (trapezoid) ノード宛 → external、終端 → terminal、その他 → forward。導出規則は docs/screen-coverage-check.md §L5。"
+    }
+  }
+}

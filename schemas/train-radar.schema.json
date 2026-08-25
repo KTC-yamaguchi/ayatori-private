@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/train-radar.schema.json",
+  "title": "radar.json — AYATORI トレーニングモード 訓練中のコンサルタント 6 能力の自己評価レーダー",
+  "description": "/ayatori-train。訓練中のコンサルタント個人の 6 能力の現在地 (自己申告 L0-L3)。セッションを跨いで蓄積するプロフィール = artifacts/_train-profile/radar.json (シナリオ別 app_name とは別・プロフィール単位で 1 ファイル)。値は本人の自己評価だが、ステップ7 Phase 5 で 📚 が今回の気づきをもとに L 値のたたき台を提案し、本人がチャットで確認・確定する (たたき台方式・(E) PROPOSED、チャット確認が人間ゲート)。手動でハンドブックのフォームから貼り戻し清書する副経路も可 (任意)。「採点・点数」とは言わない。未評価は null。writer: train-00 (未存在時 init) / train-07 Phase 5 (たたき台確定値を清書、Read → merge → Write back) / train-handbook (フォーム貼り戻しの清書、任意副経路)。reader: train-00 (★おすすめ判定) / train-handbook (レーダー表示・プレフィル) / train-07 (へこみを次アクション提案の手がかりに)。",
+  "type": "object",
+  "required": ["axes"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "axes": {
+      "type": "object",
+      "description": "6 能力軸の現在地。各軸 ∈ { null(未評価), 0, 1, 2, 3 } (L0-L3)。init 時は空オブジェクト {} でよい (全軸未評価扱い)。",
+      "additionalProperties": false,
+      "properties": {
+        "business_understanding": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 3,
+          "description": "ビジネス理解 (事業目的・背景を掴む力)。"
+        },
+        "hearing": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 3,
+          "description": "ヒアリング (取りに行く問いで細部を引き出す力)。"
+        },
+        "goal_setting": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 3,
+          "description": "目標設定 (一言ゴールとやらないことを定める力)。"
+        },
+        "discernment": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 3,
+          "description": "目利き (AI が足した不要な要素を見抜く力)。"
+        },
+        "complement": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 3,
+          "description": "補完 (抜け漏れに気づき埋める力)。"
+        },
+        "ai_communication": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 3,
+          "description": "AI 伝達 (人の意図を AI に伝わる形に翻訳する力)。"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/train-session.schema.json",
+  "title": "session.json — AYATORI トレーニングモード (train) の 1 セッション進行状態",
+  "description": "/ayatori-train の 1 訓練セッション (1 シナリオ = 1 app_name = artifacts/_train-{slug}-{NN}/) の進行状態。session.json 単一ファイルが state SoT。current_step は『いま進行中のステップ番号』で各ステップ入口で更新される。各ステップの完了は stepN_* / *_at フラグで判定する (current_step だけでは完了を表さない)。writer: train-00 (新規作成) / train-01〜04 / train-07 / train-handbook (handbook_opened のみ) / phases/train Preamble (pipeline_started_ack_at・pipeline_state_missing_checks) (Read → merge → Write back で自分の担当キーのみ追記)。reader: phases/train/SKILL.md Preamble の再開ルーティング + 各 train step / train-handbook (transcription_mode)。",
+  "type": "object",
+  "required": ["app_name", "scenario_id", "current_step"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない (writer の init stub にも含めない)。既存 artifact に残存する値や旧版 writer が書いた値は受理して無視する (merge 時の carry-over も無害)。互換判定・読み込み分岐には一切使わない。"
+    },
+    "app_name": {
+      "type": "string",
+      "pattern": "^_train-",
+      "description": "セッション識別子。artifacts/{app_name}/ と一致し _train- で始まる (例: _train-owned-media-01)。"
+    },
+    "scenario_id": {
+      "type": "string",
+      "description": "選択された教材シナリオの ID (例: 3-owned-media)。scenarios/{scenario_id}.json / index.json のキー。"
+    },
+    "current_step": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 7,
+      "description": "いま進行中のステップ番号 (0=シナリオ選択 / 1=イントロ / 2=ヒアリング / 3=目標整理 / 4=引き継ぎ〜B群 (B群突入後も 4 のまま据え置き。5/6 は実値化しない) / 7=振り返り)。各ステップ入口で更新する。完了フラグではない。"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "セッション開始時刻 (ISO 8601)。train-00 が記録。"
+    },
+    "intro_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ステップ1 イントロダクション完了時刻。train-01 が記録。"
+    },
+    "step2_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ステップ2 ヒアリング完了時刻。train-02 が記録。"
+    },
+    "step3_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ステップ3 目標の認識合わせ完了時刻。train-03 が記録。"
+    },
+    "step4_briefed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ステップ4 引き継ぎブリーフィングを渡した時刻。train-04 が記録。以降は訓練中のコンサルタントが別会話で B群 (素の本体パイプライン) を実行する。"
+    },
+    "pipeline_started_ack_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "オーナー相談モードで『別会話で本体パイプラインを開始済み』と訓練中のコンサルタントが確認した時刻。set 済みなら相談モード入口の確認を再提示せず聞き戻しモードに直行する (毎ターンの本体開始催促を防ぐ)。phases/train Preamble が記録。"
+    },
+    "pipeline_state_missing_checks": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "オーナー相談モードで『ack 済み (pipeline_started_ack_at set) なのに artifacts/{app_name}/pipeline-state.json が見つからない』再入を数えた連続カウント。閾値 (2) に達したら 📚 が『アプリ名は {app_name} で始めましたか？』と確認する (学習者が案内と違う app 名で本体を始めて相談モードに永久滞留するのを防ぐ)。確認したらリセット、pipeline-state.json を検出したらリセット。writer: phases/train Preamble。"
+    },
+    "handbook_opened": {
+      "type": "boolean",
+      "description": "ハンドブック (guide.html) をこの会話で一度でも OS open したか。true 以降は train-handbook が open せず Write (書き換え) のみ行う (開いたタブは visibility/focus で自動リロードするため。同一会話内で古いタブが溜まるのを防ぐ)。会話をまたいだ再開時は phases/train Preamble が false にリセットするため、実質「会話ごとに1回だけ open」となる (案C)。writer: train-handbook (open 時) / phases/train Preamble (再開時リセット)。"
+    },
+    "transcription_mode": {
+      "type": "string",
+      "enum": ["self", "assisted"],
+      "description": "チェックシートの記入方法。self = 学習者が自分で書いてフォームの「コピー」で貼り戻す (推奨・既定)。assisted = オート記入: 📚 がオーナー発話の逐語を該当欄へ転記し ✓ (事実) を付与する。未 set は self として扱う (既存セッションは self 相当)。enum 外の値は本 schema 違反であり正常な状態ではない (読み手側は安全のため self に倒す — 正本は phases/train/SKILL.md)。set 済みなら選択ダイアログを再提示しない (再開時の二重質問防止) ため、選択時刻は別途持たない。学習者がステップ1 で選び、以降 1 回の訓練セッションの中では固定 (どちらの向きにも切り替えない。どの欄を 📚 が書いたかの記録を持たないため、途中で変えると振り返りの判定が狂う)。訓練 1 回ごとに app_name が変わるので、次の訓練では選び直せる。許容範囲の正本は phases/train/SKILL.md「チェックシートを編集するのは訓練中のコンサルタントだけ」節。writer: train-01 のみ。reader: train-01 (未 set か = 問うか) / phases/train (例外判定) / train-02 / train-03 / train-07 / train-handbook (清書の入力源分岐)。"
+    },
+    "step7_state": {
+      "type": "string",
+      "enum": ["started", "revealed", "radar_updated", "completed"],
+      "description": "ステップ7 振り返り (セッションC) の進行段階。再開位置はこの値で判定する (開始判定の step21_approved_at は消えない時刻のため再開毎に最初からになるのを防ぐ)。completed で当該回の振り返り終了。train-07 が記録。"
+    }
+  }
+}

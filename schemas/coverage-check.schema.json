@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinto-dev/ayatori/schemas/coverage-check.schema.json",
+  "title": "screens/00-coverage-check.json — 画面パターン網羅性 早期チェック結果",
+  "description": "Step 14 で生成される L1〜L4 早期チェック結果。Step 19 はこのファイルを Read only で参照し、生成後の HTML に対して再評価した結果を scores.json.current.coverage_check へ書く。Step 21 のみ user_indicated_gaps キーを append (split ownership; キー競合なし)。docs/screen-coverage-check.md が判定基準の単一正典。",
+  "type": "object",
+  "required": ["coverage_check"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた残存値が配布先の artifacts に存在しうる (artifacts は配布先ごとに異なり、走査で全数を確定できない) ため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "coverage_check": {
+      "type": "object",
+      "required": ["checked_at", "scope", "layers", "summary"],
+      "additionalProperties": false,
+      "properties": {
+        "checked_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO8601 タイムスタンプ。Step 14 が初回生成時に記録、再実行時は上書き。"
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["screen_list", "full_html"],
+          "description": "screen_list = Step 14 早期チェック / full_html = Step 19 再評価 (将来用途。本ファイルでは原則 screen_list)。Step 25c は本ファイルを書かず、`state-pattern-scores.json.attempts[].coverage_check` (layer_result の $ref) に sub-state 視点の評価結果を別ファイルとして書く (単一所有権原則)。"
+        },
+        "layers": {
+          "type": "object",
+          "required": ["l1_ui_states", "l2_action_result", "l3_flow_end", "l4_content_replace"],
+          "additionalProperties": false,
+          "properties": {
+            "l1_ui_states":     { "$ref": "#/$defs/layer_result" },
+            "l2_action_result": { "$ref": "#/$defs/layer_result" },
+            "l3_flow_end":      { "$ref": "#/$defs/layer_result" },
+            "l4_content_replace": { "$ref": "#/$defs/layer_result" },
+            "l5_connectivity":  { "$ref": "#/$defs/connectivity_result" }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "required": ["total_missing", "by_classification"],
+          "additionalProperties": false,
+          "properties": {
+            "total_missing": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "missing[] 全体の合計件数 (DS吸収は含めない)"
+            },
+            "by_classification": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "個別画面化":           { "type": "integer", "minimum": 0 },
+                "テンプレート代表1枚":  { "type": "integer", "minimum": 0 },
+                "DS吸収":               { "type": "integer", "minimum": 0 }
+              }
+            },
+            "connectivity_defects": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "(optional) layers.l5_connectivity.defects[] の合計件数。L1〜L4 の total_missing (足りない画面) とは独立に集計する (L5 は既存画面間のリンク切れ・到達不能・行き止まりであり『画面の抜け』ではないため)。"
+            }
+          }
+        },
+        "user_accepted_gaps": {
+          "type": "boolean",
+          "description": "抜け候補があっても user が「現状のまま」を選択した場合 true。リバース経路の stub では「L1〜L4 の早期チェック未実施」の印として true を書く (誰が書いたかではなく「L1〜L4 が未実施」だけを意味する)。writer: Step 14 (14-screen-list-transition。ファストパス / 14-lite も同じ writer) / リバース経路は Phase 0b の Step 06 (06-format-convert の E6-4) も stub 生成時に書く"
+        },
+        "user_indicated_gaps": {
+          "type": "array",
+          "description": "Step 21: 全画面 HTML レビューで user が指摘した不足画面のリスト (writer: 21-screen-human-review)",
+          "items": {
+            "type": "object",
+            "required": ["indicated_at", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "indicated_at": { "type": "string", "format": "date-time" },
+              "description":  { "type": "string", "description": "user の自由記述による指摘内容" },
+              "related_layer": {
+                "type": "string",
+                "enum": ["l1", "l2", "l3", "l4", "unspecified"],
+                "default": "unspecified"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "connectivity_result": {
+      "type": "object",
+      "description": "L5 connectivity = 各画面の入口/出口 (遷移元・戻り先) の存在検証結果。L1〜L4 が『足りない画面の抜け』を見るのに対し、L5 は『既存画面間のリンク切れ・到達不能・行き止まり』を検出する。判定基準の単一正典は docs/screen-coverage-check.md §L5。**writer (split ownership)**: Step 14 (create 経路) / Step 29 (requirement delta 経路) / Step 29b (screen-edit delta 経路、編集画面に scope) が本キー layers.l5_connectivity を書く。create と delta は step 実行が排他的、29 と 29b は /ayatori-delta の排他モードで同一 run に同居しないため、同一キーへの同時書き込みは発生しない (Step 21 は本キーには触れず user_indicated_gaps[] のみ)。",
+      "required": ["defects"],
+      "additionalProperties": false,
+      "properties": {
+        "defects": {
+          "type": "array",
+          "description": "到達性/戻り先存在の違反一覧 (0 件なら空配列)。",
+          "items": {
+            "type": "object",
+            "required": ["screen", "defect_kind", "detail"],
+            "additionalProperties": false,
+            "properties": {
+              "screen": {
+                "type": "string",
+                "description": "対象画面 (00-screen-list.md の論理 screen 名 または .mmd ノード ID)。"
+              },
+              "defect_kind": {
+                "type": "string",
+                "enum": ["dangling_edge", "orphan_in_list", "unreachable", "dead_end", "back_target_missing"],
+                "description": "dangling_edge=遷移先が screen-list に存在しない (リンク切れ) / orphan_in_list=screen-list の画面が .mmd に未配線 / unreachable=inbound 0 (到達できない) / dead_end=outbound・戻り 0 (戻れない) / back_target_missing=chrome=B 子画面なのに親が特定できない (戻り先不明)。"
+              },
+              "detail": {
+                "type": "string",
+                "description": "1 文の違反説明。"
+              },
+              "fix_hint": {
+                "type": "string",
+                "enum": ["mmd_edge", "wire_new_screen", "back_affordance"],
+                "description": "(optional) 想定修正先。mmd_edge=.mmd に不足エッジ追加 / wire_new_screen=新規画面を .mmd に配線 / back_affordance=画面 HTML に戻る導線を追加。Step 19/20 はこの値で routing する (back_affordance のみ Step 17 HTML 再生成ループで自動修正、mmd_edge / wire_new_screen は .mmd 構造修正なので Step 14 へ route)。"
+              }
+            }
+          }
+        }
+      }
+    },
+    "layer_result": {
+      "type": "object",
+      "required": ["missing"],
+      "additionalProperties": false,
+      "properties": {
+        "missing": {
+          "type": "array",
+          "description": "個別画面化 / テンプレート代表1枚 が必要なのに画面リストに存在しないもののみ列挙 (DS吸収は対象外)",
+          "items": {
+            "type": "object",
+            "required": ["classification", "reason"],
+            "additionalProperties": false,
+            "properties": {
+              "screen":          { "type": "string" },
+              "state":           { "type": "string", "description": "L1 用 (Nothing/Loading/Partial/Error/Ideal)" },
+              "trigger_action":  { "type": "string", "description": "L2 用 (例: 再設定ボタン押下)" },
+              "flow":            { "type": "string", "description": "L3 用 (例: オンボーディング 1/3 → 2/3 → 3/3)" },
+              "missing_screen":  { "type": "string", "description": "L3 用 (抜けている画面名)" },
+              "classification": {
+                "type": "string",
+                "enum": ["個別画面化", "テンプレート代表1枚"]
+              },
+              "reason": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

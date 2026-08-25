@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kinto-dev/ayatori/schemas/design-brief.schema.json",
+  "title": "design-brief",
+  "description": "Phase 2 Step 08 が生成する design-brief.yaml の schema (draft v1)。3 案 (A/B/C) の palette / typography / dials / signature_animation + narrative prose を保持する。state_colors は必須。NFR-39〜41 (両モード) 要件検出時は dual-mode encoding を使う (palette.tokens[].mode + state_colors.*.{role}.light)。mode 省略時は単一モード (現行互換)。両モード生成時、下流の tokens.json は D1-a 対称構造 (global.color.{name}.modes.dark/light) で出力され、どちらも primary 扱いしない (skill 12 generate-tokens.md / build-tokens.md 参照)。top-level strict 化、実 artifact (4 アプリ) に出現する 13 keys を明示列挙。internal の object 構造は legacy 互換のため additionalProperties: true 維持。",
+  "type": "object",
+  "required": ["schema", "app_name", "cases"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー (下の `schema` field とは別物)。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた残存値が配布先の artifacts に存在しうる (artifacts は配布先ごとに異なり、走査で全数を確定できない) ため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "schema": {
+      "type": "string",
+      "enum": ["design-brief:draft:v1", "design-brief:final:v1"],
+      "description": "draft:v1 = Step 08 が書く 3 案版 / final:v1 = Step 10 で user 選択後の 1 案版 (phases/design/SKILL.md L41 参照)。"
+    },
+    "app_name": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "attempt_count": { "type": "integer", "minimum": 0 },
+    "revision_mode": { "type": ["string", "null"] },
+    "selected_sample_id": { "type": ["string", "null"], "description": "Step 10 で user が選択した case id (A/B/C)。draft:v1 では null、final:v1 で set。" },
+    "selected_label": { "type": ["string", "null"], "description": "選択された case の label (Step 10 で set)。" },
+    "approved_at": { "type": ["string", "null"], "description": "Step 13 human gate 承認時刻 (ISO 8601、optional auxiliary)。" },
+    "differentiation_summary": { "description": "3 案の差別化サマリ (Step 08 が生成)。string or object。" },
+    "anti_slop_check": { "description": "anti-slop 14 項目のチェック結果 (Step 09 後)。" },
+    "common": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "3 案 (id: A / B / C) の design direction",
+      "items": {
+        "type": "object",
+        "required": ["id", "palette"],
+        "additionalProperties": false,
+        "description": "case 全体 strict 化。直下 14 keys を properties に明示列挙、未知 key は弾く。各 property の内部構造は legacy 互換のため additionalProperties: true (free-form) を維持。",
+        "properties": {
+          "id": { "type": "string", "enum": ["A", "B", "C"] },
+          "label": { "type": "string", "description": "案の人間可読ラベル (例: 'Refined Whitespace')。" },
+          "archetype": { "type": "string", "description": "デザイン原型のキーワード (例: 'minimal-paper', 'editorial-mono')。" },
+          "concept": { "description": "案のコアコンセプト記述。string または object (legacy 互換のため type 制約なし)。" },
+          "differentiation": { "description": "他案との差別化ポイント。" },
+          "narrative": { "description": "narrative prose (説明文章)。" },
+          "typography": { "description": "書体ファミリーと階層。" },
+          "dials": { "description": "ダイヤル構造 (デザイン軸 + values)。" },
+          "signature_animation": { "description": "signature animation 仕様。" },
+          "depth": { "description": "深度・シャドウ表現。" },
+          "layout": { "description": "レイアウトグリッド・余白方針。" },
+          "donts": { "description": "やってはいけないこと。" },
+          "agent_prompt_guide": { "description": "subagent (Step 09) 向けの prompt guide。" },
+          "palette": {
+            "type": "object",
+            "required": ["tokens", "state_colors", "domain_surfaces"],
+            "additionalProperties": true,
+            "properties": {
+              "tokens": {
+                "type": "array",
+                "description": "主要トークン (bg / surface / on-surface / primary / on-primary / focus-ring / border 等)。dual-mode (NFR-39) 要件検出時は同じ name を mode: 'dark' / mode: 'light' で 2 エントリ並べる。mode 省略時は単一モード扱い (現行プロジェクト互換)。",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "hex"],
+                  "additionalProperties": true,
+                  "properties": {
+                    "name": { "type": "string" },
+                    "hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+                    "mode": {
+                      "type": "string",
+                      "enum": ["dark", "light"],
+                      "description": "NFR-39 検出時に必須。dark/light のどちらの mode に属する色値か。省略時は単一モード (default/light スロットに格納される — 業界慣行に合わせて dark default から flip 済)。旧 legacy design-brief.yaml (5 案件) は mode 未指定で dark 配色を持っており、再走時に新しい light-default 解釈と不整合になる点に注意 — 再走する場合は `mode: \"dark\"` を全 entry に明示追加する必要あり"
+                    }
+                  }
+                }
+              },
+              "state_colors": {
+                "type": "object",
+                "description": "必須。state 別に bg / text / border の 3 役割を全展開する。画面 HTML の error banner / info banner / similarity badge 等で直書き hex を排除するため (skill 17 で `var(--color-error-bg)` 等を参照可能にする)。",
+                "required": ["error", "info"],
+                "additionalProperties": true,
+                "properties": {
+                  "error": {
+                    "type": "object",
+                    "required": ["bg", "text", "border"],
+                    "additionalProperties": true,
+                    "properties": {
+                      "bg": { "$ref": "#/$defs/stateColorValue" },
+                      "text": { "$ref": "#/$defs/stateColorValue" },
+                      "border": { "$ref": "#/$defs/stateColorValue" }
+                    }
+                  },
+                  "info": {
+                    "type": "object",
+                    "required": ["bg", "text", "border"],
+                    "additionalProperties": true,
+                    "properties": {
+                      "bg": { "$ref": "#/$defs/stateColorValue" },
+                      "text": { "$ref": "#/$defs/stateColorValue" },
+                      "border": { "$ref": "#/$defs/stateColorValue" }
+                    }
+                  },
+                  "warning": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "properties": {
+                      "bg": { "$ref": "#/$defs/stateColorValue" },
+                      "text": { "$ref": "#/$defs/stateColorValue" },
+                      "border": { "$ref": "#/$defs/stateColorValue" }
+                    }
+                  },
+                  "success": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "properties": {
+                      "bg": { "$ref": "#/$defs/stateColorValue" },
+                      "text": { "$ref": "#/$defs/stateColorValue" },
+                      "border": { "$ref": "#/$defs/stateColorValue" }
+                    }
+                  }
+                }
+              },
+              "oklch_derivation_note": { "type": "string" },
+              "loop_correction_history": { "type": "array" },
+              "domain_surfaces": {
+                "type": "array",
+                "description": "dual-theme × domain 拡張: skill 08 Phase 3-domain で抽出した domain-specific UI 面 (盤面マス / カード面 / マップ地形 / グラフ系列等)。Must 機能・NFR から導出し、両テーマ hex + NFR 由来 contrast pair を保持する。skill 11 Phase 5.5 が pair 検証、skill 12 が tokens.json.global.color に flatten する。空配列の場合は palette.domain_surfaces_rationale で skip 根拠を明示。",
+                "items": { "$ref": "#/$defs/domainSurface" }
+              },
+              "domain_surfaces_rationale": {
+                "type": "string",
+                "description": "domain_surfaces が空配列のとき、その根拠を明示 (例: '汎用 palette で全 UI 面をカバーできる' / '案非採択のため未導出')。"
+              },
+              "illustration_colors": {
+                "type": "array",
+                "description": "Escape Hatch: 装飾イラスト専用の bounded パレット (目安 ≤8 色)。skill 08 Phase 3-illust が、その案の concept が装飾イラスト/挿絵を含むときのみ AI 提案する (optional — モノクロ pictogram / emoji 案件は持たない)。skill 12 が tokens.json の global 装飾グループ (--color-illustration-{name}) へ展開し、skill 24 Step A-2b が運用中の昇格分を増分追加する。**装飾専用** (境界ルール): 文字・状態伝達・操作要素の色はここに入れず通常パレット (palette.tokens[] — skill 11 が WCAG contrast 検証する側) に置く。本配列は WCAG contrast 検証の対象外であり、それが許されるのは装飾 (WCAG が contrast 要件の対象外とする用途) に限られるため。",
+                "items": { "$ref": "#/$defs/illustrationColor" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "illustrationColor": {
+      "type": "object",
+      "description": "装飾色 1 件。single-mode は hex 直置き、dual_theme_mode=true の案件は modes 配列で light/dark **両方** を持つ (domainSurface.modes と同型のペア要求。片側欠落は skill 12 Verification で reject)。",
+      "required": ["name"],
+      "anyOf": [{ "required": ["hex"] }, { "required": ["modes"] }],
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "token 名 (CSS 変数では --color-illustration-{name})。tokens.json.global.color['illustration-{name}'] に展開される。"
+        },
+        "usage": { "type": "string", "description": "用途メモ (例: '太陽イラストの本体色')。人間ゲートの判断材料。" },
+        "hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "single-mode 用。dual_theme_mode=true の案件では使わず modes を使う。" },
+        "modes": {
+          "type": "array",
+          "minItems": 1,
+          "description": "dual_theme_mode=true のとき light/dark の 2 entries 必須 (domainSurface.modes と同型)。",
+          "items": {
+            "type": "object",
+            "required": ["mode", "hex"],
+            "additionalProperties": true,
+            "properties": {
+              "mode": { "type": "string", "enum": ["dark", "light"] },
+              "hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+            }
+          }
+        }
+      }
+    },
+    "domainSurface": {
+      "type": "object",
+      "required": ["name", "role", "driver_tokens", "contrast_pairs", "modes"],
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "token 名 (CSS 変数では --color-{name})。tokens.json.global.color.{name} に展開される。"
+        },
+        "role": {
+          "type": "string",
+          "description": "この surface の役割 (例: '駒が置かれる暗色マス')。Must 機能 ID への参照を含むと retro 時のトレースに有用。"
+        },
+        "driver_tokens": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "この surface 上に重なる主体 token 名のリスト (例: ['piece-black', 'piece-red'])。空配列は『この surface 上に乗る要素が無い』(常に空のマス等) を意味する。"
+        },
+        "contrast_pairs": {
+          "type": "array",
+          "description": "必須 contrast pair。各 pair は driver_tokens のいずれかと本 surface の contrast を指定する。空配列は『必須 pair なし』を意味し skill 11 Phase 5.5 はスキップする。NFR との対応関係は skill 19 NFR Coverage 評価が NFR テキストから能動的に逆引きするため、本 entry に NFR 識別子フィールドは持たない (nfr_origin は back-link 冗長のため削除済み)。",
+          "items": {
+            "type": "object",
+            "required": ["fg", "required_ratio", "criterion"],
+            "additionalProperties": false,
+            "properties": {
+              "fg": { "type": "string", "description": "driver_tokens のいずれかの値。" },
+              "required_ratio": { "type": "number", "minimum": 1 },
+              "criterion": { "type": "string", "description": "WCAG criterion id (例: '1.4.11')。" }
+            }
+          }
+        },
+        "modes": {
+          "type": "array",
+          "minItems": 1,
+          "description": "themes_required の各 mode について hex / OKLCH / contrast_label を保持。themes_required が ['dark', 'light'] のときは 2 entries 必須。",
+          "items": {
+            "type": "object",
+            "required": ["mode", "hex"],
+            "additionalProperties": true,
+            "properties": {
+              "mode": { "type": "string", "enum": ["dark", "light"] },
+              "hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+              "oklch": {
+                "type": "object",
+                "properties": {
+                  "l": { "type": "number" },
+                  "c": { "type": "number" },
+                  "h": { "type": "number" }
+                }
+              },
+              "contrast_label": { "type": ["string", "null"] },
+              "design_note": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "stateColorValue": {
+      "type": "object",
+      "required": ["hex"],
+      "additionalProperties": true,
+      "properties": {
+        "hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "oklch": {
+          "type": "object",
+          "properties": {
+            "l": { "type": "number" },
+            "c": { "type": "number" },
+            "h": { "type": "number" }
+          }
+        },
+        "contrast_label": { "type": "string", "description": "例: '4.5:1 AA on error-text'" },
+        "light": {
+          "type": "object",
+          "description": "NFR-39 検出時に必須。light mode の同役割の色値。dark 側 (top-level hex/oklch) と対になる。",
+          "required": ["hex"],
+          "additionalProperties": true,
+          "properties": {
+            "hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+            "oklch": {
+              "type": "object",
+              "properties": {
+                "l": { "type": "number" },
+                "c": { "type": "number" },
+                "h": { "type": "number" }
+              }
+            },
+            "contrast_label": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

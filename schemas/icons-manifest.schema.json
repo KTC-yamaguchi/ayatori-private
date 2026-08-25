@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "icons-manifest.json",
+  "description": "skill 17 Step 0 (アイコン一括取得) が生成する SVG icon メタデータ。Phase 3 画面 HTML 生成前に 1 度だけ実行される取得ステップの記録で、各画面が参照するアイコン名・スタイル・ソース URL を集約する。`artifacts/{app_name}/icons/{name}.svg` の取得元と利用先 (画面または画面状態) のクロスリファレンスを保持し、Step 17 の後段や Step 22 の Figma 取り込み時に再利用される。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["library", "icons"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "deprecated": true,
+      "description": "廃止済みの旧 informational マーカー。新規に書かない。本 schema の手順が書き込みを指示したことは無いが、旧規約の汎用 init stub 契約下で書き込まれた残存値が配布先の artifacts に存在しうる (artifacts は配布先ごとに異なり、走査で全数を確定できない) ため、additionalProperties: false の下でそれらを valid に保つ受理宣言として残す (残存値は受理して無視・互換判定には一切使わない)。"
+    },
+    "library": {
+      "type": "string",
+      "description": "アイコンライブラリ名 (例: 'heroicons', 'phosphor', 'mixed')。pictogram ポリシーではライブラリ名を書く。非 pictogram ポリシーでは policy sentinel として使用: `illustration_character` または `emoji_casual` をそのまま書く。`mixed` は単一プロジェクト内で複数ライブラリを混在使用する場合の自由記述ラベル。skill 17 Step 0 で確定。"
+    },
+    "version_ref": {
+      "type": "string",
+      "description": "ライブラリの取得時 ref (例: 'master', 'main', 'v2.1.0')。再現性のため記録するが固定 release tag を推奨。skill 17 のフェッチ URL に展開される。"
+    },
+    "style_default": {
+      "type": "string",
+      "description": "プロジェクト全体で採用するアイコンスタイルのデフォルト (例: 'outline (24px)', 'solid (20px)', 'regular (1.5px stroke)')。各 icon entry の `style` がここから変わる場合のみ override される。"
+    },
+    "icons": {
+      "type": "array",
+      "description": "プロジェクトで実際に使用するアイコンのリスト。skill 17 が画面 HTML 内の `<svg>` 参照を解析して append。各 entry は 1 アイコン = 1 SVG ファイルに対応。",
+      "items": { "$ref": "#/$defs/iconEntry" }
+    }
+  },
+  "$defs": {
+    "iconEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "source_url"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "ライブラリ内のアイコン識別子 (例: 'arrow-path', 'trophy', 'exclamation-triangle')。ファイル名 (`{name}.svg`) としても使われるため OS でファイル名に許容される文字のみ使用。"
+        },
+        "style": {
+          "type": "string",
+          "description": "本 entry のスタイル variant (例: 'outline', 'solid', 'mini', 'regular', 'bold')。`style_default` と一致する場合は省略してよいが、明示推奨 (skill 17 のフェッチ URL 構築時に必須)。"
+        },
+        "used_in": {
+          "type": "array",
+          "description": "本アイコンを参照する画面 / 画面状態の論理識別子。値は screens/00-screen-list.md の番号付き画面名 (例: '01-home') または `{画面名}--{状態}` 形式 (例: 'board--error')。dual_theme_mode プロジェクトでも、used_in は **theme suffix なし** で記録する (アイコン形状は両モードで共通のため、light/dark で別 SVG を持たない原則)。",
+          "items": { "type": "string" }
+        },
+        "source_url": {
+          "type": "string",
+          "description": "SVG の取得元 URL (raw.githubusercontent.com 等)。skill 17 が WebFetch でフェッチした際のソース。再生成時の検証用、および Step 22 の Figma 取り込み時のフォールバック URL。",
+          "pattern": "^https?://"
+        }
+      }
+    }
+  }
+}
