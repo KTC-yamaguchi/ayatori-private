@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AYATORI コンサルトレーニングとは</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Shippori Mincho（見出し・literary な明朝）＋ Zen Kaku Gothic New（本文） -->
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* =========================================================
+     THEME — 和紙(washi) × 藍(indigo) × 朱(vermilion)
+     ハンドブックの落ち着いた配色を踏襲した学習系デザイン
+     ========================================================= */
+  /* 「生成り紙 × 藍緑」配色に統一。
+     ダークモード追従はしない（常に明るい配色で表示する）。 */
+  :root {
+    color-scheme: light;
+    --paper:      #f6f5f0;   /* 生成りの紙 */
+    --paper-2:    #eeece3;
+    --card:       #ffffff;
+    --ink:        #12343a;   /* 深い藍緑の墨 */
+    --ink-soft:   #5d6d6f;
+    --ink-faint:  #8a9797;
+    --rule:       #dcdad2;
+    --ai:         #1f7a86;   /* 藍緑（メインアクセント） */
+    --ai-soft:    rgba(31,122,134,.12);
+    --shu:        #b06a3f;   /* 暖色（核心の強調・落ち着いたテラコッタ） */
+    --shu-soft:   #efe9dd;   /* 暖色の紙 */
+    --gold:       #b08422;   /* 現在地の金 */
+    --gold-soft:  #f2e8cd;
+    --shadow:     0 1px 2px rgba(18,52,58,.05), 0 10px 30px rgba(18,52,58,.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+  body {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .mincho { font-family: "Shippori Mincho", serif; }
+
+  /* =========================================================
+     SLIDE FRAME — 各スライドは必ず 100vh に収める（規約）
+     ========================================================= */
+  .slide {
+    position: relative;
+    height: 100vh; height: 100dvh;
+    overflow: hidden;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(2rem, 5.2vh, 4.2rem) clamp(1.6rem, 6vw, 6rem);
+    background:
+      radial-gradient(1200px 600px at 88% -8%, var(--paper-2), transparent 60%),
+      var(--paper);
+  }
+  /* 和紙の繊維感（極薄ノイズ・純CSS） */
+  .slide::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(120,110,90,.020) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(0deg, rgba(120,110,90,.014) 0 1px, transparent 1px 3px);
+    opacity: .5;
+  }
+  .inner { position: relative; width: 100%; max-width: 1120px; margin: 0 auto; }
+
+  /* 通し番号（縦・右上） */
+  .idx {
+    position: absolute; top: clamp(1rem,3.4vh,2.2rem); right: clamp(1.2rem,4vw,3.2rem);
+    font-family: "Shippori Mincho", serif; font-weight: 700;
+    color: var(--ink-faint); letter-spacing: .18em; font-size: clamp(.72rem,1.5vh,.9rem);
+    z-index: 3;
+  }
+  .idx b { color: var(--ai); }
+
+  /* kicker（章ラベル） */
+  .kicker {
+    display: inline-flex; align-items: center; gap: .55em;
+    font-size: clamp(.7rem,1.55vh,.9rem); font-weight: 700; letter-spacing: .16em;
+    color: var(--ai); text-transform: none; margin-bottom: clamp(.7rem,1.8vh,1.2rem);
+  }
+  .kicker::before { content: ""; width: clamp(22px,3vw,40px); height: 2px; background: var(--ai); border-radius: 2px; }
+
+  h1.title { font-family: "Shippori Mincho", serif; font-weight: 800;
+    font-size: clamp(2rem, 6.4vh, 4.1rem); line-height: 1.16; letter-spacing: .01em; }
+  h2 { font-family: "Shippori Mincho", serif; font-weight: 700;
+    font-size: clamp(1.5rem, 4.2vh, 2.7rem); line-height: 1.22; margin-bottom: clamp(1rem,2.6vh,1.8rem); }
+  .lead { font-size: clamp(1rem, 2.2vh, 1.35rem); color: var(--ink-soft); line-height: 1.75; max-width: 46ch; }
+  .sub  { font-size: clamp(.92rem, 1.9vh, 1.12rem); color: var(--ink-soft); line-height: 1.7; }
+
+  /* =========================================================
+     COMPONENTS
+     ========================================================= */
+  .grid { display: grid; gap: clamp(.7rem, 1.7vh, 1.15rem); }
+  .g-3 { grid-template-columns: repeat(3, 1fr); }
+  .g-2 { grid-template-columns: repeat(2, 1fr); }
+  .g-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 16px;
+    padding: clamp(.9rem, 2.4vh, 1.5rem) clamp(1rem, 2.4vw, 1.5rem);
+    box-shadow: var(--shadow); min-width: 0;
+  }
+  .card .em { font-size: clamp(1.5rem, 3.6vh, 2.2rem); line-height: 1; display: block; margin-bottom: .5rem; }
+  .card h3 { font-family: "Shippori Mincho", serif; font-weight: 700;
+    font-size: clamp(1rem, 2.2vh, 1.28rem); margin-bottom: .35rem; }
+  .card p { font-size: clamp(.82rem, 1.72vh, 1rem); color: var(--ink-soft); line-height: 1.62; }
+  .card .tag { display: inline-block; font-size: clamp(.68rem,1.4vh,.82rem); font-weight: 700;
+    color: var(--ai); background: var(--ai-soft); border-radius: 999px; padding: .12em .8em; margin-bottom: .5rem; }
+
+  .num-badge { display: inline-flex; align-items: center; justify-content: center;
+    width: clamp(1.7rem,3.6vh,2.2rem); height: clamp(1.7rem,3.6vh,2.2rem); border-radius: 50%;
+    background: var(--ai); color: #fff; font-family: "Shippori Mincho", serif; font-weight: 700;
+    font-size: clamp(.9rem,1.9vh,1.15rem); flex: none; }
+
+  /* ステップの帯（横フロー） */
+  .flow { display: flex; align-items: stretch; gap: clamp(.35rem,.8vw,.7rem); flex-wrap: wrap; }
+  .step {
+    flex: 1 1 0; min-width: clamp(72px, 11vw, 120px);
+    background: var(--card); border: 1px solid var(--rule); border-radius: 13px;
+    padding: clamp(.6rem,1.6vh,1rem) clamp(.4rem,.9vw,.8rem); text-align: center; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; align-items: center; gap: .35rem;
+  }
+  .step .n { font-family:"Shippori Mincho",serif; font-weight:700; color: var(--ai); font-size: clamp(.72rem,1.5vh,.9rem); letter-spacing:.05em; }
+  .step .e { font-size: clamp(1.15rem,2.7vh,1.7rem); line-height: 1; }
+  .step .t { font-size: clamp(.72rem,1.55vh,.95rem); font-weight: 700; line-height: 1.3; }
+  .step.act { background: var(--gold-soft); border-color: var(--gold); }
+
+  /* 2列（能力表など） */
+  .rowitem { display: flex; gap: clamp(.7rem,1.6vw,1.1rem); align-items: flex-start;
+    padding: clamp(.55rem,1.4vh,.9rem) 0; border-bottom: 1px dashed var(--rule); }
+  .rowitem:last-child { border-bottom: none; }
+  .rowitem .kk { font-family:"Shippori Mincho",serif; font-weight:700; font-size: clamp(1rem,2.1vh,1.25rem); }
+  .rowitem .dd { font-size: clamp(.82rem,1.72vh,1rem); color: var(--ink-soft); line-height:1.55; }
+
+  .note { font-size: clamp(.8rem,1.66vh,.98rem); color: var(--ink-soft);
+    background: var(--paper-2); border-left: 3px solid var(--ai); border-radius: 8px;
+    padding: clamp(.55rem,1.3vh,.85rem) clamp(.8rem,1.6vw,1.1rem); line-height: 1.6; }
+  .note.shu { border-left-color: var(--shu); background: var(--shu-soft); }
+
+  /* 核心スライド：氷山（表面／深層） */
+  .berg { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(.8rem,2vw,1.4rem); align-items: stretch; }
+  .berg .panel { border-radius: 16px; padding: clamp(1rem,2.6vh,1.7rem) clamp(1rem,2.2vw,1.5rem); box-shadow: var(--shadow); }
+  .berg .surface { background: var(--ai-soft); border: 1px solid var(--rule); }
+  .berg .deep { background: var(--shu-soft); border: 1px solid var(--shu); }
+  .berg .lbl { font-family:"Shippori Mincho",serif; font-weight:700; font-size: clamp(1rem,2.3vh,1.35rem); margin-bottom:.55rem; display:flex; align-items:center; gap:.5rem; }
+  .berg .surface .lbl { color: var(--ai); }
+  .berg .deep .lbl { color: var(--shu); }
+  .berg ul { list-style: none; }
+  .berg li { font-size: clamp(.82rem,1.74vh,1.02rem); color: var(--ink-soft); line-height: 1.5; padding-left: 1.1em; position: relative; margin: .3em 0; }
+  .berg li::before { content: "—"; position: absolute; left: 0; color: var(--ink-faint); }
+
+  ul.bul { list-style: none; }
+  ul.bul li { position: relative; padding-left: 1.5em; margin: clamp(.4rem,1.1vh,.75rem) 0;
+    font-size: clamp(.92rem,1.95vh,1.14rem); line-height: 1.62; color: var(--ink); }
+  ul.bul li::before { content: ""; position: absolute; left: 0; top: .62em; width: .55em; height: .55em;
+    border-radius: 50%; background: var(--ai); }
+  ul.bul li.hi { font-weight: 700; }
+  ul.bul li.hi::before { background: var(--shu); }
+
+  .big { font-family:"Shippori Mincho",serif; font-weight: 800;
+    font-size: clamp(1.7rem, 5.2vh, 3.4rem); line-height: 1.3; letter-spacing:.01em; }
+  .big .u { background: linear-gradient(transparent 62%, var(--gold-soft) 62%); padding: 0 .1em; }
+  .big .shu { color: var(--shu); }
+
+  /* =========================================================
+     NAV — ドット & 進捗
+     ========================================================= */
+  .dots { position: fixed; right: clamp(.7rem,1.6vw,1.4rem); top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: .55rem; z-index: 50; }
+  .dots button { width: 9px; height: 9px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--ink-faint); opacity: .4; padding: 0; transition: all .25s; }
+  .dots button.on { opacity: 1; background: var(--ai); transform: scale(1.5); }
+  .progress { position: fixed; left: 0; top: 0; height: 3px; background: var(--ai); z-index: 60; width: 0; transition: width .3s; }
+  .hint { position: fixed; left: 50%; bottom: clamp(.6rem,1.6vh,1.2rem); transform: translateX(-50%);
+    font-size: clamp(.66rem,1.3vh,.8rem); color: var(--ink-faint); z-index: 50; letter-spacing: .05em; }
+  @media (max-width: 680px) { .dots { display: none; } }
+
+  /* =========================================================
+     ANIMATION — アクティブ時に段階表示
+     ========================================================= */
+  .reveal { opacity: 0; transform: translateY(18px); }
+  .slide.active .reveal { animation: rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+  .slide.active .reveal:nth-child(1){animation-delay:.05s}
+  .slide.active .r1{animation-delay:.12s}.slide.active .r2{animation-delay:.22s}
+  .slide.active .r3{animation-delay:.32s}.slide.active .r4{animation-delay:.42s}
+  .slide.active .r5{animation-delay:.52s}.slide.active .r6{animation-delay:.62s}
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
+  }
+
+  /* 低い画面向けの調整 */
+  @media (max-height: 640px) {
+    .card p { line-height: 1.45; }
+    .g-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 720px) {
+    .g-3, .g-4 { grid-template-columns: 1fr 1fr; }
+    .g-2, .berg { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .g-3, .g-4 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<nav class="dots" id="dots" aria-label="スライド目次"></nav>
+<div class="hint">↓ / Space / 矢印キーで移動</div>
+
+<!-- ========================================================= 1. 表紙 -->
+<section class="slide">
+  <span class="idx"><b>01</b> / 09</span>
+  <div class="inner">
+    <div class="kicker reveal r1">AYATORI コンサルトレーニング</div>
+    <h1 class="title reveal r2">「人とAIの通訳者」<br>になる訓練</h1>
+  </div>
+</section>
+
+<!-- ========================================================= 2. 狙い -->
+<section class="slide">
+  <span class="idx"><b>02</b> / 09</span>
+  <div class="inner">
+    <div class="kicker reveal r1">Purpose</div>
+    <h2 class="reveal r2">このトレーニングの狙い</h2>
+    <p class="big reveal r3" style="font-size:clamp(1.3rem,3.4vh,2.1rem)">
+      AYATORI は <span class="u">入力の質</span> が、そのまま <span class="u">出力の質</span> になる。
+    </p>
+    <ul class="bul reveal r4" style="margin-top:clamp(.8rem,2vh,1.3rem)">
+      <li>オーナーが自分で要望をきれいに言語化できるとは限らない。多くは <b>ふわっとした相談</b> から始まる。</li>
+      <li>訓練中のコンサルタントが、それを<b>言語化し・要望を引き出し</b>、AIが想像で足した／抜けた部分を<b>見抜いて</b>、AYATORI に的確にフィードバックする。</li>
+    </ul>
+    <div class="note shu reveal r6" style="margin-top:clamp(.9rem,2.2vh,1.5rem)">
+      <b>良いインプットが、良いアウトプットをつくる。</b> その“掴んで伝える力”を鍛えるのが、このトレーニングです。
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= 3. 登場人物 -->
+<section class="slide">
+  <span class="idx"><b>03</b> / 09</span>
+  <div class="inner">
+    <div class="kicker reveal r1">Cast</div>
+    <h2 class="reveal r2">登場人物</h2>
+    <div class="grid g-3">
+      <div class="card reveal r3"><span class="em">📚</span><h3>AIファシリテーター</h3><p>進行役の相棒。案内はするが、<b>答えは教えない</b>。</p></div>
+      <div class="card reveal r4"><span class="em">🙎‍♂️</span><h3>オーナー（担当者）</h3><p>事業側の相談相手。ITには詳しくなく、話は断片的。</p></div>
+      <div class="card reveal r5"><span class="em">🧵</span><h3>AYATORI本体</h3><p>要件・画面を実際に生成する。<b>あなたの入力の質が出力に直結する</b>。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= 4. 全体像 3幕 -->
+<section class="slide">
+  <span class="idx"><b>04</b> / 09</span>
+  <div class="inner">
+    <div class="kicker reveal r1">Mission / やること</div>
+    <p class="big reveal r2" style="font-size:clamp(1.4rem,4vh,2.4rem)">
+      このトレーニングにおいて、あなたは <span class="shu">AYATORI コンサルタント</span> です。
+    </p>
+    <p class="lead reveal r3" style="max-width:56ch;margin-top:clamp(.7rem,1.8vh,1.2rem)">
+      オーナーの話をもとに、AYATORI へ<b>情報量・質の高いインプット</b>を行い、最終的に<b>質の高いアウトプット</b>を届けるのがミッションです。
+    </p>
+    <ul class="bul reveal r4" style="margin-top:clamp(.7rem,1.8vh,1.2rem)">
+      <li>このトレーニング専用の <b>📔 ハンドブック</b> を1つお渡しします（この後すぐ開きます）。ヒントが書いてあるので、活用しながら進めましょう。</li>
+      <li>最後に <b>🙎‍♂️オーナーが種明かし</b> をします。ヒアリングと（要件・画面の）レビューで<b>どこがうまくいって／いかなかったか</b>——それが次の気づきになります。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ========================================================= 5. 進行フロー -->
+<section class="slide">
+  <span class="idx"><b>05</b> / 09</span>
+  <div class="inner">
+    <div class="kicker reveal r1">Flow</div>
+    <h2 class="reveal r2">トレーニングのフロー</h2>
+    <div class="flow reveal r3">
+      <div class="step"><span class="n">STEP 0</span><span class="e">🎬</span><span class="t">シナリオ選択</span></div>
+      <div class="step"><span class="n">STEP 1</span><span class="e">🙎‍♂️</span><span class="t">顔合わせ</span></div>
+      <div class="step"><span class="n">STEP 2</span><span class="e">🎤</span><span class="t">ヒアリング</span></div>
+      <div class="step"><span class="n">STEP 3</span><span class="e">🎯</span><span class="t">目標整理</span></div>
+      <div class="step"><span class="n">STEP 4</span><span class="e">🤝</span><span class="t">引き継ぎ</span></div>
+      <div class="step"><span class="n">STEP 5–6</span><span class="e">🧵</span><span class="t">作成＆レビュー</span></div>
+      <div class="step"><span class="n">STEP 7</span><span class="e">🪞</span><span class="t">振り返り</span></div>
+    </div>
+    <div class="note reveal r5" style="margin-top:clamp(1.1rem,2.8vh,1.9rem)">
+      各ステップは「次に進みますか？」と確認しながら進みます。<b>急がず、気になったところは聞き直してOK</b>です。
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= 6. 伸ばす6つの力（六角形） -->
+<section class="slide">
+  <span class="idx"><b>06</b> / 09</span>
+  <div class="inner">
+    <div class="kicker reveal r1">Skills</div>
+    <h2 class="reveal r2">伸ばす6つの力</h2>
+    <div class="grid g-2" style="align-items:center;column-gap:clamp(1.4rem,4vw,3rem)">
+      <div class="reveal r3" style="display:flex;justify-content:center;align-items:center">
+        <svg viewBox="0 0 480 400" role="img" aria-label="6つの力の六角形マップ" style="width:100%;max-width:430px;height:auto;max-height:58vh">
+          <polygon points="240,70 352,135 352,265 240,330 128,265 128,135"
+            fill="rgba(31,122,134,.12)" stroke="#1f7a86" stroke-width="2.5"/>
+          <g stroke="rgba(31,122,134,.28)" stroke-width="1">
+            <line x1="240" y1="200" x2="240" y2="70"/><line x1="240" y1="200" x2="352" y2="135"/>
+            <line x1="240" y1="200" x2="352" y2="265"/><line x1="240" y1="200" x2="240" y2="330"/>
+            <line x1="240" y1="200" x2="128" y2="265"/><line x1="240" y1="200" x2="128" y2="135"/>
+          </g>
+          <g fill="#1f7a86">
+            <circle cx="240" cy="70" r="6"/><circle cx="352" cy="135" r="6"/><circle cx="352" cy="265" r="6"/>
+            <circle cx="240" cy="330" r="6"/><circle cx="128" cy="265" r="6"/><circle cx="128" cy="135" r="6"/>
+          </g>
+          <g font-family="Shippori Mincho, serif" font-weight="700" font-size="15" fill="#12343a">
+            <text x="240" y="42" text-anchor="middle">ビジネス理解</text>
+            <text x="366" y="128" text-anchor="start">ヒアリング</text>
+            <text x="366" y="268" text-anchor="start">目標設定</text>
+            <text x="240" y="360" text-anchor="middle">目利き</text>
+            <text x="114" y="268" text-anchor="end">補完</text>
+            <text x="114" y="128" text-anchor="end">AI伝達</text>
+          </g>
+          <g font-family="Zen Kaku Gothic New, sans-serif" font-weight="500" font-size="11" fill="#1f7a86">
+            <text x="240" y="57" text-anchor="middle">理解する</text>
+            <text x="366" y="143" text-anchor="start">問う</text>
+            <text x="366" y="283" text-anchor="start">決める</text>
+            <text x="240" y="375" text-anchor="middle">見抜く</text>
+            <text x="114" y="283" text-anchor="end">補う</text>
+            <text x="114" y="143" text-anchor="end">伝える</text>
+          </g>
+        </svg>
+      </div>
+      <div class="reveal r4">
+        <div class="rowitem" style="align-items:center;gap:.9em"><span class="num-badge" style="width:1.6rem;height:1.6rem;font-size:.9rem">1</span><span class="kk">ビジネス理解</span><span class="dd" style="margin-left:auto">理解する</span></div>
+        <div class="rowitem" style="align-items:center;gap:.9em"><span class="num-badge" style="width:1.6rem;height:1.6rem;font-size:.9rem">2</span><span class="kk">ヒアリング</span><span class="dd" style="margin-left:auto">問う</span></div>
+        <div class="rowitem" style="align-items:center;gap:.9em"><span class="num-badge" style="width:1.6rem;height:1.6rem;font-size:.9rem">3</span><span class="kk">目標設定</span><span class="dd" style="margin-left:auto">決める</span></div>
+        <div class="rowitem" style="align-items:center;gap:.9em"><span class="num-badge" style="width:1.6rem;height:1.6rem;font-size:.9rem">4</span><span class="kk">目利き</span><span class="dd" style="margin-left:auto">見抜く</span></div>
+        <div class="rowitem" style="align-items:center;gap:.9em"><span class="num-badge" style="width:1.6rem;height:1.6rem;font-size:.9rem">5</span><span class="kk">補完</span><span class="dd" style="margin-left:auto">補う</span></div>
+        <div class="rowitem" style="align-items:center;gap:.9em"><span class="num-badge" style="width:1.6rem;height:1.6rem;font-size:.9rem">6</span><span class="kk">AI伝達</span><span class="dd" style="margin-left:auto">伝える</span></div>
+      </div>
+    </div>
+    <div class="note reveal r5" style="margin-top:clamp(.8rem,2vh,1.4rem)">
+      振り返りで、この6軸を<b>自分でレーダーに記録</b>します。回を重ねるほど、へこみ＝次に伸ばす方向が見えてきます。
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= 9. ★ 核心 -->
+<section class="slide" style="background:radial-gradient(1200px 700px at 15% 110%, var(--shu-soft), transparent 55%), var(--paper)">
+  <span class="idx"><b>07</b> / 09</span>
+  <div class="inner">
+    <div class="kicker reveal r1" style="color:var(--shu)"><span style="background:var(--shu);width:clamp(22px,3vw,40px);height:2px;border-radius:2px;display:inline-block"></span>&nbsp;WHY</div>
+    <h2 class="reveal r2">なぜ “AIに任せて終わり” にできないのか</h2>
+    <div class="berg">
+      <div class="panel surface reveal r3">
+        <div class="lbl">💬 聞けば出てくる話</div>
+        <ul>
+          <li>やりたいことのざっくりした説明</li>
+          <li>質問すれば答えてくれる表面的な情報</li>
+        </ul>
+      </div>
+      <div class="panel deep reveal r4">
+        <div class="lbl">🔒 掘らないと出ない本音</div>
+        <ul>
+          <li>言い忘れている「当然の前提」</li>
+          <li>まだ言葉にできていない本当の狙い・背景</li>
+        </ul>
+      </div>
+    </div>
+    <ul class="bul reveal r5" style="margin-top:clamp(.9rem,2.2vh,1.5rem)">
+      <li>オーナーは、あなたにまだ見せていない本音を持っています。<b>上手に聞き出さないと、黙ったまま埋もれます。</b></li>
+      <li class="hi">本番でも “オーナーしか知らないこと” がある。それは AI には最初から渡せません。</li>
+      <li>だから決まった質問を順に聞くだけでは足りない。<b class="mincho" style="color:var(--shu)">あなたの深掘りと目利きが要る</b>——それを鍛える場です。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ========================================================= 10. 振り返りの仕組み -->
+<section class="slide">
+  <span class="idx"><b>08</b> / 09</span>
+  <div class="inner">
+    <div class="kicker reveal r1">Reflection</div>
+    <h2 class="reveal r2">振り返り — 答え合わせではなく「気づき」</h2>
+    <ul class="bul reveal r3">
+      <li>点数・合否はつけません。</li>
+      <li>最後に <b>🙎‍♂️オーナーが種明かし</b>します——「実は…だったんです」。</li>
+      <li>そのうえで <b>「どの一問があれば取れたか」</b> を一緒に確認します。</li>
+    </ul>
+    <div class="note reveal r5" style="margin-top:clamp(1rem,2.4vh,1.6rem)">
+      見逃しは失敗ではなく教材です。「こういう落とし穴がある」と知れたこと自体が収穫になります。
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= 11. まとめ -->
+<section class="slide" style="background:radial-gradient(1100px 650px at 85% 115%, var(--ai-soft), transparent 55%), var(--paper)">
+  <span class="idx"><b>09</b> / 09</span>
+  <div class="inner">
+    <div class="kicker reveal r1">In one line</div>
+    <p class="big reveal r2">
+      AI を動かす前に、<br><span class="u">人が要件を掴み切る力</span>を鍛える。
+    </p>
+    <p class="lead reveal r3" style="margin-top:clamp(1.1rem,2.8vh,1.9rem)">
+      聞く・決める・見抜く・伝える。<br>その積み重ねが、あなたを「人とAIの通訳者」にします。
+    </p>
+    <p class="mincho reveal r4" style="margin-top:clamp(1rem,2.6vh,1.7rem);font-size:clamp(1.1rem,2.6vh,1.6rem);font-weight:700;color:var(--ai)">
+      さあ、始めましょう。
+    </p>
+  </div>
+</section>
+
+<script>
+  /* === スライド制御：ドット目次・進捗バー・キーボード・アクティブ検出 === */
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsWrap = document.getElementById('dots');
+  const progress = document.getElementById('progress');
+
+  // ドット生成
+  slides.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.setAttribute('aria-label', (i + 1) + '枚目へ');
+    b.addEventListener('click', () => s.scrollIntoView({ behavior: 'smooth' }));
+    dotsWrap.appendChild(b);
+  });
+  const dots = Array.from(dotsWrap.children);
+
+  let current = 0;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && e.intersectionRatio >= 0.5) {
+        const i = slides.indexOf(e.target);
+        current = i;
+        slides.forEach((s, k) => s.classList.toggle('active', k === i));
+        dots.forEach((d, k) => d.classList.toggle('on', k === i));
+        progress.style.width = ((i + 1) / slides.length * 100) + '%';
+      }
+    });
+  }, { threshold: [0.5] });
+  slides.forEach(s => io.observe(s));
+  slides[0].classList.add('active');
+  dots[0].classList.add('on');
+  progress.style.width = (1 / slides.length * 100) + '%';
+
+  // キーボード操作
+  function go(n) {
+    const t = Math.max(0, Math.min(slides.length - 1, n));
+    slides[t].scrollIntoView({ behavior: 'smooth' });
+  }
+  window.addEventListener('keydown', (ev) => {
+    if (['ArrowDown', 'ArrowRight', 'PageDown', ' '].includes(ev.key)) { ev.preventDefault(); go(current + 1); }
+    else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(ev.key)) { ev.preventDefault(); go(current - 1); }
+    else if (ev.key === 'Home') { ev.preventDefault(); go(0); }
+    else if (ev.key === 'End') { ev.preventDefault(); go(slides.length - 1); }
+  });
+</script>
+</body>
+</html>

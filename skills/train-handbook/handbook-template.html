@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>トレーニングモード ハンドブック</title>
+<!--
+  AYATORI トレーニングモード (/ayatori-train) ハンドブック テンプレート
+  完全自己完結・外部依存ゼロ・ブラウザでダブルクリックで開ける。
+  進行役AIが下の <script id="ayatori-train-state"> の中身のプレースホルダを
+  実際の状態JSONに置換して訓練中のコンサルタントに渡す。
+-->
+<style>
+  /* 「生成り紙 × 藍緑」配色に統一。
+     ダークモード追従はしない（常に明るい配色で表示する）。 */
+  :root {
+    color-scheme: light;
+    --bg: #f6f5f0;
+    --panel: #ffffff;
+    --panel-2: #eeece3;
+    --ink: #12343a;
+    --ink-soft: #5d6d6f;
+    --ink-faint: #8a9797;
+    --border: #dcdad2;
+    --accent: #1f7a86;
+    --accent-soft: #dce9ea;
+    --here: #b08422;
+    --here-bg: #f7f0dc;
+    --ok: #1f7a86;
+    --guess: #b08422;
+    --empty: #b06a3f;
+    --shadow: 0 1px 3px rgba(18,52,58,0.06), 0 4px 12px rgba(18,52,58,0.05);
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    line-height: 1.75;
+    font-size: 16px;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+  html { scroll-behavior: smooth; }
+  .layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+  .wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 860px;
+    padding: 28px 20px 80px;
+  }
+  /* 左サイドバー目次（ページ内リンク＋現在地ハイライト） */
+  .sidebar {
+    position: sticky;
+    top: 16px;
+    flex: 0 0 216px;
+    align-self: flex-start;
+    margin: 28px 0 0 12px;
+    padding: 14px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .sidebar .sb-title {
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--ink-soft); text-transform: uppercase; margin-bottom: 8px; padding-left: 6px;
+  }
+  .sidebar a {
+    display: block; padding: 8px 10px; margin-bottom: 2px;
+    border-radius: 8px; text-decoration: none; color: var(--ink);
+    font-size: 0.92rem; border-left: 3px solid transparent;
+  }
+  .sidebar a:hover { background: var(--accent-soft); }
+  .sidebar a.active {
+    background: var(--accent-soft); border-left-color: var(--accent); font-weight: 700;
+  }
+  section { scroll-margin-top: 16px; }
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; gap: 0; }
+    .sidebar {
+      position: static; flex-basis: auto; width: auto;
+      margin: 16px 12px 0; display: flex; flex-wrap: wrap; gap: 4px;
+    }
+    .sidebar .sb-title { width: 100%; }
+    .sidebar a { border-left: none; border-bottom: 3px solid transparent; }
+    .sidebar a.active { border-left: none; border-bottom-color: var(--accent); }
+  }
+  header.hero {
+    background: linear-gradient(135deg, var(--accent-soft), var(--panel));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 26px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow);
+  }
+  header.hero h1 {
+    margin: 0 0 8px;
+    font-size: 1.9rem;
+    letter-spacing: 0.01em;
+  }
+  .hero-meta {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+  }
+  .hero-meta .pill {
+    display: inline-block;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 12px;
+    margin: 4px 6px 0 0;
+    font-size: 0.85rem;
+  }
+  /* 「トレーニングモードって何？」導線（スライドを別タブで開く） */
+  a.whatis {
+    display: inline-flex; align-items: center; gap: .5em;
+    margin-top: 12px;
+    background: var(--accent); color: #fff; text-decoration: none;
+    border-radius: 999px; padding: 8px 18px;
+    font-size: 0.92rem; font-weight: 700;
+    box-shadow: var(--shadow);
+    transition: filter .15s ease, transform .08s ease;
+  }
+  a.whatis:hover { filter: brightness(1.08); }
+  a.whatis:active { transform: scale(0.98); }
+  a.whatis .play { font-size: 0.9em; }
+  section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  /* セクション見出しは藍緑背景＋白文字のヘッダー帯にして目立たせる（カード上端まで bleed） */
+  section > h2 {
+    margin: -22px -24px 18px;
+    padding: 13px 24px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: var(--radius) var(--radius) 0 0;
+    font-size: 1.18rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  h3 { font-size: 1.05rem; margin: 18px 0 8px; }
+  p { margin: 10px 0; }
+  ul, ol { margin: 10px 0; padding-left: 1.4em; }
+  li { margin: 5px 0; }
+  code {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1px 6px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.9em;
+  }
+  .callout {
+    background: var(--panel-2);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 0.95rem;
+  }
+  .callout.warn { border-left-color: var(--here); background: var(--here-bg); }
+  .flow-steps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+  .flow-steps .chip {
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+  .flow-steps .arrow { color: var(--ink-faint); }
+
+  /* ステップ一覧 */
+  ol.steps { list-style: none; padding: 0; margin: 0; counter-reset: st; }
+  ol.steps li {
+    counter-increment: st;
+    position: relative;
+    padding: 12px 14px 12px 52px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin: 8px 0;
+    background: var(--panel-2);
+  }
+  ol.steps li::before {
+    content: counter(st, decimal);
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+  ol.steps li[data-first] { counter-reset: none; }
+  ol.steps li .st-icon { margin-right: 6px; font-size: 1.05rem; }
+  ol.steps li .st-title { font-weight: 600; }
+  ol.steps li .st-desc { color: var(--ink-soft); font-size: 0.92rem; }
+  ol.steps li.here {
+    background: var(--here-bg);
+    border-color: var(--here);
+    box-shadow: 0 0 0 2px var(--here) inset;
+  }
+  ol.steps li.here::before { background: var(--here); color: #fff; }
+  ol.steps li.here .here-badge {
+    color: var(--here);
+    font-weight: 700;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+
+  /* チェックシート状況 */
+  .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .status-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--panel-2);
+  }
+  .status-card h4 { margin: 0 0 8px; font-size: 1rem; }
+  .status-counts { display: flex; gap: 14px; font-size: 0.95rem; }
+  .status-counts .c-ok { color: var(--ok); font-weight: 700; }
+  .status-counts .c-guess { color: var(--guess); font-weight: 700; }
+  .status-counts .c-empty { color: var(--empty); font-weight: 700; }
+  .status-bar { height: 8px; border-radius: 4px; background: var(--border); margin-top: 10px; overflow: hidden; display: flex; }
+  .status-bar .seg-ok { background: var(--ok); }
+  .status-bar .seg-guess { background: var(--guess); }
+
+  /* 人間ゲートの基準 */
+  .lens { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 10px 0; background: var(--panel-2); }
+  .lens .lens-h { font-weight: 700; color: var(--accent); }
+
+  /* フォーム */
+  .form-block {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 14px 0;
+    background: var(--panel-2);
+  }
+  .form-block.active {
+    border-color: var(--here);
+    background: var(--here-bg);
+    box-shadow: 0 0 0 2px var(--here) inset;
+  }
+  .form-block > h3 { margin-top: 0; display: flex; align-items: center; gap: 8px; }
+  .form-block .active-badge { color: var(--here); font-weight: 700; font-size: 0.9rem; }
+  /* not-yet: 焦点ではないと分かる程度に控えめにしつつ、入力欄は「書ける」見た目を保つ */
+  .form-block.not-yet { opacity: 0.72; }
+  .form-block.not-yet textarea,
+  .form-block.not-yet select { opacity: 1; }
+  .form-block .stage-note {
+    font-weight: 600; font-size: 0.8rem;
+    color: rgba(128,128,128,0.95);
+    border: 1px solid rgba(128,128,128,0.45);
+    border-radius: 999px; padding: 1px 10px;
+  }
+  .field { margin: 12px 0; }
+  .field label.field-label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.96rem; }
+  .field .ask-hint {
+    margin: 0 0 6px; padding: 5px 10px;
+    font-size: 0.85rem; color: var(--ink-soft);
+    background: var(--accent-soft); border-radius: 8px;
+  }
+  .field .ask-hint::before { content: "ex： "; font-weight: 600; }
+  .field textarea {
+    width: 100%;
+    min-height: 60px;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font: inherit;
+    background: var(--panel);
+    color: var(--ink);
+  }
+  .field textarea:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+  .marks { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 0.9rem; color: var(--ink-soft); }
+  .marks label { cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 4px; }
+  .marks input { margin: 0; }
+  /* 印（✓/△/?）が未選択の欄を目立たせる */
+  .marks.mark-todo {
+    border: 1px dashed var(--empty); border-radius: 8px;
+    padding: 4px 10px; background: rgba(160,80,80,0.07);
+  }
+  .marks.mark-todo::after {
+    content: "◀ どちらかを選んでください";
+    color: var(--empty); font-weight: 700; font-size: 0.84rem;
+  }
+
+  /* 各シートへジャンプするボタン */
+  .jump-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 4px; }
+  .jump-btns .jump-label { font-size: 0.9rem; color: var(--ink-soft); font-weight: 600; }
+  button.jump-btn {
+    border: 1px solid var(--accent); color: var(--accent);
+    background: var(--panel); border-radius: 999px;
+    padding: 6px 14px; font: inherit; font-size: 0.9rem; cursor: pointer;
+  }
+  button.jump-btn:hover { background: var(--accent-soft); }
+
+  .radar-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .radar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .radar-row .rname { flex: 1 1 160px; font-weight: 600; }
+  .radar-row select { border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; font: inherit; background: var(--panel); color: var(--ink); }
+  /* 能力レーダー チャート */
+  .radar-chart-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 4px 0 14px; }
+  .radar-chart-wrap svg { width: 260px; height: 260px; max-width: 100%; flex: 0 0 auto; }
+  .radar-chart-wrap .rc-legend { font-size: 13px; line-height: 1.9; color: var(--ink-soft); }
+  .radar-chart-wrap .rc-legend .swatch { display: inline-block; width: 22px; height: 0; vertical-align: middle; margin-right: 6px; }
+  .radar-chart-wrap .rc-legend .sw-cur { border-top: 3px solid var(--accent); }
+  .radar-chart-wrap .rc-legend .sw-prev { border-top: 3px dashed var(--ink-faint); }
+  .rc-ring { fill: none; stroke: var(--border); stroke-width: 1; }
+  .rc-spoke { stroke: var(--border); stroke-width: 1; }
+  .rc-label { fill: var(--ink); font-size: 11px; font-weight: 600; }
+  .rc-prev { fill: none; stroke: var(--ink-faint); stroke-width: 2; stroke-dasharray: 5 4; opacity: 0.85; }
+  .rc-cur { fill: var(--accent); fill-opacity: 0.18; stroke: var(--accent); stroke-width: 2.5; }
+  .rc-cur-dot { fill: var(--accent); }
+
+  /* コピーボタン */
+  .copy-zone { text-align: center; margin-top: 24px; }
+  .copy-hint { color: var(--ink-soft); margin-bottom: 10px; }
+  button.copy-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 40px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform 0.08s ease, filter 0.15s ease;
+  }
+  button.copy-btn:hover { filter: brightness(1.08); }
+  button.copy-btn:active { transform: scale(0.97); }
+  .autosave-note { color: var(--ink-soft); font-size: 0.82rem; margin-top: 12px; }
+
+  .toast {
+    position: fixed;
+    left: 50%; bottom: 32px;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .mark-legend { font-size: 0.9rem; color: var(--ink-soft); margin: 6px 0 0; }
+  .mark-legend b { color: var(--ink); }
+
+  @media (max-width: 560px) {
+    body { font-size: 15px; }
+    .wrap { padding: 18px 12px 70px; }
+    section { padding: 18px 16px; }
+    section > h2 { margin: -18px -16px 14px; padding: 11px 16px; }
+    header.hero h1 { font-size: 1.5rem; }
+  }
+  .sheet-forms { margin-top: 14px; border-top: 1px solid rgba(128,128,128,0.28); padding-top: 8px; }
+  .sheet-forms > h3 { margin-top: 8px; }
+</style>
+</head>
+<body>
+<!-- ▼▼▼ 状態注入ポイント：進行役AIがこの中身を状態JSONに置換する ▼▼▼ -->
+<script id="ayatori-train-state" type="application/json">{{STATE_JSON}}</script>
+<!-- ▲▲▲ 上のプレースホルダ文字列は必ずそのまま残す（差込点は script タグ内が唯一） ▲▲▲ -->
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-title">目次</div>
+    <a href="#sec-usage" data-sec="sec-usage">ℹ️ 使い方</a>
+    <a href="#sec-steps" data-sec="sec-steps">🗺️ 全手順・現在地</a>
+    <a href="#sec-status" data-sec="sec-status">📝 チェックシート</a>
+    <a href="#sec-radar" data-sec="sec-radar">📊 能力レーダー</a>
+    <a href="#sec-notes" data-sec="sec-notes">🗒️ メモ</a>
+    <a href="#sec-roadmap" data-sec="sec-roadmap">🧵 パイプライン操作</a>
+    <a href="#sec-lenses" data-sec="sec-lenses">🔍 人間ゲートの基準</a>
+  </nav>
+
+  <div class="wrap">
+
+  <header class="hero">
+    <h1>トレーニングモード ハンドブック</h1>
+    <div class="hero-meta">
+      <div id="hero-scenario">シナリオ: —</div>
+      <div><span class="pill" id="hero-appname">app_name: —</span></div>
+      <a class="whatis" href="../../skills/train-handbook/ayatori-train-explainer.html" target="_blank" rel="noopener"><span class="play">▶</span> トレーニングモードって何？</a>
+    </div>
+  </header>
+
+  <!-- 1. 使い方 -->
+  <section id="sec-usage">
+    <h2>このハンドブックの使い方</h2>
+    <p>これは、トレーニング中ずっと手元に置くノートです。気づいたことを書き込んでいきましょう。</p>
+    <div class="callout">
+      書いた内容は<b>「コピー」してチャットに貼り戻す</b>と AI に伝わります。
+    </div>
+    <h3>基本の流れ</h3>
+    <div class="flow-steps">
+      <span class="chip">① 下のフォームに入力</span><span class="arrow">→</span>
+      <span class="chip">② 「コピー」ボタンを押す</span><span class="arrow">→</span>
+      <span class="chip">③ AYATORI のチャットに貼る</span><span class="arrow">→</span>
+      <span class="chip">④ AI が清書して返す</span>
+    </div>
+    <div class="autosave-note">
+      シートの記入は2通りあります。<b>自分で書く（おすすめ）</b>＝聞いた話を自分の言葉で振り分けること自体が訓練です。
+      <b>オート記入（非推奨）</b>＝話をそのまま自動で転記する、動作確認向けモードです。<br>
+      ※「オート記入」に加筆した場合、都度貼り戻してAIに伝えてください。
+    </div>
+  </section>
+
+  <!-- 2. 全手順と現在地 -->
+  <section id="sec-steps">
+    <h2>訓練の流れと現在地</h2>
+    <p>訓練は次の流れで進みます。</p>
+    <ol class="steps" id="steps-list">
+      <!-- JSで current_step をハイライト（data-step===current_step の1行が点灯）。パイプライン操作のステップ（4〜6）は1つに束ねているため data-step=4 がそのあいだ点灯し続ける。振り返りは data-step=7。 -->
+      <li data-step="1" data-first><span class="st-icon">🙎‍♂️</span><span class="st-title">イントロダクション</span><span class="here-badge"></span><br><span class="st-desc">オーナー（AI原企画者）の自己紹介・世界観を聞く</span></li>
+      <li data-step="2"><span class="st-icon">🎤</span><span class="st-title">ヒアリング</span><span class="here-badge"></span><br><span class="st-desc">オーナーに質問して、ビジネス・プロダクトを理解する</span></li>
+      <li data-step="3"><span class="st-icon">🎯</span><span class="st-title">目標の認識合わせ</span><span class="here-badge"></span><br><span class="st-desc">「成功とは何か」をオーナーとすり合わせる</span></li>
+      <li data-step="4"><span class="st-icon">🧵</span><span class="st-title">パイプライン入力＋レビュー</span><span class="here-badge"></span><br><span class="st-desc">理解した内容を本体（AYATORI）に入力して作らせ、人間ゲートで確認する</span></li>
+      <li data-step="7"><span class="st-icon">🪞</span><span class="st-title">振り返り</span><span class="here-badge"></span><br><span class="st-desc">6 つの能力を自己評価して学びをまとめる</span></li>
+    </ol>
+  </section>
+
+  <!-- 3. チェックシート記載状況 -->
+  <section id="sec-status">
+    <h2>チェックシート</h2>
+    <h3>各シートのステータス</h3>
+    <div class="status-grid">
+      <div class="status-card">
+        <h4>ビジネス理解シート（B1-B4）</h4>
+        <div class="status-counts">
+          <span class="c-ok">✓ <span data-count="business-ok">0</span></span>
+          <span class="c-guess">△ <span data-count="business-guess">0</span></span>
+          <span class="c-empty">未 <span data-count="business-empty">4</span></span>
+        </div>
+        <div class="status-bar"><span class="seg-ok" data-bar="business-ok" style="width:0%"></span><span class="seg-guess" data-bar="business-guess" style="width:0%"></span></div>
+      </div>
+      <div class="status-card">
+        <h4>プロダクト理解シート（P1-P6）</h4>
+        <div class="status-counts">
+          <span class="c-ok">✓ <span data-count="product-ok">0</span></span>
+          <span class="c-guess">△ <span data-count="product-guess">0</span></span>
+          <span class="c-empty">未 <span data-count="product-empty">6</span></span>
+        </div>
+        <div class="status-bar"><span class="seg-ok" data-bar="product-ok" style="width:0%"></span><span class="seg-guess" data-bar="product-guess" style="width:0%"></span></div>
+      </div>
+      <div class="status-card">
+        <h4>目標整理シート（G1-G2）</h4>
+        <div class="status-counts">
+          <span class="c-ok">記入済 <span data-count="goal-filled">0</span></span>
+          <span class="c-empty">未 <span data-count="goal-empty">2</span></span>
+        </div>
+        <div class="status-bar"><span class="seg-ok" data-bar="goal-filled" style="width:0%"></span></div>
+      </div>
+    </div>
+    <div class="jump-btns">
+      <span class="jump-label">入力する →</span>
+      <button type="button" class="jump-btn" data-jump="form-bp">ビジネス理解シート</button>
+      <button type="button" class="jump-btn" data-jump="form-product">プロダクト理解シート</button>
+      <button type="button" class="jump-btn" data-jump="form-goal">目標整理シート</button>
+    </div>
+    <div class="sheet-forms">
+      <p>聞き取った内容をここに書きます。<b>「← いまここ」</b>が付いたフォームが、今記入すべきものです。</p>
+      <p class="mark-legend"><b>✓ 事実</b>＝オーナーが言った ／ <b>△ 想像</b>＝会話から推測</p>
+      <div class="callout warn">
+        このシートと質問例は<b>「取っかかり」</b>で、台本ではありません。大事なのは、<b>オーナーの答えに合わせて深掘りし、オーナー自身がまだ言葉にできていないことに気づくこと</b>です。
+      </div>
+    <!-- ビジネス理解シート -->
+    <div class="form-block" id="form-bp">
+      <h3>ビジネス理解シート <span class="active-badge" id="badge-bp"></span></h3>
+      <div class="field" data-key="B1" data-group="business">
+        <label class="field-label">B1 ビジネス目標</label>
+        <p class="ask-hint">最終的にどんな状態になったら成功？</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-B1" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-B1" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+      <div class="field" data-key="B2" data-group="business">
+        <label class="field-label">B2 成功の定義</label>
+        <p class="ask-hint">“うまくいった”とは具体的にどんな状態？　誰がどうなる？</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-B2" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-B2" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+      <div class="field" data-key="B3" data-group="business">
+        <label class="field-label">B3 成功の指標</label>
+        <p class="ask-hint">それは何を見れば分かる？（数字・周りの反応など）</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-B3" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-B3" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+      <div class="field" data-key="B4" data-group="business">
+        <label class="field-label">B4 背景（なぜ投資するか）</label>
+        <p class="ask-hint">今これに取り組む理由は？　きっかけは？</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-B4" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-B4" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- プロダクト理解シート -->
+    <div class="form-block" id="form-product">
+      <h3>プロダクト理解シート <span class="active-badge" id="badge-product"></span></h3>
+      <div class="field" data-key="P1" data-group="product">
+        <label class="field-label">P1 対象ユーザー</label>
+        <p class="ask-hint">主に誰に使ってほしい？　どんな人？</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-P1" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-P1" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+      <div class="field" data-key="P2" data-group="product">
+        <label class="field-label">P2 課題・ジョブ</label>
+        <p class="ask-hint">その人は今、何に困っている？　どんな場面で？</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-P2" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-P2" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+      <div class="field" data-key="P3" data-group="product">
+        <label class="field-label">P3 提供価値・コア機能</label>
+        <p class="ask-hint">その人にとって“ないと困る”一番の部分は？</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-P3" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-P3" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+      <div class="field" data-key="P4" data-group="product">
+        <label class="field-label">P4 利用シーン</label>
+        <p class="ask-hint">いつ・どこで使う？（スマホ／PC、通勤中…）</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-P4" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-P4" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+      <div class="field" data-key="P5" data-group="product">
+        <label class="field-label">P5 競合・代替手段との差</label>
+        <p class="ask-hint">今は何で代用している？　それより何が良くなると嬉しい？</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-P5" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-P5" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+      <div class="field" data-key="P6" data-group="product">
+        <label class="field-label">P6 成果物イメージ・範囲</label>
+        <p class="ask-hint">まずどこまであれば十分？　“今回はここまで”の線は？</p>
+        <textarea data-field="value"></textarea>
+        <div class="marks">
+          <label><input type="radio" name="mark-P6" value="✓" data-field="mark"> ✓ 事実</label>
+          <label><input type="radio" name="mark-P6" value="△" data-field="mark"> △ 想像</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 目標整理シート -->
+    <div class="form-block" id="form-goal">
+      <h3>目標整理シート <span class="active-badge" id="badge-goal"></span></h3>
+      <div class="field" data-key="G1" data-group="goal">
+        <label class="field-label">G1 一言ゴール（このプロジェクトの成功とはどういう状態か・あなた自身の言葉で）</label>
+        <p class="ask-hint">「一言でいうと、今回のゴールは “◯◯” で合っていますか？」と、自分の言葉でまとめてオーナーに確認。</p>
+        <textarea data-field="value"></textarea>
+      </div>
+      <div class="field" data-key="G2" data-group="goal">
+        <label class="field-label">G2 今回はやらないこと</label>
+        <p class="ask-hint">あえてやらない・後回しにすることは？　“やらない線”を一緒に確認。</p>
+        <textarea data-field="value"></textarea>
+      </div>
+    </div>
+
+    <!-- チェックシートを一通り聞き終えたあとのTIPS -->
+    <div class="callout warn">
+      <b>💡 TIPS：一通り聞き終えたら</b><br>
+      締めに<b>「その他、言い忘れたご要望はありますか？」</b>と聞くと、決まった項目からは出ない要望・制約が拾えます。
+    </div>
+
+    <!-- コピーボタン -->
+    <div class="copy-zone">
+      <div class="copy-hint">保存する場合は コピーして チャット「/ayatori-train」に貼ってくださいね</div>
+      <button type="button" class="copy-btn" id="copy-btn">コピー</button>
+    </div>
+    </div>
+  </section>
+
+  <!-- 能力レーダー（チェックシートとは別セクション） -->
+  <section id="sec-radar">
+    <h2>能力レーダー（自己評価）</h2>
+    <div class="form-block" id="form-radar">
+      <h3>6 能力レーダー <span class="active-badge" id="badge-radar"></span></h3>
+      <p class="mark-legend">トレーニングの最後に「振り返り」があり、AI が今回の手応えの下書きを提案します。</p>
+      <div class="radar-chart-wrap">
+        <svg id="radar-chart" viewBox="0 0 260 260" role="img" aria-label="6能力レーダーチャート"></svg>
+        <div class="rc-legend">
+          <div><span class="swatch sw-cur"></span>今回の自己評価</div>
+          <div id="rc-legend-prev" style="display:none"><span class="swatch sw-prev"></span>前回まで</div>
+          <div style="margin-top:6px;font-size:12px">下のセレクトを変えるとチャートが変わります。</div>
+        </div>
+      </div>
+      <div class="radar-grid" id="radar-grid">
+        <div class="radar-row" data-axis="business_understanding">
+          <span class="rname">ビジネス理解</span>
+          <select data-field="radar"><option value="">未評価</option><option value="0">L0</option><option value="1">L1</option><option value="2">L2</option><option value="3">L3</option></select>
+        </div>
+        <div class="radar-row" data-axis="hearing">
+          <span class="rname">ヒアリング</span>
+          <select data-field="radar"><option value="">未評価</option><option value="0">L0</option><option value="1">L1</option><option value="2">L2</option><option value="3">L3</option></select>
+        </div>
+        <div class="radar-row" data-axis="goal_setting">
+          <span class="rname">目標設定</span>
+          <select data-field="radar"><option value="">未評価</option><option value="0">L0</option><option value="1">L1</option><option value="2">L2</option><option value="3">L3</option></select>
+        </div>
+        <div class="radar-row" data-axis="discernment">
+          <span class="rname">目利き</span>
+          <select data-field="radar"><option value="">未評価</option><option value="0">L0</option><option value="1">L1</option><option value="2">L2</option><option value="3">L3</option></select>
+        </div>
+        <div class="radar-row" data-axis="complement">
+          <span class="rname">補完</span>
+          <select data-field="radar"><option value="">未評価</option><option value="0">L0</option><option value="1">L1</option><option value="2">L2</option><option value="3">L3</option></select>
+        </div>
+        <div class="radar-row" data-axis="ai_communication">
+          <span class="rname">AI 伝達</span>
+          <select data-field="radar"><option value="">未評価</option><option value="0">L0</option><option value="1">L1</option><option value="2">L2</option><option value="3">L3</option></select>
+        </div>
+      </div>
+      <div class="copy-zone">
+        <div class="copy-hint">保存する場合は コピーして チャット「/ayatori-train」に貼ってくださいね</div>
+        <button type="button" class="copy-btn">コピー</button>
+        <div class="autosave-note">チェックシート・レーダー・メモの入力が<b>まとめて</b>コピーされます。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3.5 メモ（自由記述） -->
+  <section id="sec-notes">
+    <h2>メモ（自由記述）</h2>
+    <p>チェックシートに収まらないことを自由にメモできます。</p>
+    <div class="form-block">
+      <div class="field" data-group="notes">
+        <label class="field-label" for="notes-freeform">メモ</label>
+        <textarea id="notes-freeform" data-group="notes" rows="10"
+          placeholder="例）オーナーは『長く安心して乗ってほしい』と言うが、その先の狙いを次に確認したい／スマホ前提かどうか未確認 …"></textarea>
+      </div>
+      <div class="copy-zone">
+        <div class="copy-hint">保存する場合は コピーして チャット「/ayatori-train」に貼ってくださいね</div>
+        <button type="button" class="copy-btn">コピー</button>
+        <div class="autosave-note">チェックシート・レーダー・メモの入力が<b>まとめて</b>コピーされます。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 行程表 -->
+  <section id="sec-roadmap">
+    <h2>これまでの内容をパイプラインへ入力する際の操作手順</h2>
+    <p>パイプライン入力は、<b>新しい会話</b>を開いて次の順にコマンドを打ちます。</p>
+    <ol>
+      <li>新しい会話で <code>/ayatori-question</code> → 続けて <code>/ayatori-requirements</code></li>
+      <li>別の新しい会話で <code>/ayatori-design</code></li>
+      <li>さらに別の新しい会話で <code>/ayatori-screens</code></li>
+    </ol>
+    <div class="callout">
+      <b>終了点＝「画面デザインのレビューが承認されました〈承認ゲート 21〉」</b>。この表示（本体画面に出ます）まで来たら訓練のパイプライン部分は完了です。
+    </div>
+    <div class="callout warn">
+      <ul style="margin:4px 0;">
+        <li>この承認（〈承認ゲート 21〉）の後、<b>「トレーニングの振り返りに進みましょう」と案内が出ます</b>。その通り、新しい会話で <code>/ayatori-train</code> に戻りましょう。</li>
+        <li>Confluence・Figma への書き出しは<b>不要（任意）</b>。</li>
+        <li>ゲートで「最初からやり直す／却下」は<b>選ばない</b>（進行の記録が消え、進捗を判定できなくなるため）。</li>
+        <li>パイプラインを進めている途中でオーナーに聞き戻して<b>新しく決まったこと</b>は、要件文書に<b>自動では反映されません</b>。自分で AYATORI に追加インプットしてください（要件の承認前なら該当ステップの会話で補足、承認後なら <code>/ayatori-req-delta</code>、画面まで完成した後なら <code>/ayatori-delta</code>）。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5. 3つの基準 -->
+  <section id="sec-lenses">
+    <h2>人間ゲートでの判断基準</h2>
+    <p>以下 3 つの基準でチェックすると、判断しやすいのでおすすめです。</p>
+    <div class="lens"><span class="lens-h">1 照合：「それ、オーナーは言った?」</span><br>足されたものを見る。要件や画面に、オーナーが言っていない要素が紛れ込んでいないか。</div>
+    <div class="lens"><span class="lens-h">2 抜け：「オーナーが言ったのに、無くない?」</span><br>欠けたものを見る。オーナーが大事だと言ったのに、要件・画面に反映されていないものはないか。</div>
+    <div class="lens"><span class="lens-h">3 ゴール整合：「これで、オーナーの成功に近づく?」</span><br>向きを見る。この作りは、オーナーが定義した「成功」に向かっているか。</div>
+
+    <h3>例</h3>
+    <p>画面を開く → 上から順に要素（ボタン・入力欄・表示など）を見る → それぞれ「これ、オーナーが言ったことだっけ?」と 3つの基準で確認。</p>
+
+    <h3>注意書き</h3>
+    <ul>
+      <li><b>ゲートで並ぶリスト</b>（要件に無い／根拠が薄いもの）から確認してよい。あわせて<b>自分の目でも 3つの基準</b>を通す。</li>
+      <li>迷ったら<b>オーナーに聞き戻して</b>よい：① 訓練を始めた会話（📚 と 🙎‍♂️ がいる）に戻って質問 ／ ② 閉じた場合は<b>新しい会話</b>で <code>/ayatori-train</code>（オーナー相談モード）。</li>
+      <li>2 回目以降は、まず<b>前回の指摘が直ったか</b>を確認。</li>
+    </ul>
+  </section>
+
+  </div><!-- /.wrap -->
+</div><!-- /.layout -->
+
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- ラベル定義（コピー用テキストと表示に使う） ----
+  var BUSINESS_FIELDS = [
+    ["B1", "ビジネス目標"], ["B2", "成功の定義"],
+    ["B3", "成功の指標"], ["B4", "背景(なぜ投資するか)"]
+  ];
+  var PRODUCT_FIELDS = [
+    ["P1", "対象ユーザー"], ["P2", "課題・ジョブ"], ["P3", "提供価値・コア機能"],
+    ["P4", "利用シーン"], ["P5", "競合・代替手段との差"], ["P6", "成果物イメージ・範囲"]
+  ];
+  var GOAL_FIELDS = [["G1", "一言ゴール"], ["G2", "今回はやらないこと"]];
+  var RADAR_AXES = [
+    ["business_understanding", "ビジネス理解"], ["hearing", "ヒアリング"],
+    ["goal_setting", "目標設定"], ["discernment", "目利き"],
+    ["complement", "補完"], ["ai_communication", "AI伝達"]
+  ];
+  var VALID_MARKS = ["✓", "△", "?"];
+
+  // ---- 状態JSONの安全な読み込み ----
+  function loadState() {
+    var el = document.getElementById("ayatori-train-state");
+    var raw = el ? el.textContent : "";
+    if (!raw) return {};
+    raw = raw.trim();
+    // 未置換のプレースホルダ、または空 → 空状態
+    if (!raw || raw.indexOf("{{") === 0) return {};
+    try {
+      var parsed = JSON.parse(raw);
+      return (parsed && typeof parsed === "object") ? parsed : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function safeGet(obj, path, fallback) {
+    var cur = obj;
+    for (var i = 0; i < path.length; i++) {
+      if (cur == null || typeof cur !== "object") return fallback;
+      cur = cur[path[i]];
+    }
+    return (cur === undefined || cur === null) ? fallback : cur;
+  }
+
+  var state = loadState();
+  // 差込時点(＝前回までの累積 radar.json)を merge 前に凍結。localStorage 下書きで汚染しない
+  var RADAR_INJECTED = {};
+  (function () {
+    var src = (state && state.radar && typeof state.radar === "object") ? state.radar : {};
+    for (var k in src) { if (src.hasOwnProperty(k)) RADAR_INJECTED[k] = src[k]; }
+  })();
+
+  // 差込された state (＝ファイルの正本値) の指紋を merge 前に確定する。
+  // 下書き(localStorage)にこの指紋を添えて保存し、リロード時に照合する:
+  //   指紋が一致 → ファイル未変更 (ただのタブ切替) → 下書きを保持 (未送信入力を守る)
+  //   指紋が不一致 → 📚 が再生成してファイルが変わった → 下書きは古いので破棄しファイル値を採用
+  // これで「入力中の下書きは消えない」と「清書後はリロードで丸ごと最新化」を両立する。
+  function fileSignature(st) {
+    function grp(g, fields, withMark) {
+      var parts = [];
+      for (var i = 0; i < fields.length; i++) {
+        var key = fields[i][0];
+        var v = safeGet(st, [g, key, "value"], "");
+        var m = withMark ? safeGet(st, [g, key, "mark"], "?") : "";
+        parts.push(key + "=" + v + (withMark ? ("/" + m) : ""));
+      }
+      return g + ":{" + parts.join("|") + "}";
+    }
+    var rparts = [];
+    for (var i = 0; i < RADAR_AXES.length; i++) {
+      var ax = RADAR_AXES[i][0];
+      rparts.push(ax + "=" + safeGet(st, ["radar", ax], ""));
+    }
+    return [
+      grp("business", BUSINESS_FIELDS, true),
+      grp("product", PRODUCT_FIELDS, true),
+      grp("goal", GOAL_FIELDS, false),
+      "radar:{" + rparts.join("|") + "}",
+      "notes=" + safeGet(st, ["notes"], "")
+    ].join("||");
+  }
+  var FILE_SIGNATURE = fileSignature(state);
+
+  // ---- ヘッダー描画 ----
+  function renderHero() {
+    var appName = safeGet(state, ["app_name"], "");
+    var oneliner = safeGet(state, ["scenario_oneliner"], "");
+    document.getElementById("hero-scenario").textContent = "シナリオ: " + (oneliner || "—");
+    document.getElementById("hero-appname").textContent = "app_name: " + (appName || "—");
+  }
+
+  // ---- ステップ現在地 ----
+  function renderSteps() {
+    var cur = safeGet(state, ["current_step"], null);
+    var items = document.querySelectorAll("#steps-list li");
+    for (var i = 0; i < items.length; i++) {
+      var li = items[i];
+      var step = parseInt(li.getAttribute("data-step"), 10);
+      var badge = li.querySelector(".here-badge");
+      if (cur !== null && step === cur) {
+        li.classList.add("here");
+        if (badge) badge.textContent = "◀ いまここ";
+      } else {
+        li.classList.remove("here");
+        if (badge) badge.textContent = "";
+      }
+    }
+  }
+
+  // ---- フォームのプレフィル ----
+  function prefillGroup(groupName, fields) {
+    for (var i = 0; i < fields.length; i++) {
+      var key = fields[i][0];
+      var fieldEl = document.querySelector('.field[data-key="' + key + '"][data-group="' + groupName + '"]');
+      if (!fieldEl) continue;
+      var val = safeGet(state, [groupName, key, "value"], "");
+      var ta = fieldEl.querySelector("textarea");
+      if (ta) ta.value = (typeof val === "string") ? val : "";
+      // mark（goal にはマークなし）
+      if (groupName !== "goal") {
+        var mark = safeGet(state, [groupName, key, "mark"], null);
+        if (VALID_MARKS.indexOf(mark) === -1) mark = null;
+        var radios = fieldEl.querySelectorAll('input[data-field="mark"]');
+        for (var r = 0; r < radios.length; r++) {
+          radios[r].checked = (mark !== null && radios[r].value === mark);
+        }
+      }
+    }
+  }
+
+  function prefillRadar() {
+    for (var i = 0; i < RADAR_AXES.length; i++) {
+      var axis = RADAR_AXES[i][0];
+      var row = document.querySelector('.radar-row[data-axis="' + axis + '"]');
+      if (!row) continue;
+      var sel = row.querySelector("select");
+      var v = safeGet(state, ["radar", axis], null);
+      if (sel) {
+        sel.value = (v === 0 || v === 1 || v === 2 || v === 3) ? String(v) : "";
+      }
+    }
+  }
+
+  // ---- 能力レーダー チャート ----
+  var RADAR_PREV = null; // 差込 state の radar 値を凍結保持（前回まで＝破線）
+  var RC = { cx: 130, cy: 130, R: 92 }; // level3 = 半径 R
+
+  function rcPoint(axisIndex, level) {
+    // 上(-90°)始点・時計回りに 60° ずつ。level 0-3 → 半径 0..R
+    var ang = (-90 + 60 * axisIndex) * Math.PI / 180;
+    var r = RC.R * (level / 3);
+    return [RC.cx + r * Math.cos(ang), RC.cy + r * Math.sin(ang)];
+  }
+  function rcPolyPoints(vals) {
+    // vals: 6要素 (null は 0 扱いで内側に寄せる)
+    var pts = [];
+    for (var i = 0; i < 6; i++) {
+      var v = (vals[i] === 0 || vals[i] === 1 || vals[i] === 2 || vals[i] === 3) ? vals[i] : 0;
+      var p = rcPoint(i, v);
+      pts.push(p[0].toFixed(1) + "," + p[1].toFixed(1));
+    }
+    return pts.join(" ");
+  }
+  function radarCurrentValues() {
+    var vals = [];
+    for (var i = 0; i < RADAR_AXES.length; i++) {
+      var row = document.querySelector('.radar-row[data-axis="' + RADAR_AXES[i][0] + '"]');
+      var sel = row ? row.querySelector("select") : null;
+      vals.push((sel && sel.value !== "") ? parseInt(sel.value, 10) : null);
+    }
+    return vals;
+  }
+  function svgEl(name, attrs) {
+    var e = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (var k in attrs) { if (attrs.hasOwnProperty(k)) e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+  function buildRadarChart() {
+    var svg = document.getElementById("radar-chart");
+    if (!svg) return;
+    // 前回まで＝差込時点で凍結した RADAR_INJECTED（下書き非汚染）
+    RADAR_PREV = [];
+    for (var i = 0; i < RADAR_AXES.length; i++) {
+      var pv = RADAR_INJECTED[RADAR_AXES[i][0]];
+      RADAR_PREV.push((pv === 0 || pv === 1 || pv === 2 || pv === 3) ? pv : null);
+    }
+    var hasPrev = false;
+    for (var p = 0; p < RADAR_PREV.length; p++) {
+      if (RADAR_PREV[p] === 0 || RADAR_PREV[p] === 1 || RADAR_PREV[p] === 2 || RADAR_PREV[p] === 3) hasPrev = true;
+    }
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    // リング (level 1,2,3)
+    for (var lv = 1; lv <= 3; lv++) {
+      var ring = [];
+      for (var a = 0; a < 6; a++) { var q = rcPoint(a, lv); ring.push(q[0].toFixed(1) + "," + q[1].toFixed(1)); }
+      svg.appendChild(svgEl("polygon", { points: ring.join(" "), "class": "rc-ring" }));
+    }
+    // スポーク＋ラベル
+    for (var s = 0; s < 6; s++) {
+      var tip = rcPoint(s, 3);
+      svg.appendChild(svgEl("line", { x1: RC.cx, y1: RC.cy, x2: tip[0].toFixed(1), y2: tip[1].toFixed(1), "class": "rc-spoke" }));
+      var lp = rcPoint(s, 3.42);
+      var anchor = "middle";
+      if (lp[0] > RC.cx + 4) anchor = "start"; else if (lp[0] < RC.cx - 4) anchor = "end";
+      var t = svgEl("text", { x: lp[0].toFixed(1), y: (lp[1] + 3).toFixed(1), "class": "rc-label", "text-anchor": anchor });
+      t.textContent = RADAR_AXES[s][1];
+      svg.appendChild(t);
+    }
+    // 前回まで（破線・凍結）
+    if (hasPrev) {
+      svg.appendChild(svgEl("polygon", { points: rcPolyPoints(RADAR_PREV), "class": "rc-prev", id: "rc-prev-poly" }));
+      var lgPrev = document.getElementById("rc-legend-prev");
+      if (lgPrev) lgPrev.style.display = "";
+    }
+    // 今回（実線・可変）
+    svg.appendChild(svgEl("polygon", { points: rcPolyPoints(radarCurrentValues()), "class": "rc-cur", id: "rc-cur-poly" }));
+    updateRadarCurrent();
+  }
+  function updateRadarCurrent() {
+    var poly = document.getElementById("rc-cur-poly");
+    if (!poly) return;
+    var vals = radarCurrentValues();
+    poly.setAttribute("points", rcPolyPoints(vals));
+    // 頂点ドット（評価済み軸のみ）
+    var svg = document.getElementById("radar-chart");
+    var dots = svg.querySelectorAll(".rc-cur-dot");
+    for (var d = dots.length - 1; d >= 0; d--) dots[d].parentNode.removeChild(dots[d]);
+    for (var i = 0; i < 6; i++) {
+      if (vals[i] === 0 || vals[i] === 1 || vals[i] === 2 || vals[i] === 3) {
+        var pt = rcPoint(i, vals[i]);
+        svg.appendChild(svgEl("circle", { cx: pt[0].toFixed(1), cy: pt[1].toFixed(1), r: 3, "class": "rc-cur-dot" }));
+      }
+    }
+  }
+
+  // ---- active_form の強調 ----
+  function highlightActiveForm() {
+    var active = safeGet(state, ["active_form"], null);
+    // active_form 値 → form-block id
+    // active_form 値 → 強調する form-block id（複数可。bp はビジネス+プロダクトの両方が対象）
+    var map = {
+      "bp": ["form-bp", "form-product"],
+      "goal": ["form-goal"],
+      "radar": ["form-radar"],
+      "radar_update": ["form-radar"]
+    };
+    var badgeMap = {
+      "form-bp": "badge-bp",
+      "form-product": "badge-product",
+      "form-goal": "badge-goal",
+      "form-radar": "badge-radar"
+    };
+    // この段階では「まだ（今は不要）」なフォーム
+    var notYetMap = {
+      "radar": ["form-bp", "form-product", "form-goal"],
+      "bp": ["form-goal", "form-radar"],
+      "goal": ["form-radar"],
+      "radar_update": []
+    };
+    // reset
+    var blocks = document.querySelectorAll(".form-block");
+    for (var i = 0; i < blocks.length; i++) blocks[i].classList.remove("active", "not-yet");
+    var badges = document.querySelectorAll(".active-badge");
+    for (var b = 0; b < badges.length; b++) badges[b].textContent = "";
+    var oldNotes = document.querySelectorAll(".stage-note");
+    for (var s = 0; s < oldNotes.length; s++) oldNotes[s].parentNode.removeChild(oldNotes[s]);
+
+    // 「まだ」バッジを付ける（active_form が分かるときだけ）
+    var notYet = (active && notYetMap[active]) ? notYetMap[active] : [];
+    for (var n = 0; n < notYet.length; n++) {
+      var nb = document.getElementById(notYet[n]);
+      if (!nb) continue;
+      nb.classList.add("not-yet");
+      var h3 = nb.querySelector("h3");
+      if (h3 && !h3.querySelector(".stage-note")) {
+        var note = document.createElement("span");
+        note.className = "stage-note";
+        note.textContent = "この後のステップで使います";
+        h3.appendChild(note);
+      }
+    }
+
+    if (!active || !map[active]) return;
+    var targets = map[active];
+    // 対象ブロックを（順番を保って）フォーム群の先頭側へ移動し、いずれも強調
+    for (var t = targets.length - 1; t >= 0; t--) {
+      var block = document.getElementById(targets[t]);
+      if (!block) continue;
+      block.classList.add("active");
+      var parent = block.parentNode;
+      var firstFormBlock = parent.querySelector(".form-block");
+      if (firstFormBlock && firstFormBlock !== block) {
+        parent.insertBefore(block, firstFormBlock);
+      }
+    }
+    for (var u = 0; u < targets.length; u++) {
+      var badgeId = badgeMap[targets[u]];
+      if (badgeId) {
+        var badgeEl = document.getElementById(badgeId);
+        if (badgeEl) badgeEl.textContent = "← いまここ";
+      }
+    }
+  }
+
+  // ---- 記載状況カウント（フォームの現在値から算出） ----
+  function currentMarkOf(groupName, key) {
+    var fieldEl = document.querySelector('.field[data-key="' + key + '"][data-group="' + groupName + '"]');
+    if (!fieldEl) return "?";
+    var radios = fieldEl.querySelectorAll('input[data-field="mark"]');
+    for (var r = 0; r < radios.length; r++) {
+      if (radios[r].checked) return radios[r].value;
+    }
+    return "?";
+  }
+
+  function valueOf(groupName, key) {
+    var fieldEl = document.querySelector('.field[data-key="' + key + '"][data-group="' + groupName + '"]');
+    if (!fieldEl) return "";
+    var ta = fieldEl.querySelector("textarea");
+    return ta ? ta.value.trim() : "";
+  }
+
+  function setText(sel, txt) {
+    var el = document.querySelector(sel);
+    if (el) el.textContent = txt;
+  }
+  function setBar(sel, pct) {
+    var el = document.querySelector(sel);
+    if (el) el.style.width = pct + "%";
+  }
+
+  function recomputeStatus() {
+    // business
+    var bOk = 0, bGuess = 0, bEmpty = 0;
+    for (var i = 0; i < BUSINESS_FIELDS.length; i++) {
+      var m = currentMarkOf("business", BUSINESS_FIELDS[i][0]);
+      if (m === "✓") bOk++; else if (m === "△") bGuess++; else bEmpty++;
+    }
+    setText('[data-count="business-ok"]', bOk);
+    setText('[data-count="business-guess"]', bGuess);
+    setText('[data-count="business-empty"]', bEmpty);
+    setBar('[data-bar="business-ok"]', (bOk / BUSINESS_FIELDS.length) * 100);
+    setBar('[data-bar="business-guess"]', (bGuess / BUSINESS_FIELDS.length) * 100);
+
+    // product
+    var pOk = 0, pGuess = 0, pEmpty = 0;
+    for (var j = 0; j < PRODUCT_FIELDS.length; j++) {
+      var mp = currentMarkOf("product", PRODUCT_FIELDS[j][0]);
+      if (mp === "✓") pOk++; else if (mp === "△") pGuess++; else pEmpty++;
+    }
+    setText('[data-count="product-ok"]', pOk);
+    setText('[data-count="product-guess"]', pGuess);
+    setText('[data-count="product-empty"]', pEmpty);
+    setBar('[data-bar="product-ok"]', (pOk / PRODUCT_FIELDS.length) * 100);
+    setBar('[data-bar="product-guess"]', (pGuess / PRODUCT_FIELDS.length) * 100);
+
+    // goal
+    var gFilled = 0;
+    for (var k = 0; k < GOAL_FIELDS.length; k++) {
+      if (valueOf("goal", GOAL_FIELDS[k][0]) !== "") gFilled++;
+    }
+    setText('[data-count="goal-filled"]', gFilled);
+    setText('[data-count="goal-empty"]', GOAL_FIELDS.length - gFilled);
+    setBar('[data-bar="goal-filled"]', (gFilled / GOAL_FIELDS.length) * 100);
+
+    flagUnmarkedFields();
+  }
+
+  // 内容を書いたのに ✓/△/? の印を選び忘れている欄を目立たせる（入力忘れ防止）
+  function flagUnmarkedFields() {
+    var groups = [["business", BUSINESS_FIELDS], ["product", PRODUCT_FIELDS]];
+    for (var g = 0; g < groups.length; g++) {
+      var groupName = groups[g][0], fields = groups[g][1];
+      for (var i = 0; i < fields.length; i++) {
+        var key = fields[i][0];
+        var fieldEl = document.querySelector('.field[data-key="' + key + '"][data-group="' + groupName + '"]');
+        if (!fieldEl) continue;
+        var marksEl = fieldEl.querySelector(".marks");
+        if (!marksEl) continue;
+        var hasValue = valueOf(groupName, key) !== "";
+        var hasMark = false;
+        var radios = fieldEl.querySelectorAll('input[data-field="mark"]');
+        for (var r = 0; r < radios.length; r++) { if (radios[r].checked) hasMark = true; }
+        // 「値は書いたのに印が未選択」= 選び忘れ → 目立たせる
+        if (hasValue && !hasMark) marksEl.classList.add("mark-todo");
+        else marksEl.classList.remove("mark-todo");
+      }
+    }
+  }
+
+  // ---- コピー用テキスト生成 ----
+  function buildCopyText() {
+    var lines = [];
+    lines.push("【AYATORI-TRAIN ハンドブック貼り戻し】");
+    lines.push("app_name: " + (safeGet(state, ["app_name"], "") || ""));
+
+    lines.push("--- ビジネス理解シート ---");
+    for (var i = 0; i < BUSINESS_FIELDS.length; i++) {
+      var bk = BUSINESS_FIELDS[i][0], blabel = BUSINESS_FIELDS[i][1];
+      lines.push(bk + " " + blabel + " [" + currentMarkOf("business", bk) + "]: " + valueOf("business", bk));
+    }
+
+    lines.push("--- プロダクト理解シート ---");
+    for (var j = 0; j < PRODUCT_FIELDS.length; j++) {
+      var pk = PRODUCT_FIELDS[j][0], plabel = PRODUCT_FIELDS[j][1];
+      lines.push(pk + " " + plabel + " [" + currentMarkOf("product", pk) + "]: " + valueOf("product", pk));
+    }
+
+    lines.push("--- 目標整理シート ---");
+    for (var k = 0; k < GOAL_FIELDS.length; k++) {
+      var gk = GOAL_FIELDS[k][0], glabel = GOAL_FIELDS[k][1];
+      lines.push(gk + " " + glabel + ": " + valueOf("goal", gk));
+    }
+
+    lines.push("--- 6能力レーダー(自己評価 L0-3) ---");
+    for (var m = 0; m < RADAR_AXES.length; m++) {
+      var axis = RADAR_AXES[m][0], alabel = RADAR_AXES[m][1];
+      var row = document.querySelector('.radar-row[data-axis="' + axis + '"]');
+      var sel = row ? row.querySelector("select") : null;
+      var v = (sel && sel.value !== "") ? ("L" + sel.value) : "-";
+      lines.push(alabel + ": " + v);
+    }
+
+    // メモ（自由記述）は最後に置く：本文は複数行になりうるので「--- メモ --- 以降 EOF まで」を本文とする
+    var notesEl = document.getElementById("notes-freeform");
+    lines.push("--- メモ ---");
+    lines.push(notesEl ? notesEl.value : "");
+
+    return lines.join("\n");
+  }
+
+  // ---- コピー処理 ----
+  function showToast() {
+    var t = document.getElementById("toast");
+    if (!t) return;
+    t.classList.add("show");
+    setTimeout(function () { t.classList.remove("show"); }, 1800);
+  }
+
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function doCopy() {
+    var text = buildCopyText();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showToast();
+      }, function () {
+        if (fallbackCopy(text)) showToast();
+        else window.prompt("コピーできませんでした。手動で選択してコピーしてください:", text);
+      });
+    } else {
+      if (fallbackCopy(text)) showToast();
+      else window.prompt("コピーできませんでした。手動で選択してコピーしてください:", text);
+    }
+  }
+
+  // ---- 下書きのブラウザ保存（localStorage・貼り戻し前でも入力が消えないように） ----
+  function draftKey() {
+    return "ayatori-train-draft:" + (safeGet(state, ["app_name"], "") || "default");
+  }
+  function readFormIntoObject() {
+    var o = { business: {}, product: {}, goal: {}, radar: {} };
+    function grab(group, fields) {
+      for (var i = 0; i < fields.length; i++) {
+        var key = fields[i][0];
+        var fe = document.querySelector('.field[data-key="' + key + '"][data-group="' + group + '"]');
+        if (!fe) continue;
+        var ta = fe.querySelector("textarea");
+        var entry = { value: ta ? ta.value : "" };
+        if (group !== "goal") {
+          var mark = "?";
+          var rs = fe.querySelectorAll('input[data-field="mark"]');
+          for (var r = 0; r < rs.length; r++) { if (rs[r].checked) { mark = rs[r].value; break; } }
+          entry.mark = mark;
+        }
+        o[group][key] = entry;
+      }
+    }
+    grab("business", BUSINESS_FIELDS);
+    grab("product", PRODUCT_FIELDS);
+    grab("goal", GOAL_FIELDS);
+    for (var i = 0; i < RADAR_AXES.length; i++) {
+      var axis = RADAR_AXES[i][0];
+      var row = document.querySelector('.radar-row[data-axis="' + axis + '"]');
+      var sel = row ? row.querySelector("select") : null;
+      o.radar[axis] = (sel && sel.value !== "") ? parseInt(sel.value, 10) : null;
+    }
+    var notesEl = document.getElementById("notes-freeform");
+    o.notes = notesEl ? notesEl.value : "";
+    return o;
+  }
+  function saveDraft() {
+    // 下書きに「土台にしたファイルの指紋」を添えて保存する (リロード時の照合用)
+    try {
+      localStorage.setItem(draftKey(), JSON.stringify({ sig: FILE_SIGNATURE, data: readFormIntoObject() }));
+    } catch (e) {}
+  }
+  function loadDraft() {
+    try {
+      var s = localStorage.getItem(draftKey());
+      if (!s) return null;
+      var p = JSON.parse(s);
+      return (p && typeof p === "object") ? p : null;
+    } catch (e) { return null; }
+  }
+  function mergeDraftIntoState(draft) {
+    if (!draft || typeof draft !== "object") return;
+    ["business", "product", "goal"].forEach(function (g) {
+      if (!draft[g]) return;
+      if (!state[g]) state[g] = {};
+      for (var k in draft[g]) { if (draft[g].hasOwnProperty(k)) state[g][k] = draft[g][k]; }
+    });
+    if (draft.radar) {
+      if (!state.radar) state.radar = {};
+      for (var a in draft.radar) { if (draft.radar.hasOwnProperty(a)) state.radar[a] = draft.radar[a]; }
+    }
+    if (typeof draft.notes === "string") state.notes = draft.notes;
+  }
+
+  // ---- 初期化 ----
+  function init() {
+    renderHero();
+    renderSteps();
+    // 差込 state に、この端末に保存した下書きを重ねてから描画（下書きが優先＝入力が消えない）。
+    // ただし下書きの土台指紋が現在のファイルと違う＝📚が再生成した最新なら、下書きは古いので破棄しファイル値を採用する。
+    var draft = loadDraft();
+    if (draft && draft.sig === FILE_SIGNATURE && draft.data) {
+      mergeDraftIntoState(draft.data);
+    } else if (draft) {
+      try { localStorage.removeItem(draftKey()); } catch (e) {}
+    }
+    prefillGroup("business", BUSINESS_FIELDS);
+    prefillGroup("product", PRODUCT_FIELDS);
+    prefillGroup("goal", GOAL_FIELDS);
+    prefillRadar();
+    buildRadarChart();
+    var notesEl = document.getElementById("notes-freeform");
+    if (notesEl) notesEl.value = safeGet(state, ["notes"], "") || "";
+    highlightActiveForm();
+    recomputeStatus();
+
+    // フォーム入力で「記載状況の即時更新」＋「下書きの自動保存」＋レーダー再描画
+    // (sec-forms はアコーディオン統合で廃止したため document に委譲)
+    function onEdit() { recomputeStatus(); updateRadarCurrent(); saveDraft(); }
+    document.addEventListener("input", onEdit);
+    document.addEventListener("change", onEdit);
+
+    // コピーボタンは複数（チェックシート末尾・レーダー下・メモ下）。すべて同じ全文コピーを行う
+    var copyBtns = document.querySelectorAll(".copy-btn");
+    for (var cb = 0; cb < copyBtns.length; cb++) copyBtns[cb].addEventListener("click", doCopy);
+
+    // 各シートへジャンプ
+    var jumps = document.querySelectorAll(".jump-btn");
+    for (var jb = 0; jb < jumps.length; jb++) {
+      jumps[jb].addEventListener("click", function () {
+        var id = this.getAttribute("data-jump");
+        var target = document.getElementById(id);
+        if (!target) return;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+
+    initScrollspy();
+    initAutoReload();
+  }
+
+  // ---- タブに戻ったら自動リロードして最新化（📚 が書き換えた guide.html を拾う） ----
+  // 全表示は差込 STATE_JSON 由来なので、リロードで「← いまここ」含め丸ごと最新化される。
+  // 入力中（フォームにフォーカスがある）ときは割り込まない。未送信の入力は下書き(localStorage)で保持済み。
+  function initAutoReload() {
+    function isEditing() {
+      var a = document.activeElement;
+      if (!a) return false;
+      var tag = a.tagName;
+      return tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT" || a.isContentEditable === true;
+    }
+    function onReturn() {
+      if (document.visibilityState !== "visible") return; // 隠れたままの focus は無視
+      if (isEditing()) return;                              // 入力中は割り込まない
+      location.reload();
+    }
+    document.addEventListener("visibilitychange", onReturn);
+    window.addEventListener("focus", onReturn);
+  }
+
+  // ---- サイドバー目次の現在地ハイライト（スクロール連動） ----
+  function initScrollspy() {
+    var links = document.querySelectorAll(".sidebar a[data-sec]");
+    if (!links.length) return;
+    function setActive(id) {
+      for (var i = 0; i < links.length; i++) {
+        links[i].classList.toggle("active", links[i].getAttribute("data-sec") === id);
+      }
+    }
+    // クリック時は即座にハイライト
+    for (var i = 0; i < links.length; i++) {
+      (function (lnk) {
+        lnk.addEventListener("click", function () { setActive(lnk.getAttribute("data-sec")); });
+      })(links[i]);
+    }
+    // IntersectionObserver 非対応環境では静的リンクのみ（機能は生きる）
+    if (typeof IntersectionObserver === "undefined") { setActive("sec-usage"); return; }
+    var obs = new IntersectionObserver(function (entries) {
+      for (var e = 0; e < entries.length; e++) {
+        if (entries[e].isIntersecting) { setActive(entries[e].target.id); break; }
+      }
+    }, { rootMargin: "-20% 0px -70% 0px", threshold: 0 });
+    var ids = ["sec-usage", "sec-steps", "sec-status", "sec-radar", "sec-notes", "sec-roadmap", "sec-lenses"];
+    for (var k = 0; k < ids.length; k++) {
+      var sec = document.getElementById(ids[k]);
+      if (sec) obs.observe(sec);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "_note": "シナリオ選択メニュー（ステップ0）専用の目次。進行役AI（AIファシリテーター／main session）が読むのは【本ファイルだけ】。正解ファイル（1-*.json 等）は進行役は一切開かない＝カンニング/ネタバレ防止。正解ファイルは AI原企画者 subagent（ayatori-train-persona）だけが scenario_id を受け取って開く。",
+  "_warning": "このファイルには oneliner / difficulty のみ。由来（実在サービス名）・intro_text・business_context・hidden_settings は載せない（載せると進行役に正解が漏れる）。正解ファイルを更新したら本 index も手で（または実行時以外のビルド手順で）同期する。",
+  "_numbering": "通し番号（ファイル名の先頭数字＝scenario_id の接頭）は難易度の昇順で採番する（1-2=難易度0 / 3-4=難易度1 / 5-6=難易度2）。シナリオ選択は二段構成（まず難易度を選び、その難易度内のシナリオを選ぶ）。scenarios[] は難易度昇順→通し番号昇順で並べる。",
+  "scenarios": [
+    { "scenario_id": "1-car-info-service",   "oneliner": "車のお役立ち情報サービス",         "difficulty": 0 },
+    { "scenario_id": "2-usage-guide",         "oneliner": "サービスの使い方ガイド",           "difficulty": 0 },
+    { "scenario_id": "3-owned-media",         "oneliner": "企業オウンドメディア",             "difficulty": 1 },
+    { "scenario_id": "4-used-car",            "oneliner": "認定中古車の検索・問い合わせ",     "difficulty": 1 },
+    { "scenario_id": "5-inspection-booking",  "oneliner": "点検・車検の予約サービス",         "difficulty": 2 },
+    { "scenario_id": "6-upgrade-ec",          "oneliner": "愛車のアップグレードEC",           "difficulty": 2 }
+  ]
+}
