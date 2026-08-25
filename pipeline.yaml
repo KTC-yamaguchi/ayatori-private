@@ -1,0 +1,1494 @@
+# ============================================================
+# AYATORI Pipeline — Single Source of Truth
+# ============================================================
+# This file is the sole definition for the entire pipeline.
+# Phase order, step composition, loop thresholds, and gate
+# conditions are all managed here.
+# To change thresholds, modify this file only.
+#
+# Spec: Confluence page 3767469072 (AYATORI 26-step design).
+# ============================================================
+
+pipeline: ayatori-design
+version: "1.1"
+
+# ── Output Language ────────────────────────────
+# All artifact documents (requirements, design-brief, style-guide,
+# screen descriptions, etc.) MUST be written in this language.
+# JSON schema keys remain in English; human-readable content follows this setting.
+output_language: ja
+
+# ── Phase Execution Order ───────────────────────
+# Greenfield flow:  question → requirements → design → screens → retro
+# Reverse flow:     reverse  →               design → screens → retro
+#   (/ayatori-reverse replaces question+requirements; sets status=REVERSE_ENGINEERED)
+phase_order:
+  - question
+  - requirements
+  - req_delta
+  - design
+  - screens
+  - retro
+  - add_feature   # Phase 1d: 完走済プロジェクトへの機能追加ヒアリング
+  - delta
+  - delta_mini   # Phase 6: delta / req_delta runs を対象とした軽量振り返り (scope B)
+  - export    # 独立コマンド /ayatori-export。Phase 3 完了後にいつでも実行可能 (必須ではない・skip可)
+
+# ── Phase Definitions ───────────────────────────
+
+# Phase 0b: Alternative entry point for existing apps (replaces question + requirements)
+reverse:
+  description: "Reverse-engineer existing app source/docs into ISO 29148 requirements + AYATORI format bridge"
+  steps:
+    - 01-ground-truth
+    - 02-source-analysis
+    - 03-requirements-gen
+    - 04-comparison
+    - 05-review-gate  # ground-truth 不在で Step 04 が self-skip しても必ず通す (phase SKILL.md 参照)
+    - 06-format-convert
+    - 06-confluence-save-req  # reused from Phase 1b — same input (requirements/01-08.md) + same hierarchy
+  input:
+    - input-sources/{stack}/   # optional but PREFERRED — user-provided local source (ios-swift/be-python/kmp/...). 一次ソース。Step 02 / Step 04 は存在時は必須参照。CLAUDE.md "Operating Principle 3" 参照。
+    - input-sources/docs/         # optional — ユーザー提供のローカル文書 (md/txt/pdf)。予約名 ({stack} ではない)。Step 01 が ground-truth/local-{stem}.md へ正規化
+    - source_repo_url             # optional — ユーザー提示の repo URL の記録用。**パイプラインは取得しない** (トリー全体が必要で git 等の外部 CLI に依存しない設計。Operating Principle 1)。Preamble が clone コマンドを提示しユーザー自身が input-sources/{stack}/ へ配置する。配置完了までは code を present 扱いにしない
+    - confluence_parent_ids       # optional — Confluence 収集起点の親ページ ID 列挙 (複数トリー可)。Preamble が source-inventory.json に記録し、Step 01 が親ごとに列挙して union する。requirements.json.confluence_parent_id (単数) は要件文書の保存先用 — set なら収集起点候補の 1 つとして合流するのみ
+    - jira_issue_keys             # optional — ユーザー指定の Jira 課題キー / URL (docs ソースの一種。Preamble が source-inventory.json に記録し、Step 01 が ground-truth/jira-{KEY}.md へ正規化)。課題は時点の変更要求記録のため current-state 根拠としては裏取り (cross_check) 扱い
+    - figma_urls                  # optional — ユーザー指定の Figma file/frame URL (突合ソース。code 不在時は縮退モードで primary に昇格)。FIGMA_MCP_ENABLED=true 必須。Preamble が source-inventory.json に記録
+  output:
+    - requirements.json          # status: REVERSE_ENGINEERED — Phase 1b will skip on this sentinel
+    - pipeline-state.json        # Completion が approvals.step07_approved_at + step07_approved_via を押印 (reverse 経路限定の第 2 writer — docs/artifact-file-responsibility.md)
+  gates:
+    05-review-gate:
+      type: human
+      description: "Review reverse-engineered requirements + provenance deviations (auditor flags ∪ self-declared inferred) before AYATORI format conversion"
+
+# Phase 0c: Standalone repeatable command (NOT in phase_order). reverse 完了後の対象限定突合。
+# reverse と同型: ブロックは定義するが phase_order には載せない (明示起動 /ayatori-reverse-verify 時のみ)。
+# 改修対象として名指しされた機能・画面の関連範囲だけを 3 証拠ソースと突合し、要件記述・画面仕様を正す。
+# 全範囲の再突合はスコープ外 (それは Phase 0b の役目)。承認フラグ (approvals.*) は書かない。
+reverse_verify:
+  description: "Cross-check the reverse-generated requirement / screen descriptions against code, document archives and Figma captures — limited to the named enhancement target and its related scope"
+  steps:
+    - 01-target-scope
+    - 02-targeted-crosscheck
+    - 03-discrepancy-gate
+  entry_condition: 'requirements.json.status == "REVERSE_ENGINEERED" AND requirements/01-08.md + screens/00-screen-list.md が実在 (ls 実測。判定式の SoT は phases/reverse-verify/SKILL.md「Entry Condition」)'
+  optional: true    # 改修に入る前の補正フェーズ。走らせなくてもパイプラインは進む
+  input:
+    - requirements/*.md            # 訂正対象 + 範囲導出元 (見出し / 機能 ID)
+    - screens/{slug}.md            # 訂正対象 (存在するものだけ。不在なら要件文書のみを突合し、画面仕様を新規生成しない)
+    - input-sources/{stack}/       # 一次ソース実コード (present のとき module 限定で再読)
+    - ground-truth/                # 文書アーカイブ + figma/ capture (live 外部読みはしない — 引用の行アンカーを保つため)
+    - reverse-engineered/source-inventory.json   # roles / degraded_mode を読み取り専用で再利用 (本 phase は書かない)
+  output:
+    - reverse-verify/scope-manifest.json    # 人間承認した確定範囲
+    - reverse-verify/crosscheck-report.md   # 突合結果 (主張一覧 / 食い違い / 誤読訂正 / Coverage)
+    - requirement-deviations.json           # phase=reverse_verify + run_id の entry (reconcile は自 run のみ)
+    - requirements/*.md                     # 承認された訂正のみ
+    - screens/{slug}.md                     # 承認された訂正のみ
+    - pipeline-state.json                   # reverse_verify.runs[] (approvals.* には触れない)
+  gates:
+    01-target-scope:
+      type: human
+      description: "Approve the derived related scope (requirement sections / screens / documents / Figma frames / code modules) before any cross-check reads happen"
+    03-discrepancy-gate:
+      type: human
+      description: "Decide per finding (correct the description / accept as-is / defer) before anything is written back to the requirement and screen documents"
+
+# Standalone advisory command (NOT in phase_order). ChargeMinder 専属コンサル。
+# reverse と同型: ブロックは定義するが phase_order には載せない代替エントリー。
+# 明示起動 (/ayatori-cm-consult) 時のみ実行。requirements.json 種を出して本流へ合流。
+# 注: input/output の `charge_minder` prefix は意図的なハードコード (本コマンドは ChargeMinder 専属。
+#     他アプリ汎用化はスコープ外 — 設計 spec §12 YAGNI)。{slug} は介入ごとの識別子。
+cm_consult:
+  description: "ChargeMinder consultant. Propose nudge-theory-based behavior-change interventions on ChargeMinder, design pre/post KPI validation (with measurability check), and emit a requirements.json seed for handoff to /ayatori-requirements."
+  steps:
+    - cm-consult
+  entry_condition: "explicit invocation only (/ayatori-cm-consult). ChargeMinder reverse artifact (raw-analysis.md) recommended but not required."
+  input:
+    - artifacts/charge_minder/reverse-engineered/raw-analysis.md  # optional (recommended)
+  output:
+    - artifacts/charge_minder_{slug}/cm-consult/proposal-{slug}.md
+    - artifacts/charge_minder_{slug}/cm-consult/validation-{slug}.md
+    - artifacts/charge_minder_{slug}/requirements.json
+    - artifacts/charge_minder_{slug}/session-handoff.md
+  optional: true
+  stateless: true
+
+# Standalone pre-question command (NOT in phase_order). アイデアブラッシュアップ。
+# cm_consult と同型: ブロックは定義するが phase_order には載せない代替エントリー。
+# 明示起動 (/ayatori-idea) 時のみ実行。idea-brief.md を生成し、同一会話でそのまま
+# /ayatori-question の 7 軸 (ブリーフ先読みモード) へ合流する。question 側のモード選択からも
+# 同一会話で inline 実行される (双方向)。中断時は question 側が idea-brief.md を自動検出
+# (消費判定は requirements.json の存在で行う)。
+idea_brushup:
+  description: "Idea brushup. Diverge → converge → specify loop (max 3 rounds) with CxO mini-critique and solidity scoring; emits idea-brief.md and merges into the /ayatori-question 7-axis interview in the same conversation."
+  steps:
+    - 01a-idea-brushup
+  entry_condition: "explicit invocation only (/ayatori-idea). No prerequisites — runs before Phase 1a."
+  output:
+    - artifacts/{app_name}/idea-brief.md            # Step 5 で毎ラウンド上書き
+    - artifacts/{app_name}/pending-questions.json   # born-resolved entries (「7 軸へ進む」選択時)
+    - artifacts/{app_name}/session-handoff.md       # 表示専用 (「7 軸へ進む」選択時)
+  optional: true
+  stateless: true
+
+# Standalone command (NOT in phase_order). AYATORI コンサルトレーニングモード。
+# reverse / cm_consult と同型: ブロックは定義するが phase_order には載せない代替エントリー。
+# 明示起動 (/ayatori-train) 時のみ実行。3層セッション構成: A (📚AIファシリテーター+🙎‍♂️担当者(オーナー)
+# = step0-3+引き継ぎブリーフィング) → B群 (🧵素の本体パイプライン無改造 = step4-6、ゲート07/16/21が舞台)
+# → C (📚+種明かし時のみ🙎‍♂️再登場 = step7 振り返り)。B群は本体コマンドを直接使うため train 固有の
+# skill を持たない (train が呼び出すのではなくコンサルタントが別会話で /ayatori-question 等を直接実行する)。
+# 詳細設計の正本: ~/Documents/claude/acad/ayatori_0630/docs/train/ (Git 外・リポジトリには入れない方針)。
+train:
+  description: "AYATORI コンサルトレーニングモード。シナリオのAI原企画者(オーナー)からビジネス理解→ヒアリング→目標設定を経て、素の本体パイプライン(B群)の人間ゲートで目利き・補完を鍛え、最後に振り返りで6能力を自己評価する。"
+  steps:
+    - train-00-scenario-select    # step0: シナリオ選択 (index.json のみ・正解は開かない)
+    - train-01-intro              # step1: イントロ (ハンドブック手渡し + 記入方法の選択 + オーナー intro)
+    - train-02-hearing            # step2: ヒアリング (B/P シートを埋める)
+    - train-03-goal-setting       # step3: 目標整理 (G1/G2)
+    - train-04-handoff            # step4: 引き継ぎブリーフィング (A末尾・B群へ送り出す)
+    - train-07-retro              # step7: 振り返り (セッションC・6能力の自己評価)
+    # 共通ヘルパー: train-handbook (ハンドブック生成・貼り戻し清書) を step2/3/4/7 が呼ぶ。
+    # step4-6 (B群) はコンサルタントが別会話で /ayatori-question → /ayatori-requirements →
+    # /ayatori-design → /ayatori-screens を直接実行する (train 固有の skill を持たない・無改造)。
+  entry_condition: "explicit invocation only (/ayatori-train)."
+  input: []
+  output:
+    - artifacts/_train-{scenario-slug}-{NN}/session.json           # 進行状態 SoT (schemas/train-session.schema.json)
+    - artifacts/_train-{scenario-slug}-{NN}/understanding-notes.md  # B/P/目標整理/メモ/振り返り (📚 単一書き手)
+    - artifacts/_train-{scenario-slug}-{NN}/guide.html              # ハンドブック (handbook-template.html を差込生成)
+    - artifacts/_train-{scenario-slug}-{NN}/dialogue-log.md         # オーナー役 subagent の記憶引き継ぎ + step7 一次資料
+    - artifacts/_train-profile/radar.json                          # セッション横断 6能力レーダー (schemas/train-radar.schema.json)
+    - artifacts/_train-profile/play-log.json                       # セッション横断プレイ履歴 (schemas/train-play-log.schema.json)
+  optional: true
+  stateless: false
+
+question:
+  description: "Idea structuring (7-axis discovery, including design output scope)"
+  steps:
+    - 01-question
+  output: requirements.json
+
+requirements:
+  description: "ISO 29148 requirements definition + scoring + Confluence save"
+  steps:
+    - 02-iso-breakdown
+    - 03-rubric-gen
+    - 04-scoring
+    - 05-loop-req
+    - 06-confluence-save-req
+    - 07-human-gate-req
+  input: requirements.json
+  output:
+    - rubric.json            # 03-rubric-gen が criteria を生成 (ループ不変量)
+    - scoring-history.json   # 04-scoring が attempt ごとに append (ループ結果履歴)
+  loop:
+    control_step: 05-loop-req
+    back_to: 02-iso-breakdown
+    score_file: scoring-history.json   # 旧 rubric.json から rename。pass/fail 判定は attempts[-1] を見る
+    # 合格条件は 2 つ AND で判定する:
+    #   1. total >= 80   … 全体最低点
+    #   2. 各軸 scores[axis] >= per_axis_min … 軸別最低点（低次元平均への逃げ道を塞ぐ）
+    pass_condition: "attempts[-1].total >= 80 AND all axes >= per_axis_min"
+    per_axis_min: 12
+    max_attempts: 3
+    # attempt_count は len(scoring-history.attempts) - 1 で導出する (rubric.json から消滅)
+    # escalated は len(attempts) >= max_attempts AND attempts[-1] が pass 未達で導出する
+  confluence_save:
+    # Step 06 保存後の read-back 漏れチェック (実行手順の SoT は skills/06-confluence-save-req/SKILL.md Step 3.5)。
+    # ツール戻り値の「成功」だけでは save_status=success にせず、保存内容を読み戻して
+    # ローカル MD の構造指紋 (見出し / 項目 ID / 本文長比) と突合してから成功判定する。
+    # 背景: ネットワーク不安定・update が永続化されない環境・create の content 長制限は
+    # いずれもエラーなしで内容欠落を起こすため、read-back 以外では検出できない。
+    verification:
+      enabled: true
+      item_id_pattern: "[A-Z]{1,4}-[0-9]+[a-z]?"   # F-01 / F-02b / UC-03 / NFR-12 等の要件項目 ID
+      min_text_ratio: 0.5      # タグ・記号除去後の remote 本文長 / local MD 本文長 の下限 (切り詰め検出)
+      max_retry_per_page: 1    # 漏れ検出ページの自動再保存回数 (超過は failed として人間ゲートへ)
+  gates:
+    07-human-gate-req:
+      type: human
+      description: "Final approval for requirements"
+
+design:
+  description: "Design brainstorm -> WCAG constraints (color-agnostic) -> sample HTML -> selection -> design system (with color-specific contrast verification)"
+  steps:
+    - 08-design-brainstorm
+    - 11-wcag-mapping
+    - 09-sample-html-gen
+    - 10-sample-human-review
+    - 12-design-system
+    - 13-human-gate-design
+  input:
+    - requirements.json      # 08/09/10/12/13 が design_output_scope / Must 機能等を参照
+  output:
+    - tokens.json
+    - design-brief.yaml
+    - style-guide-view.html
+    - wcag-mapping.json      # 11-wcag-mapping が初回のみ生成 (constraints/criteria = ループ不変量)
+    - wcag-history.json      # 11-wcag-mapping が attempt ごとに append (violations 履歴)
+  loop:
+    control_step: 11-wcag-mapping
+    back_to: 08-design-brainstorm
+    score_file: wcag-history.json   # 旧 wcag-mapping.json.wcag_loop から rename
+    pass_condition: "attempts[-1].violations is empty"
+    max_attempts: 3
+    # attempt_count は len(wcag-history.attempts) - 1 で導出する (旧 wcag_loop オブジェクトは消滅)
+    # 11 が単一所有権で append する。08/12 は触らない
+  gates:
+    10-sample-human-review:
+      type: human
+      description: "Select 1 of 3 HOME sample HTMLs (design direction)"
+    13-human-gate-design:
+      type: human
+      description: "Style guide approval"
+
+screens:
+  description: "Screen docs -> human gate -> Confluence save -> main HTML -> review loop -> human approval -> (optional) graphic block 21a-21g -> Figma export -> final approval -> design system update -> component build -> (optional) sub-state patterns 25a-25e"
+  # ── screens-lite (Route A: reverse 基線確立ルート) ────────────────
+  # reverse 経路のプロジェクトは画面 HTML を持たないため、完走系の変更コマンド
+  # (add_feature / delta / delta_mini) に入場する印 (approvals.baseline_approved_at) を
+  # 立てる経路が必要。Phase 3 入口 (phases/screens preamble 4b-1) で route を選ばせ、
+  # Route A は画面 HTML を作らず「変更コマンドが必要とする材料」だけを整えて
+  # 出口の人間ゲート (baseline_approved_at の正規 writer) で押印して終わる。
+  # Route B = 従来のフル実行 (画面 HTML 〜 最終承認)。
+  # forward プロジェクト (status != REVERSE_ENGINEERED) には route 質問を出さない
+  # = 既存挙動は 1 字も変わらない。工程の正本は phases/screens/SKILL.md
+  # § Execution — screens-lite (本ブロックは宣言のみ)。
+  lite_route:
+    id: screens-lite
+    offered_when: "requirements.json.status == 'REVERSE_ENGINEERED' AND pipeline-state.json.approvals.final_approved != true"
+    default_on_esc: full          # ESC は従来挙動 (Route B = フル実行) に倒す
+    reuses:                       # 既存 step の一部だけを再利用する (新 skill を作らない)
+      - 14-screen-list-transition   # 「## 14-lite」節のみ (遷移図 salvage -> 派生ビュー -> L5 -> chrome プラン)
+      - 16-design-doc-human-review  # 既存のまま (提示に L5 defects 一覧を添える)
+      - 17-screen-gen               # Phase A 手順 3/4 + Step 0 + Step 0b-1 のみ (_shared 正典。画面 HTML は作らない)
+    skips: [15-confluence-save-design, 18-design-review, 19-rubric-score, 20-loop-design, 21-screen-human-review, 21a-graphic-recommend, 21b-graphic-hearing, 21c-graphic-taste, 21d-graphic-prompts, 21e-graphic-generate, 21f-graphic-postprocess, 21g-graphic-embed-review, 22-figma-export, 23-human-final-approval, 24-design-system-update, 25-component-build, 25a-state-pattern-plan, 25b-state-pattern-gen, 25c-state-pattern-score, 25d-state-pattern-approval, 25e-figma-pattern-export]   # グラフィックブロック (21a〜21g) / sub-state (25a〜25e) も Route A の対象外 (phases/screens/SKILL.md § Execution — screens-lite「扱わないもの」と一致)
+    exit_gate:                    # ベースライン承認ゲート [人間]
+      writes: [approvals.baseline_approved_at, approvals.baseline_approved_via]
+      via: screens-lite-gate
+      requires: "requirements.json.status == 'REVERSE_ENGINEERED'"   # 押印直前の由来 assert (defense-in-depth)
+      never_writes: [approvals.final_approved]                       # 画面レビュー未実施 = 二段階完了モデルの意味を守る
+      idempotent: true            # baseline_approved_at が既 set なら両キーとも触らない
+      opens: [add_feature, delta, delta_mini]   # 入場判定の SoT は CLAUDE.md § 完走後 Phase 共通 Entry Guard
+  steps:
+    - 14-screen-list-transition
+    - 16-design-doc-human-review
+    - 15-confluence-save-design
+    - 17-screen-gen
+    - 18-design-review
+    - 19-rubric-score
+    - 20-loop-design
+    - 21-screen-human-review
+    # ── 21a-21g: グラフィック生成ブロック (挿入位置設計 docs/graphic-generation-design.md) ──
+    # Step 21 承認済み main HTML を入力に、AI 生成グラフィック (イラスト/キャラ/写真、gpt-image-2) を
+    # 生成して <img> 相対参照 (正典 screens/_shared/graphics/) で埋め込む任意ブロック。
+    # Step 15 再実行 (2nd Confluence save) より前に完結。
+    # 実機検証済み: 埋め込み済み HTML は現行 Step 22 キャプチャ経路のまま Figma に書き出せる
+    # ため 22 側の変更は無し (入口 layer-1 assert のみ追加、設計 §9-3)。skip 動線は
+    # graphic_generation (上流) と 21b (人間ゲート) の 2 段。
+    # sub-state (25b inherit_main) には main HTML 経由で自動継承。v1 は default 状態のみ対象。
+
+    - 21a-graphic-recommend      # F-2A: 必要性分析 → graphics/graphic-recommend.md
+    - 21b-graphic-hearing        # F-2: 要否+箇所 (人間ゲート) → graphics/graphic-plan.json
+    - 21c-graphic-taste          # F-3: テイスト2段階 (人間ゲート) → plan.taste + samples/
+    - 21d-graphic-prompts        # F-4: プロンプト確定 (人間ゲート) → graphics/graphic-prompts.json
+    - 21e-graphic-generate       # F-5: 生成+サイズ自動調整 (透過 slot は tool_transparent へルーティング) → graphics/raw/
+    - 21f-graphic-postprocess    # F-6: 透過検証→正典化 (圧縮 ⑫ 非搭載) → screens/_shared/graphics/
+    - 21g-graphic-embed-review   # F-7: HTML/MD 埋め込み + 人間ゲート
+    - 22-figma-export
+    - 23-human-final-approval
+    - 24-design-system-update
+    - 25-component-build
+    # ── 25a-25e: Sub-state パターン後追い生成 ──────────
+    # Step 17 は main (default) HTML のみ生成し、sub-state (empty/loading/error 等) は
+    # final_approved 後の任意ステップとして 25a-25e で後追い生成する設計。
+    # 25a の AskUserQuestion で「不要」選択時は 25b-25e を skip して Phase 4 retro へ。
+    # skip 後 (state_pattern_skipped==true) でも /ayatori-screens 再実行で
+    # sub-state を後続生成できる。preamble の再入判定 AskUserQuestion で「生成する」を選ぶと 25a を
+    # 再起動し、proceed 時に state_pattern_skipped を false 解除して通常フローに乗せる。完走後
+    # (completed_at_states set) からの追加生成は delta 領域 (/ayatori-delta) で本経路の対象外。
+    # 25b の subagent Phase 2 を inherit_main 方式 (main HTML を Read して
+    # <head> / <style> / <body> 構造を継承し state-specific 差分のみ overlay) に切替済。
+    - 25a-state-pattern-plan
+    - 25b-state-pattern-gen
+    - 25c-state-pattern-score
+    - 25d-state-pattern-approval
+    - 25e-figma-pattern-export
+  input:
+    - requirements.json      # 14/15/16/17/21/22/23 が design_output_scope 等を参照
+    - tokens.json
+    - design-brief.yaml
+    - style-guide-view.html
+    - wcag-mapping.json      # 18/19 が constraints/criteria を Read (Phase 2 ループ不変量を引き継ぐ)
+    - wcag-history.json      # 19 (automated_verified 照合) / 21 (warn-only state_colors の人間ゲート表示) が最新 attempt の violations を Read (Phase 2 ループ結果を引き継ぐ。旧記載の 18 は実際には読まない)
+    - screens/state-pattern-plan.json    # 25b/25c/25d/25e が READ-ONLY で参照 (25a が proceed 選択時のみ生成)
+  output:
+    - scores.json
+    - screens/state-pattern-plan.json    # 25a の OUTPUT (loop 不変量)
+    - screens/state-pattern-scores.json  # 25c が attempt ごとに append (loop history)
+    - graphics/graphic-plan.json         # 21b init + 21c taste キー append (key 分離)
+    - graphics/graphic-prompts.json      # 21d が確定プロンプトを書く
+  loop:
+    control_step: 20-loop-design
+    back_to: 17-screen-gen
+    score_file: scores.json
+    pass_condition: "current.ai_improvable_deductions == 0"
+    max_attempts: 3
+  # Sub-state 採点 mini-loop (25c→25b)。main loop (17→20) とは別立てにし、
+  # score_file もループ不変量/履歴の分離原則 (docs/artifact-file-responsibility.md § 設計原則 2) に従って分離する。
+  state_pattern_loop:
+    control_step: 25c-state-pattern-score
+    back_to: 25b-state-pattern-gen
+    score_file: screens/state-pattern-scores.json
+    pass_condition: "attempts[-1].ai_improvable_deductions == 0"
+    max_attempts: 2          # main loop より小さく (sub-state はスコープが限定的、リトライ単価が高い)
+  # 25b→25c→25d の順序強制 (採点スキップ防止、二層防御)。従来は phase / skills の
+  # SKILL.md の prose + preamble resume ロジックのみで、preamble は /ayatori-screens 新規再起動時しか
+  # 発火しないため、完走後の「後続生成」を 1 セッション連続実行するとオーケストレータが 25c を飛ばして
+  # 人間確認へ直行できてしまった (振り返り Confluence 3965452789 原因 F)。以下 2 層で機械強制する:
+  state_pattern_gate_enforcement:
+    unscored_signal: "screens.step25b.completed_at is set AND (screens.step25c.completed_at unset OR epoch(step25c.completed_at) < epoch(step25b.completed_at))  # 時刻比較は epoch 換算 (+09:00 / Z 等の TZ 表記混在に安全、parse 不能時のみ文字列比較 fallback)"
+    layer1_skill_assert:
+      steps: [25d-state-pattern-approval, 25e-figma-pattern-export]
+      rule: "Phase 0 で unscored_signal が真なら AskUserQuestion / figma capture を起動せず中断し 25c へ差し戻す (早期・明示)"
+    layer2_hook:
+      hook: ".claude/hooks/enforce-substate-scoring.sh"
+      event: "PreToolUse Write|Edit → artifacts/{app}/pipeline-state.json"
+      territory_keys:  # 25d/25e territory キー一覧の SoT (hook 実装 / CLAUDE.md / settings.json はここを参照。変更時は hook 実装も同時に更新する)
+        - approvals.patterns_human_approved
+        - approvals.step25d_approved_at
+        - approvals.completed_at_states
+        - screens.step25d.decision
+        - screens.step25d.completed_at
+      rule: >-
+        書き込み後の state (Write は content そのもの、Edit は old_string→new_string の literal 置換を
+        simulate した結果) が unscored_signal を満たすとき、territory_keys をディスク現行値から
+        「新規導入 or 値変更」する書き込みを exit 2 で block する。キーの「存在」ではなく「導入 (差分)」で
+        判定するのは、Read→merge→Write back 規約により 25d の revise 判定記録が残置された state を
+        25b 再生成が丸ごと書き戻すため — 同値 carry-over を block すると差し戻し→再生成の正規ループが
+        詰まる。carry-over は allow、新規導入 / 値変更のみ block することで、25b/25c 自身の書き込みは
+        決してブロックされず、承認の前進 (25d/25e) だけが 25c 採点を待つ形に強制される
+        (機械強制の最後の砦、fail-open)
+    scoring_axis:
+      step: 25c-state-pattern-score
+      added: "Step 1-2b 画面間横断一貫性 (cross-screen consistency) 軸 — 同 state 複数画面の CTA クラス/font・アイコン・レイアウト位置・ラベル規約・ナビ慣習のばらつきを検出 (振り返り症状 A/D/E)"
+  # 25b の sub-state HTML 生成方式は `inherit_main`。
+  # `ayatori-screen-state-builder` Phase 2-1 が main HTML を Read し、<head> / <style> /
+  # <body> 構造を継承して state-specific 差分のみ overlay する。初期の `independent`
+  # (旧 Step 17 ロジック移植、main HTML を Read しない独立生成) は廃止。
+  # 値の意味論:
+  #   - `inherit_main` (現行): main HTML 継承方式。:root token / capture.js
+  #     は main から自動継承され、main↔sub-state の一貫性を **規約遵守で担保 (convention-enforced)** +
+  #     25c Phase 1 Step 1-1b の継承整合 spot-check で事後検出
+  #     (本 key は documentation marker であり runtime 強制力は無いため、物理保証ではなく規約遵守)
+  #   - `independent` (廃止・初期の暫定値): 画面仕様 .md + tokens.json から独立生成
+  # 注意: 本 key は subagent (`ayatori-screen-state-builder`) と orchestrator (25b SKILL.md) のどちらも
+  #       runtime で読まない documentation marker (現行の生成方式を宣言する SSoT)。
+  #       `independent` 経路の生成ロジックは subagent から物理的に削除済みのため、
+  #       本 key を `independent` に書き戻しても旧挙動は復活しない (rollback 時は subagent Phase 2
+  #       を切替前時点に revert する必要がある)。
+  #       将来新たな継承方式 (例: 2 段継承) を追加する場合の enum 拡張点として保持。
+  pattern_export:
+    inheritance_mode: inherit_main     # independent → inherit_main 反転完了 (documentation marker)
+  gates:
+    16-design-doc-human-review:
+      type: human
+      description: "Approve design docs (screen list + transition map) before main HTML"
+    21-screen-human-review:
+      type: human
+      description: "Approve main (default state) HTML set"
+    21b-graphic-hearing:
+      type: human
+      description: "Decide whether graphics are needed and where (informed by 21a recommend report)"
+    21c-graphic-taste:
+      type: human
+      description: "Select graphic taste (words first, then sample A/B/C comparison)"
+    21d-graphic-prompts:
+      type: human
+      description: "Confirm per-slot generation prompts (feedback loop)"
+    21g-graphic-embed-review:
+      type: human
+      description: "Approve screens with embedded graphics before 2nd Confluence save / Figma export"
+    23-human-final-approval:
+      type: human
+      description: "Final sign-off for main HTML (sub-state patterns are handled separately in 25d if requested)"
+    25a-state-pattern-plan:
+      type: human
+      description: "Decide whether to generate sub-state patterns; if yes, approve the generation plan"
+    25d-state-pattern-approval:
+      type: human
+      description: "Approve sub-state pattern HTML before adding them to Figma"
+    screens-lite-baseline-gate:   # skill を持たない phase 内工程のためキーは step 番号ではなくルート名 (工程の正本は phases/screens/SKILL.md § Execution — screens-lite)
+      type: human
+      description: "Approve reverse baseline materials at the screens-lite (Route A) exit; stamps baseline_approved_at"
+  # After loop exits (step 20 -> step 21 approved), re-run step 15
+  # to upload the now-complete screens/*.md specs to Confluence.
+  post_loop_reexecute:
+    - 15-confluence-save-design
+
+  # ── 21a-21g グラフィック生成ブロック設定 (設計 SoT: docs/graphic-generation-design.md) ──
+  graphic_generation:
+    tool: gpt-image-2                  # 画像生成ツール比較の結果採用 (非透過 slot)
+    tool_transparent: gpt-image-1.5    # 透過 slot 専用 (gpt-image-2 は background: transparent
+                                       # 非サポート [指定エラー] のため、21e が transparent_background=true の
+                                       # slot のみ per-slot でこちらへルーティングする)。透過 slot の鮮度判定
+                                       # source_digest は tool ではなく本値から導出される — 本値の変更 = 透過
+                                       # slot が stale 化して再生成 / tool 側の変更は透過 slot に波及しない
+    embed_format: img_relative_ref     # <img src="../_shared/graphics/{graphic_id}.png"> — 正典への相対参照 (§7)。
+                                       # Base64 data URI は不採用 (LLM context コストの根本回避)。
+                                       # 相対参照も Base64 と同一 imageHash で完全動作を実測済。装飾背景のみ background-image 可
+    alt_required: true                 # alt = graphic_id (Figma レイヤ名になる)。width/height 明示必須 (C-26)
+    raster_formats: [png, webp]        # SVG 不可 (upload_assets 制約) / 正典は screens/_shared/graphics/
+    state_scope: default_only          # v1: main (default) HTML のみ。sub-state 専用 slot は将来拡張 (plan.json の state field)
+    skip_semantics:
+      upstream: "requirements.json.design_output_scope.graphic_generation == 'skip' → 21a 含めブロック全体を不実行。skip 記録 (screens.graphics.decision='skip', decided_by='upstream_scope') の writer は 21a-21g ではなく phase orchestrator (ブロック入口到達時に一度だけ書く — resume cascade / 連続セッション進行の両経路、設計 §5/§9-1) — 21a-21g は 1 つも走らないため"
+      gate_21b: "21b で「不要」選択 → 21c-21g を skip。screens.graphics.decision='skip', decided_by='step21b' を記録"
+      gate_21d_all_cancel: "21d で全 slot の生成中止を選択 → graphic-prompts.json は書かず (確定 prompt 0 件のため minItems:1 を満たせない = 正しく書けない)、screens.graphics.decision='skip', decided_by='step21d' を記録して 21e-21g を skip"
+      gate_21g_all_reject: "21g で全対象 slot を却下 (per-slot 却下、設計 §11 — F-7 で採用) → 各 slot の generated_files[] entry 削除 + excluded_slots[] append (reason に「21g 却下:」prefix) の結果、埋め込み対象 0 件 = ブロック中止と同義に扱い decision='skip', decided_by='step21g' を記録して Step 15 (2nd) へ素通し (21e の全 slot excluded 規則と同型)。正典 screens/_shared/graphics/ のファイルは削除しない (孤児保持 — 21g は正典への書き込み権限を持たない。writer 実体は skills/21g-graphic-embed-review/scripts/commit-approval.mjs reject)"
+      reentry: "v1 では再入経路なし (P4-07 過剰質問禁止)。final_approved 前は手動リセット 3 点セット (設計 §5): ① screens.graphics ② 2nd save 済みなら confluence.design.save_count を 1 に戻す (§9-1 cascade ガード再入条件 + 21g 反映後の仕様書再 save) ③ Step 22 実行済みならその完了記録 (screens.step22_figma_status / figma-state.json の export 記録) も戻す (Figma 再 export を走らせ HTML↔Figma 乖離を防ぐ — 22 済み・final_approved 前の窓は正規に存在する) — の上で /ayatori-screens 再実行。以後は delta 領域"
+    degrade:
+      recommend_failure: "21a の分析失敗/低信頼は fail-open — 21b は推奨レポートなしの素朴ヒアリングに degrade"
+      generation_failure: "21e の生成失敗は AskUserQuestion (リトライ / 当該 slot を除外 → screens.graphics.excluded_slots[] に {graphic_id, reason, excluded_at} を記録 [記録なしの除外は禁止 — 設計 §9-2b の pending 定義に当該 slot が残り続け、resume ごとに再生成試行・再質問 (P4-07 抵触) を繰り返すため] / ブロック中止 → screens.graphics.decision='skip', decided_by='step21e' を記録)。除外の結果、全 slot が excluded になった場合はブロック中止と同義に扱い decision='skip', decided_by='step21e' を記録する (埋め込み対象 0 件の空 21g ゲートを回さない)"
+      postprocess_failure: "21f の透過検証 fail / 後処理失敗は AskUserQuestion (そのまま採用 → screens.graphics.transparency_waived[] に {graphic_id, source_digest, raw_sha256, reason, waived_at} をラベル記録して不透明のまま正典化 [受諾は digest + raw バイトの複合単位 — 別バイトの再生成には自動適用しない] [POCTEAMA-189 チケットの fallback 方針「ラベルをつけて代わりの方法を提案」の実体 — 21g は postprocess-manifest.json の transparency='waived' を配置判断に使う] / リトライ → 当該 generated_files entry 削除 + step21e_completed_at クリアで 21e から再生成 / 当該 slot を除外 → excluded_slots[] append [21e と同じ台帳] / ブロック中止 → decision='skip', decided_by='step21f' / 保留)。全 slot excluded はブロック中止と同義 (decided_by='step21f')"
+    # サイズ統制の専用 knob は置かない (YAGNI): HTML は相対参照のため肥大せず (設計 §7)、アセットの
+    # ファイルサイズは生成時の size_px 指定 (21d 確定 → 21e が gpt-image-2 の size パラメタに使用) で
+    # 上流から決まる。圧縮 (ユーザーフロー ⑫) は非搭載 — I-4 (POCTEAMA-183) Skip に加え、F-6
+    # (POCTEAMA-189) 実装レビュー時のユーザー判断 (2026-08-05) でスコープ除外。21f は raw PNG を
+    # 無加工で正典化する。git / 配布物の肥大が実運用で問題化した場合の再起票は設計 §11 (圧縮) が受け皿。
+    html_transform_policy: deterministic_script   # 一括タグ書き換え・src↔正典の存在照合は LLM の
+                                                  # Read-Edit-Write でなく script の責務 (設計 §7。挿入位置の判断のみ LLM)。
+                                                  # script は置換前に _backup/ へ self-backup する — Bash 起動は
+                                                  # backup-on-edit.sh (PreToolUse Write|Edit) を発火しないため (設計 §7)
+    ordering:
+      before: [15-confluence-save-design (2nd), 22-figma-export]   # 21g 承認 or skip 確定が 15/22 の前提
+      layer1_assert: "15-confluence-save-design (2nd run) / 22-figma-export の両入口 (Phase 0 節): screens.graphics.decision == 'skip' でも approvals.graphics_human_approved == true でもなく、legacy passthrough (screens.graphics キー未存在 AND confluence.design.save_count >= 2) でもなければ、実行を起動せず中断し resume cascade の該当 21x step へ差し戻す (肯定形条件 — decision='generate' のまま 21g 未承認の素通りを塞ぐ。read は canonical フラグ、設計 §9-2/§9-3)。15 側の発火は 2nd run のみ = confluence.design.save_count >= 1 のとき (無条件実装は 1st save を自己 deadlock させる、設計 §9-3)"
+      cascade_guard: "設計 §9-1 の graphics 分岐は design_save_count < 2 が前提条件 — 完走済み / 2nd save 通過済みプロジェクトを 21a へ吸い込まない (完走後の後付けは delta 領域、設計 §5)"
+
+  # Step 22 Figma export configuration.
+  # Step 22 は main (default) HTML のみを Figma に出力する。
+  # Q1 (platforms) のみユーザーに確認、Q2 (状態粒度) は廃止され `states: ["default"]` 固定。
+  # Sub-state (empty/loading/error 等) の Figma 出力は Step 25e (figma-pattern-export) が
+  # figma-capture-runner を `mode: substate` で呼び出して append-only で実行する。
+  # Q1: 出力プラットフォーム (default: requirements.json.design_output_scope.platform_combo + web_viewports から展開した
+  #      platform dirs の subset。web-sm が加わり最大 3 dirs)
+  # Target HTML files live under platform-specific subfolders:
+  #   screens/web/*.html (1440×900) / screens/web-sm/*.html (390×844) / screens/mobile/*.html (390×844).
+  # Resulting capture count = N_screens × len(platforms)  (× 1 state = "default")
+  #   min = N (e.g., 11)            — 1 platform dir
+  #   max = N × 3 (e.g., 33)        — web + web-sm + mobile
+  figma_export:
+    # enum 値 `all_states_and_platforms` は廃止 (Q2 状態粒度質問が消滅したため
+    # 状態軸は default 固定)。新 enum: `user_selected` (Q1 ask) | `all_platforms` (skip prompt, all platforms × default)。
+    scope: user_selected           # "user_selected" (ask Q1 at runtime) | "all_platforms" (skip prompt, both platforms × default)
+    parallel_batch_size: 4         # how many captureIds to fire + browser tabs to open per batch
+    stagger_open_sec: 4            # delay between browser tab opens within a batch (avoid Chrome throttling)
+    poll_interval_sec: 5           # delay between polls
+    poll_max_retries: 10           # max polls per captureId before re-open
+    on_pending_after_max_polls: re_open_and_retry  # re_open_and_retry | abort
+    require_full_scope_for_success: true  # status="success" requires ALL targeted files captured
+
+    # P-15: 離席による session timeout 対策
+    # Pre-flight で macOS スリープを抑止し、capture 中の captureId TTL 切れ・mcp.figma.com セッション切断を防ぐ。
+    # 中断発生時は次セッションの Step 22 再実行で Resume mode が自動検出 → deferred のみ再キャプチャ。
+    captureid_ttl_sec: 300         # captureId 発行から N 秒経過したら stale 扱い → 再発行（agent retry 内で参照）
+    estimate_sec_per_file: 6       # Pre-flight 所要時間見積もり (4 並列 batch + stagger 4s + poll で 1 件 ~6s 想定)
+    system_sleep_prevention: auto  # auto (macOS なら caffeinate 起動) | disabled
+    sleep_prevention_buffer_sec: 600  # caffeinate duration = estimate + buffer (停止取りこぼし対策)
+
+    # Step 2.5: post-capture default grid layout
+    # Frames are auto-arranged into rows=screens × cols=states×platforms
+    # via mcp__figma__use_figma. Template: skills/22-figma-export/refs/default-grid-layout.js
+    layout:
+      enabled: true                # set false to skip auto-layout (frames remain in capture order)
+      web_frame_width: 1440
+      web_sm_frame_width: 390      # web スマホ幅 (screens/web-sm/) のフレーム幅
+      mobile_frame_width: 375
+      col_gap_px: 100              # between adjacent columns within same platform group
+      section_gap_px: 320          # extra gap between platform groups (web / web-sm / mobile)
+      row_gap_px: 240              # vertical gap between screen rows
+      use_actual_height_per_row: true  # measure each frame's actual height; row height = max
+      add_col_headers: true        # "Web · default" / "Mobile · empty" etc. at top of each col
+      add_row_labels: true         # screen name to the left of each row
+      header_font: "Inter Bold"    # falls back gracefully if font unavailable
+
+    # Subagent isolation: Step 22 is ALWAYS delegated to .claude/agents/figma-capture-runner
+    # so the verbose mcp__figma__generate_figma_design responses (~3KB × hundreds of calls)
+    # never enter the main conversation context. The agent decides internally whether to
+    # split into recursive worker sub-agents based on capture count.
+    subagent_isolation:
+      enabled: true                       # always delegate Step 22 to figma-capture-runner agent
+      recursive_split_threshold: 150      # >this captures → orchestrator splits into sequential worker chunks
+      chunk_size: 100                     # max files per worker chunk (≈600KB context budget per worker, 60% of 1M)
+      parallel_workers: 1                 # reserved for future use; MUST stay 1 (browser throttling + single HTTP server)
+
+retro:
+  description: "Retrospective + pipeline improvement proposals + final approval"
+  # retro のみ 2 条件 (F ∨ C) — 他の完走後 Phase (add_feature/delta/delta_mini) は reverse 基線例外 (baseline_approved_at) つきの 3 条件。SoT = CLAUDE.md § 完走後 Phase 共通 Entry Guard
+  entry_condition: "pipeline-state.json.approvals.final_approved == true OR pipeline-state.json.approvals.completed_at_states is set"
+  steps:
+    - 26-retro
+  input:
+    - feedback-log.md
+    - scores.json
+    - rubric.json
+    - scoring-history.json   # Phase 1b ループ収束過程 (W4 設計判断)
+    - wcag-history.json      # Phase 2 WCAG 違反収束過程 (W4 設計判断)
+    - pipeline-state.json    # 各 phase の承認時刻 / 選択 / Confluence ID をレポート生成に使用 (skills/26-retro/SKILL.md L65)
+  output: pipeline-improvements.md
+  gates:
+    26-retro:
+      type: human
+      description: "Final deliverables review + improvement proposal approval"
+
+# Phase 1c: Requirements-level delta — propagate spec changes across ISO 29148 docs (pre-UI)
+req_delta:
+  description: "Propagate a requirements-level spec change across all 8 ISO 29148 documents"
+  entry_condition: "pipeline-state.json.approvals.step07_approved_at is set"
+  steps:
+    - 31-req-change-detect
+    - 32-req-impact-analysis
+    - 33-req-revision
+  input:
+    - requirements/          # 01~08 docs — user selects which changed (Step 31)
+    - requirements.json      # interview_mode — feature_addition branch (Step 31)
+    - pipeline-state.json    # step07_approved_at gate + req_delta.runs[] history
+  output:
+    - req-delta/change-manifest.json
+    - req-delta/doc-impact-analysis.md
+    - req-delta/run-history.json
+    - req-delta/feature-add-brief.md # change_type == feature_addition のみ (Step 31)
+    - pipeline-state.json    # req_delta.runs[] entries appended by Steps 31–33
+  gates:
+    32-req-impact-analysis:
+      type: human
+      description: "Cross-document impact scope approval"
+    33-req-revision:
+      type: human
+      description: "Revision proposal review and approval"
+
+# Phase 1d: Add-feature hearing for already-completed projects
+# Purpose: Bridge between "user vague feature request" and Phase 1c (/ayatori-req-delta)
+# Entry condition の判定式の正本 (SoT) は CLAUDE.md § 完走後 Phase 共通 Entry Guard —
+# 下の entry_condition: はその機械可読ミラー (式を変えるときは CLAUDE.md を先に直すこと)。
+# 二段階完了モデル (final_approved / completed_at_states) + reverse 基線例外 (baseline_approved_at、Phase 1d/5/6 限定)。
+add_feature:
+  description: "Add-feature hearing for completed or reverse-baseline projects. 7-axis hearing → ISO 29148 decompose → change-manifest.json (source: skill-01b)"
+  entry_condition: "pipeline-state.json.approvals.final_approved == true OR pipeline-state.json.approvals.completed_at_states is set OR (pipeline-state.json.approvals.baseline_approved_at is set AND requirements.json.status == 'REVERSE_ENGINEERED')"
+  steps:
+    - 01b-add-feature-question
+  input:
+    - requirements/             # 01〜08.md — context として全件 read (skill 01b Step 0)
+    - pipeline-state.json       # final_approved gate + req_delta.runs[] への append
+  output:
+    - req-delta/change-manifest.json   # source: "skill-01b" 付き
+    - req-delta/snapshots/{doc}.snapshot.md
+    - pipeline-state.json       # req_delta.runs[] に stub append (initiated_at)
+  handoff_to:
+    next_phase: req_delta
+    handoff_signal: "change-manifest.json.source == 'skill-01b'"
+    bypass_step: 31-req-change-detect   # 01b が manifest を直接生成済のため
+
+# Phase 5: Post-completion delta update (optional, repeatable)
+# Entry condition: 判定式の正本 (SoT) は CLAUDE.md § 完走後 Phase 共通 Entry Guard (F ∨ C ∨ baseline)。下の entry_condition: はその機械可読ミラー。
+delta:
+  description: "Single entry for post-completion changes without a full rebuild. Three entry modes — requirement-change (27→28→29→30) regenerates only affected/new screens; screen-edit (27b→29b→(29c)→30) reverse-propagates a hand-edited screen HTML into its spec/docs, audits the edit diff against the requirement docs, and promotes gate-approved deviations into requirements/*.md (requirements.json untouched); when Figma exists, only that frame is re-captured (skipped when Figma is absent); feature-add (27f) runs the 01b hearing then hands off to req-delta and the requirement-change mode. Design system and preserved screens are untouched."
+  steps:
+    - 27-change-detect            # requirement モード起点
+    - 27b-screen-edit-detect      # screen-edit モード起点 (27 の代替、git 非依存の編集検知)
+    - 28-impact-analysis          # requirement モードのみ
+    - 29-partial-screen-regen     # requirement モード
+    - 29b-reverse-propagate       # screen-edit モード (29 の逆方向代替: HTML→spec 逆伝播 + scoped 採点 + 逆方向要件監査)
+    - 29c-req-propagate           # screen-edit モード (29b ゲートで「要件に昇格」に選ばれた逸脱を requirements/*.md へ反映。昇格 0 件なら no-op)
+    - 30-partial-figma-update     # 両モード共通 (screen-edit は Figma 実在時のみ実行)
+    # feature-add モード起点 (Step 27f) は 01b-add-feature-question を借用 (Phase 1d と共有)。
+    # ヒアリング後は要件文書 → UI 反映を req-delta → delta (要件変更) へ委譲し、delta 専用 step は持たない。
+  # `final_approved` (main 完了、Step 23) OR `completed_at_states` (sub-state 含む完全完了、Step 25e)
+  # OR `baseline_approved_at` (reverse 基線 — ベースライン承認ゲート [人間]。二段階完了モデルと基線例外の
+  # 正本は CLAUDE.md § 完走後 Phase 共通 Entry Guard)。
+  entry_condition: "pipeline-state.json.approvals.final_approved == true OR pipeline-state.json.approvals.completed_at_states is set OR (pipeline-state.json.approvals.baseline_approved_at is set AND requirements.json.status == 'REVERSE_ENGINEERED')"
+  input:
+    - pipeline-state.json        # final_approved / completed_at_states gate + delta.runs[] history
+    - requirements.json          # interview_mode — feature_addition branch (Step 27)
+    - requirements/              # 01~08 docs — user selects which changed (Step 27)
+    - screens/00-screen-list.md  # impact analysis (Step 28)
+    - screens/00-transition-map.mmd   # SSoT — Step 29 が部分修正 (29b は screen-edit の nav 変更時)
+    - screens/00-transition-map.html  # derived from .mmd — Step 29 が template から再生成 (29b 同上)
+    - screens/*.md               # screen specs — read by 28, updated by 29 / 29b (screen-edit: 逆伝播先)
+    - figma-state.json           # preserved frame node_ids (Step 30)
+    - delta/edited-screens.json  # screen-edit モード: 編集台帳 (PostToolUse hook が記録、27b が消費)
+  output:
+    - delta/change-manifest.json
+    - delta/impact-analysis.md
+    - delta/run-history.json
+    - delta/snapshots/           # requirement: changed requirement docs / screen-edit: pre-edit screen HTML
+    - delta/feature-add-brief.md # change_type == feature_addition のみ (Step 27)
+    - delta/req-promotion/       # screen-edit 昇格時のみ (Step 29c): snapshots/ + change-manifest.json + cross-reference-integrity-report.md
+    - requirements/              # screen-edit 昇格時のみ (Step 29c が該当 NN-*.md を改訂。requirements.json は不変) / requirement モード feature_addition は Step 27 Step5b が 05-features.md へ追記
+    - pipeline-state.json        # delta.runs[] entries appended by Steps 27/27b–30 (+ 29c の req_promotion)
+  design_system_freeze:
+    - tokens.json
+    - design-brief.yaml
+    - screens/_shared/root-variables.css
+    - screens/_shared/common-styles.css
+    - figma-state.json  # preserved-screen node_ids only — affected/new/removed entries are updated by Step 30
+  gates:
+    28-impact-analysis:
+      type: human
+      description: "Confirm which screens are affected before any regeneration"
+    29-partial-screen-regen:
+      type: human
+      description: "Review updated HTML for affected screens before Figma update"
+    29b-reverse-propagate:
+      type: human
+      description: "Review reverse-propagated specs + scoped score + deviations before Figma update (screen-edit mode); on approval select which deviations to promote into the requirement docs"
+    29c-req-propagate:
+      type: human
+      description: "Review the proposed requirements/*.md revisions for promoted deviations before they are written (screen-edit mode, only when promotions exist)"
+    30-partial-figma-update:
+      type: human
+      description: "Confirm Figma partial update result"
+
+# Phase Export
+# 独立コマンド /ayatori-export。画面定義書 / 要件定義書の MD 群を 1 つの自己完結 HTML に結合する。
+# Phase 3 (screens) の Step 23 final_approved 後に推奨されるが必須ではない。いつでも再実行可能。
+# PDF 化はスコープ外 (Operating Principle 1 準拠) — 出力 HTML をブラウザで開いて手動印刷する運用。
+export:
+  description: "Build self-contained HTML deliverables (screens.html / requirements.html) with base64-embedded images for external sharing."
+  steps:
+    - 35-md-to-html-export
+  entry_condition: "any time after screens/*.md or requirements/*.md exist (no gate required)"
+  input:
+    - screens/                # source MDs + optional screenshots/ subdir (markers: <!-- screenshots: SCR-XXX -->)
+    - requirements/           # source MDs (target=requirements の場合)
+  output:
+    - screens.html            # 全画面定義書を結合した自己完結 HTML (画像 base64 inline)
+    - requirements.html       # 全要件定義書を結合した自己完結 HTML
+  optional: true              # 必須フェーズではない — Phase 3 完了後の任意配布物生成
+  stateless: true             # pipeline-state.json への読み書きを行わない (責務最小化)
+  pdf_generation: "out_of_scope"  # Operating Principle 1 抵触のため。ユーザーは HTML をブラウザで「印刷→PDF保存」する。
+
+# 独立コマンド /ayatori-index。artifacts/{app_name}/ の全成果物を 1 つの index.html
+# (左カテゴリ目次 + 右コンテンツ) に集約する。HTML 成果物は live sibling への iframe、
+# Markdown は in-script renderer で描画。二重クリックで開くだけで動く (サーバ不要・外部 lib 不要)。
+# phase_order 非搭載・明示起動のみ。各人間ゲートでも自動再生成される (human_gate.artifact_preview.refresh_index)。
+index:
+  description: "Aggregate all artifacts/{app_name}/ deliverables into one double-clickable index.html (left categorized TOC + right pane). HTML deliverables via iframe to live siblings; Markdown rendered inline. No server, no external libs."
+  steps:
+    - 36-artifact-index
+  entry_condition: "explicit invocation only (/ayatori-index). Any time artifacts/{app_name}/ exists; generates for partial runs too."
+  input:  # すべて読み取り専用 (本 phase は書き込みをしない)
+    - requirements/          # ISO 29148 docs (MD)
+    - screens/               # screen specs (MD) + screen HTML + transition / style-guide / color-lint views
+    - design-samples/        # 3-variant design HTML (live or newest .archive fallback)
+    - scoring-dashboard.html # + scoring-history.html / requirement-deviations-view.html 等の派生 HTML ビュー
+    - feedback-log.md        # 実行履歴カテゴリに表示
+    - pipeline-state.json    # 実行サマリー合成: 承認タイムライン / 選択デザインの読み取り元
+    - scores.json            # 実行サマリー合成: デザイン採点の読み取り元
+    - delta/run-history.json # 実行サマリー合成: デルタ変更履歴の読み取り元
+  output:
+    - index.html             # 全成果物を集約したインデックス (毎回フル上書き、SoT = ディレクトリ自身のスキャン結果)
+  optional: true
+  stateless: true            # runtime state を書き込まず・制御判定にも用いない。実行サマリー表示のため pipeline-state.json / scores.json / delta/run-history.json を読み取り専用で参照するのみ (export の "読み書きしない" と異なり、本 phase は表示目的の read だけ許容する)
+# Phase 6: Delta / req-delta mini-retro (optional, repeatable)
+# Entry condition の判定式の正本 (SoT) は CLAUDE.md § 完走後 Phase 共通 Entry Guard —
+# 下の entry_condition: はその機械可読ミラー。Phase 5 と同じ完了条件 (F ∨ C ∨ baseline) に加え、
+# delta.runs[] / req_delta.runs[] のいずれかに mini_retro_completed_at 未 set のエントリが存在することを要求する。
+# Scope B: covers BOTH delta phase (steps 27-30) AND req_delta phase (steps 31-33) — captures both retro gaps.
+# Symmetric with Phase 4 /ayatori-retro (also user-invoked, single-step lightweight retro).
+delta_mini:
+  description: "Lightweight retrospective for post-completion delta / req-delta runs. Filters feedback-log.md by retro-marker sentinel + step 27-33 range, generates improvement proposals, appends to pipeline-improvements.md via inline approval gate (skill 26 Phase E pattern)."
+  steps:
+    - 34-delta-mini-retro
+  entry_condition: "(pipeline-state.json.approvals.final_approved == true OR pipeline-state.json.approvals.completed_at_states is set OR (pipeline-state.json.approvals.baseline_approved_at is set AND requirements.json.status == 'REVERSE_ENGINEERED')) AND (any delta.runs[].mini_retro_completed_at unset OR any req_delta.runs[].mini_retro_completed_at unset)"
+  input:
+    - pipeline-state.json        # delta.runs[] / req_delta.runs[] pending detection
+    - feedback-log.md            # marker 以降 + step 27-33 filter で Pattern A/B/C を集計
+  output:
+    - pipeline-state.json        # delta.runs[]/req_delta.runs[] の対象 entry に mini_retro_* を書き込む
+    - feedback-log.md            # 末尾に mini-retro-marker を append (次回 Phase 6 の filter 起点)
+    - ../pipeline-improvements.md  # 提案承認時に section append (project 共有グローバル)
+  gates:
+    34-delta-mini-retro:
+      type: human
+      description: "Inline approval of improvement proposals before append (skill 26 Phase E pattern)"
+      condition: "Pattern A/B/C detected in feedback-log since last marker (step 27-33 filtered); otherwise a one-shot skip confirmation"
+
+# ── Confluence URL Template ──────
+# Confluence page URL を `pipeline-state.json.confluence.{requirements|design}.page_id` から
+# 組み立てるテンプレート。人間ゲート preview (Steps 07 / 26) で clickable link 化するために
+# 使う。`pipeline-state.json` schema (schemas/pipeline-state.schema.json L198-L242) には
+# page_id / doc_page_ids / save_status しか保存されておらず、base URL や space slug は無いため、
+# 本テンプレートが「URL 化」の唯一の SoT となる。`{page_id}` プレースホルダのみ skill 側で置換する。
+# KTC team デフォルト。他組織で運用する場合は本値を差し替えること (空間 slug `mord` 部分も含む)。
+confluence:
+  url_template: "https://kinto-dev.atlassian.net/wiki/spaces/mord/pages/{page_id}"
+
+# ── Human Gate Artifact Preview ──
+# 人間ゲート時に成果物 (MD / HTML / 画像) をスムーズに確認できるようにする設定。
+# 従来は path 文字列のみ提示 → ユーザーが手でフォルダから探して開く必要があった。
+# 本設定で 2 階層の UX 改善を導入する:
+#   (1) Clickable link 一覧 (baseline) — VSCode 拡張で ⌘+click で開ける
+#       `[label](file:///abs/path)` markdown link を提示。全人間ゲートで共通フォーマット。
+#   (2) Auto-open (HTML のみ、step ごとに 1 つ) — `open` (macOS) / `xdg-open` (Linux) /
+#       `cmd.exe /c start` (Windows Git Bash 等) で「主要 HTML」を 1 つだけブラウザ起動。
+#       複数ファイル一斉自動 open は spam になるため抑制。各 step の「主要 HTML」は step_targets で
+#       declarative に定義。Windows の `start` は cmd.exe builtin で PATH に無いため、必ず cmd.exe 経由で起動する
+#       (skills/_shared/human-gate-preview.md Bash 実装参照)。
+# 対象 step: 07 / 10 / 13 / 16 / 21 / 21b / 21g / 23 / 26 + screens-lite のベースライン承認ゲート
+#   (`phases/screens/SKILL.md` § Execution — screens-lite の lite-4b。step_id = screens-lite-baseline-gate)
+#   の全人間ゲート step。列挙の SoT は skills/_shared/human-gate-preview.md 冒頭。
+# 共通ヘルパ: skills/_shared/human-gate-preview.md (本設定の読み込みと実行手順を定義する SoT)。
+# Failure 動作: auto-open Bash が失敗 / OS opener 不在 → link 一覧表示のみで続行 (希望③に自動 degrade)。
+# CLAUDE.md Operating Principle 1 例外: OS 同梱コマンドは外部 CLI install 系ではないため対象外。
+human_gate:
+  artifact_preview:
+    enabled: true                  # false にすると preview block を出さず従来通り path 提示のみ
+    link_format: file_uri          # file_uri (`file:///abs/path`) | repo_relative (将来用、未実装)
+    refresh_index: true            # true = 各人間ゲートで artifacts/{app_name}/index.html を自動再生成し preview link に追加 (fail-open)。false で無効化
+    auto_open:
+      mode: primary_only           # primary_only | none | all
+      # primary_only: step_targets で declared された 1 ファイルのみ auto-open
+      # none:         auto-open 無効化 (全 step が link 一覧のみになる)
+      # all:          step_targets を無視して artifacts_to_review 内の target_types を全部 open (非推奨)
+      target_types: [html]         # auto-open 対象のファイル種別。md は link のみ、html だけ open
+      # ─ Step ごとの「主要 HTML」(primary_only モードで auto-open される 1 ファイル) ─
+      # 値は artifacts/{app_name}/ からの相対パス。null は「auto-open なし、link 一覧のみ」。
+      # {placeholder} は各 skill が解決する (例: {first_platform} = ["web","mobile"] の固定順で最初に存在するもの)。
+      step_targets:
+        "07-human-gate-req": null                                                   # MD のみ。Confluence で確認するため auto-open 不要
+        "10-sample-human-review": "design-samples/{first_platform}/index.html"      # 最初の platform の index.html (3 案切替式)
+        "13-human-gate-design": "screens/style-guide-view.html"                     # スタイルガイド HTML (パーツカタログ)
+        "16-design-doc-human-review": "screens/00-transition-map.html"              # 遷移図 HTML (派生)
+        "screens-lite-baseline-gate": "index.html"                                  # ベースライン承認ゲート (screens-lite Route A の lite-4b)。基線材料を 1 画面で確認できる成果物インデックスを auto-open。skill を持たない phase 内工程のためキーは step 番号ではなくルート名
+        "21-screen-human-review": null                                              # 画面が大量、Figma 確認が主、link 一覧のみで OK (ユーザー希望)
+        "21b-graphic-hearing": "graphics/graphic-recommend.html"                    # 候補スロット視覚レポート 。候補 0 件 / render 失敗時は不在 → helper が warn + skip (link 一覧のみ)
+        "21g-graphic-embed-review": "graphics/graphic-embed-review.html"            # 埋め込み視覚レポート (どのグラフィックがどの箇所に入ったかのハイライト表示)。render 失敗時は不在 → helper が warn + skip (link 一覧のみ)
+        "23-human-final-approval": null                                             # Figma URL 確認が主、HTML auto-open 不要
+        "26-retro": null                                                            # 数値サマリーが主、Confluence/Figma URL は link 提示
+    fallback_on_failure: emit_path_only   # open 系コマンド不在 / 失敗時は link 一覧表示のみで続行 (希望③ degrade)
+
+# ── Artifact Backup ─────────────────────────────
+# 人間ゲート確認対象の成果物を上書き / 編集する直前に、現行 (= 修正前) の中身を
+# app ルート直下の `_backup/` フォルダ (元の相対構造をミラー) へ時刻付きで自動複製する仕組みのポリシー宣言。
+# 誤った修正をしても直前バージョンへ戻せるようにするのが目的。
+#
+# 実装は PreToolUse (Write|Edit) hook `.claude/hooks/backup-on-edit.sh`。本セクションは
+# 人間可読の正本であり、hook 側が enforcement を担う (targets を変更する場合は hook 内の
+# 許可リスト regex も同期すること)。
+artifact_backup:
+  # 無効化する場合: .claude/settings.json の hooks.PreToolUse から backup-on-edit.sh のエントリを外す。
+  # (本セクションは宣言用の正本であり、enabled 等のフラグを読むコードは無い — hook は bash で pipeline.yaml を参照しない)
+  hook: .claude/hooks/backup-on-edit.sh
+  # トリガー経路は 3 つ (詳細は docs/artifact-backup.md):
+  #   1. Write/Edit ツール経由 (生成・ループ再生成・req-delta 適用・subagent 生成等) → 上記 hook が自動退避
+  #   2. スクリプト経由の一括修正 (人間ゲートのフィードバック反映 = skills/00-feedback-protocol) → hook 非発火のため、
+  #      当該プロトコルの置換スクリプト自身が置換前に同じミラー配置へ退避する (skill 側 Step 2 に統合)
+  #   3. スクリプト経由の生成・patch (下記 targets の成果物を Bash で上書き / patch する経路) → **script 側での
+  #      self-backup を義務とする** (hook は matcher が Write|Edit ツールのみで Bash は対象外のため。
+  #      実装済み: scripts/derive-transition-map.mjs の --force 上書き / 21g の graphic 埋め込み script
+  #      [graphic_generation.html_transform_policy]。21f 側に self-backup 実装は無い)。規約は経路 1 と同一 — ミラー配置
+  #      (_backup/{相対dir}/{stem}.{YYYYMMDD_HHMMSS}.{ext}) / 直前バックアップと md5 同一ならスキップ /
+  #      複製失敗でも本処理を block しない fail-open。新規生成 (ファイル不在) は対象外。
+  #      **targets に載っていない成果物 (例: screens/00-coverage-check.json) を書く script は対象外**
+  #      (許可リスト方式 — hook と同じ範囲に閉じる)
+  placement: mirrored_app_backup_root  # app ルート直下の `_backup/` に元の相対構造をミラーして格納
+  backup_dir_name: _backup
+  # 格納先: artifacts/{app_name}/_backup/{元の相対dir}/{stem}.{時刻}.{ext}
+  #   例: requirements/05-features.md → artifacts/{app}/_backup/requirements/05-features.20260528_150000.md
+  #       screens/mobile/01-home.html → artifacts/{app}/_backup/screens/mobile/01-home.20260528_150000.html
+  # 理由: deliverable ディレクトリ (requirements/ や screens/) の内側に _backup/ を置くと、
+  #   パイプラインがそれらを再帰 grep / find する処理 (skill 33 の ID 整合 grep、C-18 / skill 18 の
+  #   色整合 grep、skill 28/29 の find、skill 00/21/23 の grep 等) がバックアップを誤検出する。
+  #   scan 対象ツリーの外 (= app ルート直下) へ退避することで、これら既存 scan を一切変更せずに済む。
+  naming: timestamp                    # `{stem}.{YYYYMMDD_HHMMSS}.{ext}` (例: 05-features.20260528_150000.md)
+  trigger: pre_overwrite               # 上書き / 編集の直前。新規生成 (ファイル未存在) は対象外
+  dedup: md5                           # 直前バックアップと内容が同一なら複製しない (no-op rewrite の増殖防止)
+  # cooldown: 連続 Edit の増殖防止。1 回の修正指示を複数 Edit に分割しても、同一ファイルの直近バックアップが
+  #   一定秒数以内なら退避を skip し、指示前の 1 件のみ残す。秒数は環境変数 AYATORI_BACKUP_COOLDOWN_SECONDS で
+  #   調整 (既定 180、0 で無効)。hook (bash) が env を読むため、ここには数値フィールドを置かない (参照されない
+  #   dead field を避ける)。詳細は docs/artifact-backup.md。
+  deletion: manual                     # 溜まったバックアップはユーザーが手動削除する (自動削除・容量上限は設けない)
+  fail_open: true                      # 複製失敗でも Write / Edit をブロックしない (成果物保存を最優先)
+  # 対象成果物 (artifacts/{app_name}/ からの相対パス。skills/_shared/human-gate-preview.md の
+  # 人間ゲート確認対象と整合。中間ファイル・ループ用 history・machine state は対象外):
+  targets:
+    - requirements/*.md                # Step 07: ISO 29148 ドキュメント 8 点
+    - design-samples/**/*.html         # Step 10: サンプル HTML 3 案
+    - style-guide.md                   # Step 13: スタイルガイド (MD)
+    - screens/style-guide-view.html    # Step 13: パーツカタログ (HTML)
+    - tokens.json                      # Step 13: デザイントークン
+    - screens/*.md                     # Step 16/21: 画面一覧 + 各画面仕様書
+    - screens/00-transition-map.mmd    # Step 16: 画面遷移図 SSoT
+    - screens/00-transition-map.html   # Step 16: 画面遷移図 (派生 HTML)
+    - screens/web/*.html               # Step 21: 全画面 HTML (Web、状態パターン含む)
+    - screens/web-sm/*.html            # Step 21: 全画面 HTML (Web スマホ幅、状態パターン含む)
+    - screens/mobile/*.html            # Step 21: 全画面 HTML (Mobile、状態パターン含む)
+    - figma-state.json                 # Step 23: Figma 出力関連
+    - pipeline-improvements.md         # Step 26: 振り返りレポート (artifacts 直下 / app 配下どちらも対象)
+  # 対象外 (許可リスト方式により自動的に除外される。誤解防止のため明示):
+  #   requirements.json / design-brief.yaml (INPUT・machine state) /
+  #   pipeline-state.json / pending-questions.json / requirement-deviations.json /
+  #   generation-provenance.json / reverse-provenance.json / scores.json / *-history.json /
+  #   screens/00-coverage-check.json / screens/_shared/* / feedback-log.md / session-handoff.md
+
+# ── Design Output Scope Defaults ────────────────
+# Step 01 (Axis 7) asks the user to choose; these values are used
+# when requirements.json.design_output_scope is missing or incomplete.
+default_design_output_scope:
+  platform_combo: mobile_and_web         # mobile_only | web_only | mobile_and_web
+  # platform_combo ∋ web のとき、web の出力ビューポート幅を宣言する直交属性。
+  #   desktop = 1440px 固定幅 (screens/web/)、sm = 390px 固定スマホ幅 (screens/web-sm/)。
+  #   media query による responsive 1 ファイル化は採用しない — Figma キャプチャは viewport 幅を
+  #   制御できず「固定幅要素 + figmaselector 切出し」のみ可能なため、幅ごとに別 HTML を派生する
+  #   (mobile の 390px .screen ラッパーと同じ機構)。web-sm はブラウザページ体裁 (フォンフレーム
+  #   装飾 / BottomTab なし) で、mobile (ネイティブアプリ想定) とは別物。
+  #   requirements.json.design_output_scope.web_viewports 欠落時のフォールバック既定値 (後方互換 = desktop のみ)。
+  web_viewports: [desktop]               # subset of [desktop, sm]、minItems 1 (platform_combo ∋ web の場合に適用)
+  screen_coverage: must_and_should       # must_only | must_and_should | all_features
+  # state_pattern は Step 25a (state-pattern-plan) が読んで sub-state
+  # 生成計画の推奨デフォルトとして提示する。Step 17 (screen-gen) は default のみ生成し、
+  # 本値を参照しない。
+  # 既定値は default_only。初回フローは main を素早く一周させることを
+  # 優先し、sub-state は最終承認後の Step 25a で任意に追加する設計 (二段階完了モデル) に
+  # 合わせ、design_output_scope 未設定時の fallback も「追加パターンなし」を推奨する。
+  state_pattern: default_only  # default_only | required_4_states | nature_based_extra_states
+  mobile_framework: native               # native | flutter | kmp (mobile を含む場合に適用)
+  # Android XML (colors.xml / dimens.xml) は native baseline (Swift + Compose) から
+  # 外し、View システムを使うレガシー案件のみの opt-in に降格。既定 false = build/android/ を生成しない。
+  # true にすべきケース: 既存アプリが XML ベース / レガシー画面の解析・改修 / View ベースの
+  # カスタムビュー / Compose への移行プロジェクト。
+  legacy_android_xml: false              # true | false (mobile を含む場合に適用)
+  illustration_policy: pictogram         # pictogram | illustration_character | emoji_casual
+  graphic_generation: ask   # ask | skip — AI グラフィック生成ブロック (21a-21g) の起動方針。
+                            # ask=21a 分析+21b 人間判断 (default) / skip=ブロック全体不実行。
+                            # 既存 illustration_policy とは別軸 (アイコン描画規約 vs ラスター生成の有無)。
+                            # フィールド欠落 (legacy) は ask 相当 — 後方互換は「聞く」側に倒す。
+                            # 詳細: docs/graphic-generation-design.md §5
+
+# ── Figma MCP ───────────────────────────────────
+# Mode detection is centralized in skills/00-figma-mode-detect/SKILL.md
+# Resolution rules:
+#   1. OS env var FIGMA_MCP_ENABLED (must be checked via Bash, not inferred)
+#      - "true"        → Figma MCP mode
+#      - "false"       → stub mode
+#      - unset / other → stub mode + explicit warn message guiding the user to set the env var
+figma:
+  env_var: FIGMA_MCP_ENABLED         # OS env var name to check via Bash
+  # generate_diagram に渡す planKey。team / org ごとに値が異なるため、skill 側に
+  # ハードコードせず本ファイルから注入する。
+  # 別 team で運用する場合は本値を差し替えるか、環境変数 FIGMA_PLAN_KEY を設定して
+  # skill 側で env を優先するパターンも可。現状値は KTC team。
+  plan_key: "team::966282011765117715"
+  # Step 12 (design-system) は tokens.json (JSON) / style-guide HTML /
+  # マルチプラットフォームコード生成のみで Figma を書き込まないため対象外。
+  # Figma Variables 3 コレクション (Primitives / Semantic / Component) の
+  # 登録は Step 24 (design-system-update) が担当する。
+  # Step 17 (screen-gen) も Figma 書き込みは行わない (SKILL.md L69 参照、
+  # 出力は Step 22 が担当) が、mode 判定ログを audit trail として残すため
+  # affected_steps には含めたまま。
+  # Step 14 (screen-list-transition) と Step 29 (partial-screen-regen) は
+  # 共通 skill 00-transition-figjam-sync 経由で
+  # 00-transition-map.mmd (SSoT) から FigJam に単方向同期する。
+  affected_steps:
+    - 14-screen-list-transition
+    - 17-screen-gen
+    - 18-design-review
+    - 22-figma-export             # disabled 時は fallback が screens.step22_figma_status = skipped_stub_mode を記録して 23 へ (figma-state.json は作成しない)
+    - 24-design-system-update     # disabled 時は skill 冒頭 mode 判定のスタブ手順で screens.step24_figma_status = skipped_stub_mode + step24_completed_at のみ記録
+    - 25-component-build          # disabled 時は skill 冒頭 mode 判定のスタブ手順で screens.step25_figma_status = skipped_stub_mode + step25_completed_at のみ記録
+    - 25e-figma-pattern-export    # FIGMA_MCP_ENABLED=true 時のみ動作、それ以外は skipped_stub_mode
+    - 29-partial-screen-regen
+    - 30-partial-figma-update
+  detect_skill: skills/00-figma-mode-detect/SKILL.md  # single source of truth for mode detection
+  fallback: "MD/HTML stub output"
+
+# ── File Topology ───────────────────────────────
+# artifacts/{app_name}/ 配下のうち phase.input/output で宣言されないファイルの責務マップ。
+# phase.output で宣言済みのもの (rubric.json / scoring-history.json / tokens.json /
+# design-brief.yaml / style-guide-view.html / wcag-mapping.json / wcag-history.json /
+# scores.json / pipeline-improvements.md) はここに再掲しない (SoT 原則)。
+# - mode_agnostic: greenfield (question→) / reverse (Step 01~) どちらでも生成されるファイル
+# - conditional:   feature flag / phase status により生成有無が変わるファイル
+file_topology:
+  mode_agnostic:
+    - path: pipeline-state.json
+      role: cross_phase_hot_state
+      sections: [approvals, selections, confluence]
+      lazy_init: true   # 最初の writer が空 stub ({"app_name": "{app_name}"}) から init。"Read or {} → merge → Write" パターン。
+      note: "人間ゲート承認時刻 / サンプル選択結果 / Confluence ページ ID 等の cross-phase hot state を集約。schemas/pipeline-state.schema.json 参照。"
+    - path: feedback-log.md
+      role: free_form_log
+      note: "Pattern A/B/C/D 発生時に append される自由記述ログ。CLAUDE.md `Feedback Log` セクション参照。"
+    - path: pending-questions.json
+      role: uncertainty_queue   # Operating Principle 4 input 側: (D)UNCERTAIN キュー兼 confirmed-decisions ledger
+      primary_writer: "main session orchestrator (subagent は assertion_failed return 経由で間接 append。resolve は main session のみ。確定 decision の born-resolved 記録は 02 補完質問確定時 / 07 gate 昇格時 等)"
+      readers: "全 Phase preamble の Pre-flight Gate + 07-human-gate-req 要件トレース監査 (resolved entries を user 確定 input として突合) + 26-retro (Pattern D 集計)"
+      lazy_init: true   # 初回 UNCERTAIN append 時に init stub {"app_name":"{app_name}","entries":[]} から生成
+      note: "(D) UNCERTAIN 未確定キュー + resolved entries = confirmed-decisions ledger (Step07 要件トレース監査の突合先)。pipeline-state.json には派生 counter pending_questions_open のみ保持。schemas/pending-questions.schema.json 参照。"
+    - path: screens/00-coverage-check.json
+      role: coverage_check_result
+      sections: [layers, summary, user_accepted_gaps, user_indicated_gaps]   # layers は l1〜l4 + l5_connectivity
+      primary_writer: 14-screen-list-transition   # 通常経路 / REVERSE_ENGINEERED ファストパス / 14-lite (screens-lite Route A) のいずれも本 skill が担う。14-lite は不在時のみ空 stub を書き L5 は validate-connectivity.mjs --write で patch する
+      secondary_writers: [06-format-convert, 21-screen-human-review, 29-partial-screen-regen, 29b-reverse-propagate]   # 06=reverse Step 06 E6 (リバース産プロジェクトの初期生成: 空 stub + L5 patch)。21=user_indicated_gaps キーのみで key 分離。29=layers.l5_connectivity (requirement delta 経路)。29b=layers.l5_connectivity (screen-edit delta 経路、編集画面 scope)。14(create) / 06 / 29 / 29b は同じ l5_connectivity キーを書くが key 分離ではなく "create (06/14 は reverse 経路で 06→14-lite の順に一方向) と delta は実行排他、29 と 29b は delta の排他モードで同一 run に同居しない" ため競合しない
+      readers: [19-rubric-score]                    # 19 は Read only (再評価の起点として参照)
+      note: "Step 14 で生成される画面パターン網羅性 (L1〜L4) 早期チェック結果 + 各画面の入口/出口検証 (L5 connectivity)。Step 19 が L1〜L4 を生成 HTML に対して再評価し scores.json.current.coverage_check に、L5 を connectivity_check に反映。reverse 経路 (Step 06 E6 / ファストパス / 14-lite) は L1〜L4 が空 stub + user_accepted_gaps: true = 「早期チェック未実施」の印 (空を「欠陥なし」と読まない)。docs/screen-coverage-check.md 参照。schemas/coverage-check.schema.json 参照。"
+    - path: screens/00-screen-nav.json
+      role: screen_io_derived_view
+      primary_writer: 14-screen-list-transition   # 通常経路 / ファストパス / 14-lite (screens-lite Route A) — いずれも scripts/derive-screen-nav.mjs で派生生成
+      secondary_writers: [06-format-convert, 29-partial-screen-regen, 29b-reverse-propagate]   # 06=reverse Step 06 E6-3 (同 script)。29=requirement delta / 29b=screen-edit delta の nav 変更時 (いずれも .mmd が変わったら再生成)
+      readers: [19-rubric-score, 21-screen-human-review, 28-impact-analysis]
+      note: "各画面の入口 (遷移元) / 出口 (戻り先・前方遷移) を per-screen に正規化した派生ビュー。SoT は 00-transition-map.mmd であり本ファイルは .html と同じ派生物 (authored 化禁止、修正は .mmd へ)。L5 connectivity validator の正規化入力 + 人間がフロー図全体を読まずに 1 画面の in/out を把握する用途。schemas/screen-nav.schema.json 参照。"
+    - path: screens/00-transition-map.mmd
+      role: transition_diagram_sot
+      primary_writer: 14-screen-list-transition   # 通常経路 (AI が Mermaid 生成) / ファストパス・14-lite (screens-lite Route A) は不在時のみ scripts/derive-transition-map.mjs で salvage 生成。既存 .mmd は再生成しない (--force を渡さない)
+      secondary_writers: [06-format-convert, 29-partial-screen-regen, 29b-reverse-propagate]   # 06=reverse Step 06 E6-2 (リバース産プロジェクトの初期生成。実体は同じ決定論 script)。29b=screen-edit delta の nav 変更時に部分修正
+      readers: [00-transition-figjam-sync, 15-confluence-save-design, 16-design-doc-human-review, 28-impact-analysis]
+      note: "画面遷移図の SSoT (純 Mermaid テキスト)。.html は派生 (docs/templates/transition-map.template.html + .mmd で機械生成)。複数 flowchart は --- 区切りで連結。readers は実際に .mmd を Read する skill のみを列挙 (17 / 19 / 21 / 26 は前提条件 / ログ用に言及するのみで Read しないため除外)。"
+    - path: screens/00-transition-map.html
+      role: transition_diagram_derived_html
+      primary_writer: 14-screen-list-transition
+      secondary_writers: [29-partial-screen-regen, 29b-reverse-propagate]   # 29b=screen-edit delta の nav 変更時に再生成
+      readers: [16-design-doc-human-review]   # ブラウザ参照用 (人間レビュー)
+      note: "docs/templates/transition-map.template.html + 00-transition-map.mmd で機械生成される派生物。AI は wrapper や CSS を編集しない (template 内に閉じる)。"
+    - path: screens/_shared/components.html
+      role: chrome_component_canonical
+      primary_writer: 17-screen-gen   # Step 0b で chrome プラン (00-screen-list.md) + icons/ から一度だけ materialize
+      readers: [25b-state-pattern-gen, 25c-state-pattern-score, 29-partial-screen-regen]   # 25b/25c は READ-ONLY 参照 (chrome は main から byte-level 継承)
+      note: "共通部品 (ボトムメニュー 1 種 + ヘッダー 2 種 A/B) のマークアップ正典。各画面 HTML へ verbatim ペースト + スロット (現在タブ / タイトル / 戻り先) 差し込み。root-variables.css の inline-copy idiom を部品フラグメントへ拡張。docs/html-generation-rules.md §11 参照。"
+    - path: screens/_shared/components.css
+      role: chrome_component_canonical
+      primary_writer: 17-screen-gen
+      readers: [25b-state-pattern-gen, 25c-state-pattern-score, 29-partial-screen-regen]
+      note: "共通部品 chrome の CSS 正典 (.mobile-header / .mobile-bottom-nav / nav svg stroke-width / body padding-bottom 等)。root-variables.css と同様に各 HTML へ逐語インライン。色は var(--color-*) 参照のみ。"
+    - path: screens/color-lint-report.json   # + 派生 color-lint-report.html (scripts/render-color-report.mjs が生成)
+      role: color_lint_derived_report
+      primary_writer: "scripts/lint-screen-colors.mjs --report (invoker: 18-design-review primary、29/25c は再生成後・29b は screen-edit run 冒頭に再実行して上書き。derived = HTML+icons+illustrations の決定的関数で append 台帳ではない)"
+      readers: [19-rubric-score, 21-screen-human-review, 25d-state-pattern-approval, 24-design-system-update]
+      note: "画面 content 色 lint (C-25)。L1=zero-literal 等の機械的事実 / L2=アイコン色変動・未照合 SVG・装飾色昇格キュー・境界違反 (人間判断)。schemas/color-lint-report.schema.json 参照。"
+  conditional:
+    - path: screens/_shared/illustrations/   # {name}.svg
+      role: illustration_canonical
+      when: "休止 (dormant)。pictogram は独自シーンイラストを手描きせず単一アイコンの拡大表示で表現するため生成されない。illustration_character / emoji_casual も placeholder / 絵文字を使い不在。後方互換のため定義のみ残す。"
+      primary_writer: "17-screen-gen (Step 0c。29 は new 画面向けに additive 追加のみ可・既存改変禁止)"
+      readers: [25b-state-pattern-gen, 25c-state-pattern-score, 29-partial-screen-regen]
+      note: "イラスト正典 (第 3 の正典系統)。内部色は var(--…)/currentColor のみ。各画面へ逐語ペースト (サイズ系属性のみ可変)・lint が形状署名+inner byte 照合。docs/html-generation-rules.md §11.7 参照。"
+    - path: input-sources/{stack}/
+      role: user_provided_primary_source
+      when: "user provides local source code (リバース系・整合チェック系の一次ソース)"
+      writer: "user (パイプラインは書き込まない)"
+      readers: [02-source-analysis, 04-comparison, 05-review-gate, 32-req-impact-analysis, 01-target-scope, 02-targeted-crosscheck]
+      placeholders:
+        "{stack}": |
+          ソースの言語+プラットフォーム+デプロイ役割を表す自由名サブディレクトリ。
+          許容例: ios-swift / be-python / kmp / android-kotlin / react-native / nextjs / flutter 等。
+          **注意**: 出力プラットフォームを表す `{platform}` とは別概念。`{platform}` の許容値はツリーごとに異なる —
+          screens/{platform} = web|web-sm|mobile (web-sm = Web スマホ幅)、
+          design-samples/{platform} = web|mobile のみ (Step 09 はテイスト選定用のため web-sm 版サンプルを作らない)。
+          リバース系の `{stack}` は「ユーザーが置いたソースコード本体」を表す。
+          予約名 `docs/` は `{stack}` ではない — ローカル文書の配置場所 (input-sources/docs/ エントリ参照)。
+      note: |
+        ユーザー提供のローカルソースコード。リバース系・整合チェック系の ground-truth。
+        例: input-sources/ios-swift/, input-sources/be-python/, input-sources/kmp/。
+        存在する場合は raw-analysis.md / comparison-report.md 等の二次要約より優先される。
+        CLAUDE.md "Operating Principle 3: 一次ソース優先" 参照。
+    - path: input-sources/docs/
+      role: user_provided_documents
+      when: "user provides local existing documents (md/txt/pdf) for reverse (ベース or 突合ソース)"
+      writer: "user (パイプラインは書き込まない)"
+      readers: [01-ground-truth]
+      note: |
+        予約名サブディレクトリ ({stack} の自由名とは別 — code stack として解釈しない)。
+        既存ドキュメントのローカル配置場所。Step 01 の local-docs sub-module (skills/reverse/01-ground-truth/refs/local-docs.md) が
+        ground-truth/local-{stem}.md へ正規化してから下流が読む (原本は不変。doc_backed の引用は正規化本の行番号を指す)。
+        pdf は Read tool で転写 — 外部 PDF CLI は使わない (Operating Principle 1)。
+    - path: figma-state.json
+      role: feature_state
+      sections: [nodes, variables, audit_trail]
+      when: "env.FIGMA_MCP_ENABLED == true"
+      note: "旧 figma-nodes.json から rename。Figma MCP 経由で生成された node_id / variable_id を保持。schemas/figma-state.schema.json 参照。"
+    - path: requirement-deviations.json   # + 派生 requirement-deviations-view.html (scripts/render-deviations-view.mjs が生成)
+      role: requirement_deviation_audit   # Operating Principle 4 output 側 (pending-questions の対)
+      when: "requirements 生成 / UI を (再)生成する review/gate pass が要件外追加・推測を検出した場合 (requirements/design/screens/delta/sub-state/reverse)。lazy_init。"
+      primary_writer: "07-human-gate-req / 13-human-gate-design / 18-design-review / 29-partial-screen-regen / 29b-reverse-propagate (screen-edit 逆方向監査 append) / 25c-state-pattern-score / 05-review-gate (review pass。resolve は main session のみ、screen-edit の「要件に昇格」は 29c-req-propagate が requirements/*.md 反映後に resolved_at を stamp)"
+      readers: [07-human-gate-req, 13-human-gate-design, 21-screen-human-review, 29-partial-screen-regen, 29b-reverse-propagate, 29c-req-propagate, 25d-state-pattern-approval, 05-review-gate, 26-retro, train-07-retro]
+      note: "AI が上流の確定情報に無いのに想像補完した要素の監査リスト。requirements 層 (Step07) は requirements.json でなく user 確定 input (confirmed-decisions ledger + 00-raw-input + 7軸) を突合先にする (E2E で laundering 検出不可が判明し追加)。reverse 層 (Phase0b Step 05) は input-sources/{stack}/ 実コード file:line を突合先にして推測を検出する。delta 層の逆方向 (29b screen-edit) は手編集 diff を requirements/*.md と突合し 要件外追加 / 要件矛盾 / 要件削除 を検出、「要件に昇格」逸脱は 29c が requirements/*.md へ反映して終端する。派生 HTML は決定論 renderer scripts/render-deviations-view.mjs が生成。ゲートでの判断受領 (per-item 既定、#N 番号対話) と resolution_mode (individual/bulk) の記録は docs/principle4-disambiguation.md §5.5 が SoT。reader のうち train-07-retro はトレーニングモード限定の read-only (判定条件の SoT は skills/train-07-retro/SKILL.md)。schemas/requirement-deviations.schema.json 参照。"
+    - path: screens/state-pattern-plan.json
+      role: state_pattern_loop_invariant
+      when: "Step 25a-state-pattern-plan で user が proceed (4 状態すべて / 個別指定) を選択した場合のみ生成。skip 選択時は本ファイル不在 + pipeline-state.json.screens.state_pattern_skipped=true で判定。"
+      primary_writer: 25a-state-pattern-plan
+      readers: [25b-state-pattern-gen, 25c-state-pattern-score, 25d-state-pattern-approval, 25e-figma-pattern-export, 26-retro, 27-change-detect]
+      schema: schemas/state-pattern-plan.schema.json
+      note: "Sub-state 生成計画 (loop 不変量)。各 screen × state × platform の組合せを定義する。Phase 5 delta は本ファイルを Read して sub-state 再生成スコープを決める。"
+    - path: screens/state-pattern-scores.json
+      role: state_pattern_loop_history
+      when: "Step 25a で proceed が選択された場合のみ生成。25c が attempt ごとに append。"
+      primary_writer: 25c-state-pattern-score
+      readers: [25d-state-pattern-approval, 25e-figma-pattern-export, 26-retro]
+      schema: schemas/state-pattern-scores.schema.json
+      note: "Sub-state 採点履歴 (loop history)。Step 19 の scores.json (main HTML 採点) とは分離して単一所有権を保つ。25b↔25c mini-loop (max_attempts: 2) の判定材料。"
+    - path: screens.html
+      role: distribution_deliverable
+      when: "Phase Export (/ayatori-export) で生成"
+      primary_writer: 35-md-to-html-export
+      readers: []   # 配布物 — Claude 側は読み返さない
+      note: "画面定義書 MD 群を結合した自己完結 HTML。画像は base64 inline 埋め込みで file:// でも表示可能。Confluence / 外部サーバ非依存。"
+    - path: requirements.html
+      role: distribution_deliverable
+      when: "Phase Export (/ayatori-export) で生成"
+      primary_writer: 35-md-to-html-export
+      readers: []
+      note: "要件定義書 MD 群を結合した自己完結 HTML。"
+    - path: index.html
+      role: artifact_index_hub
+      when: "独立コマンド /ayatori-index 実行時、または各人間ゲート (07/10/13/16/21/23/26) の自動再生成時に生成"
+      primary_writer: "36-artifact-index (scripts/build-artifact-index.mjs) / human_gate 経由の自動再生成"
+      readers: []   # 配布物 — Claude 側は読み返さない
+      note: "artifacts/{app_name}/ の全成果物を集約した double-clickable インデックス。HTML 成果物は live sibling への iframe src (相対 CSS / CDN 挙動を保持)、Markdown は in-script renderer で div 描画。実行履歴カテゴリの実行サマリー (承認タイムライン・採点・デルタ変更履歴) は pipeline-state.json / scores.json / delta/run-history.json を読み取り合成 (書き込みなし)。毎回フル上書き。base64 不使用 (HTML 内に raster 画像なし)。手編集しない派生ビュー。"
+    - path: reverse-engineered/
+      role: source_archive
+      when: "requirements.json.status == REVERSE_ENGINEERED"
+      note: |
+        Phase 0b (Step 01~Step 06) で生成される逆エンジニアリング中間成果物のディレクトリ (raw-analysis.md / 08-constraints.md / comparison-report.md 等)。
+        **注**: これらは二次要約であり、一次ソース input-sources/ が存在する場合は併用必須 (CLAUDE.md Operating Principle 3)。
+        - .code-inventory.json / .code-scope.json = Step 02 B2.0 の code 読み取り計画と予算ゲート確定範囲。
+          scripts/build-code-inventory.mjs が決定論生成 (LLM 無呼び出し — tier 分類 + 理由つき除外台帳 +
+          module 別 shard 計画 [120,000 字 / 40 ファイル上限、小型 module は相乗り packing])。予算ゲートの超過判定は
+          summary.budget_gate (閾値の SoT はスクリプト定数 gate_file_limit / gate_char_limit。超過時は
+          件数 + 予想所要 [token / 分] を提示して範囲確定、段階解析可 — 範囲外は raw-analysis.md の
+          Analysis Coverage に未解析として残す)。.code-scope.json が resume の再質問を封じる (writer は 02-source-analysis の main のみ)。
+        - raw-analysis.md は Write 直後に scripts/check-source-citations.mjs で引用 3 文法 (input-sources 実コード /
+          ground-truth 文書 / figma capture) の file:line 実在を機械検証する (Step 05 §1.5 が監査前に再実行)。
+    - path: ground-truth/
+      role: evidence_archive
+      when: "Phase 0b で source-inventory.json 上 docs / figma が present のとき Step 01 が収集"
+      primary_writer: "01-ground-truth (Confluence 収集 = refs/confluence-docs.md → haiku worker fanout / Figma capture = refs/figma-capture.md → ayatori-figma-ground-truth-collector subagent batch 分割)"
+      readers: [02-source-analysis, 04-comparison, 05-review-gate, 06-format-convert, "ayatori-requirements-auditor (layer=reverse)"]
+      note: |
+        証拠ソースのオンディスクアーカイブ (下流は live 外部システムを読まず、ここだけを読む = provenance ref の安定参照先)。
+        - root 直下 *.md = 文書アーカイブ (Confluence ページ)。doc_backed の source_ref 突合先。index.md が文書側インデックス
+          (scripts/build-ground-truth-index.mjs の決定論生成 — content status [本文/薄い/殻/図のみ/テンプレート未記入/ADF生JSON]
+          を機械判定し、下流の引用可否を規定する。殻/図のみ/テンプレート未記入は引用禁止・情報不在とも解釈しない)。
+          収集は 50 ページ超で予算ゲート (件数 + 予想所要を提示して範囲確定、段階収集可 — 範囲外は index に未収集として残す)。
+        - figma/ = Figma capture アーカイブ (figma-manifest.json [schemas/figma-manifest.schema.json] +
+          {file_key}/{node-id}--{slug}.png / .design-context.md / variables.json)。figma_backed の source_ref 突合先。
+          縮退モード (code 不在) では主突合先。ソース別冪等 — figma/ の存在だけで「文書収集済み」と判定しない (逆も然り)。
+          file 全体 URL は列挙 (.enumeration-*.json) → クラスタリング (scripts/cluster-figma-candidates.mjs が
+          同名 dedup + ファミリ化 + 代表選定を決定論実行、.clustering-*.json) → 範囲確定ゲート (代表セットが既定案、
+          件数 + 予想所要を提示) を経て代表のみ capture する。capture は 1 batch ≤3 frame の並列 subagent、
+          manifest は scripts/build-figma-manifest.mjs の決定論組み立て (batch fragment .batch*-frames.json +
+          ディスク実体を node_id で突合)。列挙済み・未 capture のノードは manifest の enumerated_not_captured に
+          残す (未収集 ≠ 不存在。変形名の存在自体は figma-manifest.json:line で引用可、差分 capture で後から追加可)。
+    - path: reverse-engineered/source-inventory.json
+      role: reverse_source_inventory
+      when: "Phase 0b (/ayatori-reverse) 実行時。Preamble が棚卸し + ユーザー確認後に生成"
+      primary_writer: "phases/reverse Preamble (main session)"
+      readers: [01-ground-truth, 02-source-analysis, 03-requirements-gen, 04-comparison, 05-review-gate, 06-format-convert]
+      lazy_init: true   # init stub {"app_name":"{app_name}","sources":{},"roles":{}} → 棚卸し結果を merge → Write back
+      schema: schemas/source-inventory.schema.json
+      note: "証拠ソース {code, docs, figma} の棚卸し + 役割確定 (primary / base / cross_check)。役割規則の SoT は phases/reverse/SKILL.md「Input Sources & Roles」。code 不在で figma が primary に昇格した run は degraded_mode: true (縮退モード)。存在する resume では再質問せず再利用する。"
+    - path: reverse-engineered/reverse-provenance.json
+      role: reverse_generation_provenance   # forward generation-provenance.json の reverse 版 (生成側 self-report)
+      when: "requirements.json.status == REVERSE_ENGINEERED (Phase 0b 実行時。Step 03 が 01-08.md 生成後に書く)"
+      primary_writer: 03-requirements-gen
+      readers: ["reverse review gate (Step 04↔Step 06) の ayatori-requirements-auditor layer=reverse", 06-format-convert]
+      lazy_init: true   # Step 03 が init stub {"app_name":"{app_name}","specifics":[]} から生成、ループ再走時は全体上書き
+      schema: schemas/reverse-provenance.schema.json
+      note: "リバース成果物 (01-08.md) の load-bearing specifics を Step 03 が全件列挙し provenance {source_backed/doc_backed/figma_backed/derived/inferred} を自己申告する単一台帳。根拠あり 3 種は種類別文法の source_ref を必須化 (source_backed=input-sources/{stack}/path:line / doc_backed=ground-truth/{file}.md:line / figma_backed=ground-truth/figma/ 配下。CLAUDE.md Operating Principle 3 の引用義務を機械可読化)。requirement-deviations.json (phase=reverse, 監査 verdict) と対をなす生成側 self-report。schema-light-check.sh R8 が必須 field + 種類別 source_ref 整合を検証。"
+    - path: reverse-verify/scope-manifest.json
+      role: verify_scope_manifest
+      when: "Phase 0c (/ayatori-reverse-verify) 実行時。Step V1 が対象と関連範囲を確定したとき"
+      primary_writer: 01-target-scope
+      readers: [02-targeted-crosscheck, 03-discrepancy-gate]
+      schema: schemas/reverse-verify-scope-manifest.schema.json
+      note: |
+        改修対象と、そこから導出した突合範囲 (要件セクション / 画面仕様 / 文書アーカイブ / Figma frame /
+        コード module + 読み取り見積) の確定記述。範囲承認の時刻は本ファイルではなく
+        pipeline-state.json の reverse_verify.runs[].scope_approved_at が持つ (state SoT の最小化) —
+        本ファイルは純粋な記述で、人間ゲートで範囲を修正した場合は直接更新して再提示する。
+        sources は source-inventory.json の申告ではなく突合直前の ls 実測値 (未収集と不在を混同しない)。
+        schema-light-check.sh R11 が必須 field + 「scope が全て空でない」ことを検証する
+        (空 scope を通すと報告書の「差分なし」が「何も見ていない」と区別できなくなる)。
+    - path: reverse-verify/.code-inventory.json
+      role: verify_code_read_plan
+      when: "Phase 0c で code 範囲がある run。Step V1 の範囲承認時に確定"
+      primary_writer: "01-target-scope (scripts/build-code-inventory.mjs --modules ... --out の決定論生成)"
+      readers: ["ayatori-code-analysis-worker (02-targeted-crosscheck が shard ごとに起動)"]
+      note: |
+        承認範囲の module に限定した読み取り計画。**reverse-engineered/.code-inventory.json とは別ファイル**
+        にするのが要点 — 既定の台帳は Phase 0b の resume と shard worker が読むため、そこへ書くと
+        reverse の確定範囲を壊す (--out はこの分離のために設けたフラグ)。
+        .code-scope.json (予算ゲートの確定範囲) は本 phase では作らない — 範囲確定は Step V1 の
+        人間ゲートが担い、予算ゲートの再質問という概念が無いため。
+    - path: reverse-verify/crosscheck-report.md
+      role: verify_crosscheck_report
+      when: "Phase 0c の Step V2 完了時"
+      primary_writer: "02-targeted-crosscheck (main session が単一 writer)"
+      readers: [03-discrepancy-gate, "人間 (ゲート提示)"]
+      note: |
+        主張一覧 (原文 + 記述位置 + 判定 + 根拠) / 食い違い (初読 Evidence + **再読 Evidence** の両方) /
+        誤読訂正 / Coverage を持つ突合結果。run ごとに上書きし、履歴は requirement-deviations.json の
+        run_id 付き entry と reverse_verify.runs[] が保持する。
+        台帳 (requirement-deviations.json) を編集する前後で scripts/check-deviations-preserved.mjs の
+        snapshot / verify を通す — 他 phase の記録・resolved 済み・他 run から引き継いだ未解決の 3 種が
+        消えていないことを機械で確かめる (台帳は artifact_backup の対象外なので、この snapshot が
+        違反検出時の復旧原本にもなる)。verify は snapshot の実在を要求するため、順序ミス
+        (両方を Write 後に実行して「検査が自分自身を満たす」状態) が構造的に起きない。
+        Write 直後に 2 つの機械検査を通す:
+        - scripts/check-crosscheck-findings.mjs = Findings 表の各行に初読・再読の Evidence が両方あり、
+          引用文法を満たし、再読に「初読に無い行アンカー付き引用」が 1 件以上あること (空欄は再読
+          プロトコル未通過 = 食い違いとして確定させない。省略形 / backtick 込み経路は引用実在検証の
+          抽出対象から外れて検証を素通りするため弾く。注記の追加・行アンカー無し .png の追加は
+          位置が増えていないので証跡にならない)。併せて主張一覧の 不一致確定 件数と Findings 行数を
+          突き合わせる — 検査は表に載った行しか見ないため、表を空にすれば必ず PASS になる一方、
+          台帳へ append する根拠は主張一覧の判定であり、消したぶんが下流へ素通りする。
+          引用抽出の文字クラスは check-source-citations.mjs と一致させている — 片方だけが通る
+          書き方が残ると、両ゲートが green なのに引用が検証されていない状態を作る。
+        - scripts/check-source-citations.mjs --file = 引用の file:line 実在検証
+          (exit 3 = 引用ゼロは通過扱いにしない)。
+    - path: reverse-verify/snapshots/{run_id}/
+      role: pre_correction_snapshot
+      when: "Phase 0c の Step V3 で記述を訂正する直前"
+      primary_writer: 03-discrepancy-gate
+      readers: ["scripts/check-marker-retention.mjs (--snapshots reverse-verify/snapshots/{run_id})"]
+      note: |
+        訂正前の複製 ({stem}.snapshot.md)。推測マーカー保持検査の基準線。
+        - 直下 = 要件文書を **全量** 退避する。判定は退避物を母集団に回るため、訂正対象だけを置くと
+          「触っていない文書のマーカーが落ちていないか」という検査本来の目的が成立しない
+          (skills/31-req-change-detect も同じ理由で全量退避を指示)。
+        - screens/ サブディレクトリ = 画面仕様。**直下に置いてはならない** — 要件文書の判定は
+          ファイル名パターン (NN-*.md) で、画面 slug (03-search.md 等) が一致してしまい、
+          requirements/ 側に同名が無いため触っていない画面仕様が violation として上がる。
+          サブディレクトリは走査されないため分離すれば誤判定しない。
+        PreToolUse hook の _backup/ 退避 (artifact_backup) とは役割が別。
+        - **退避先は run_id でディレクトリを分ける**。判定は今ディスクにある退避物を基準線にするため、
+          run を跨いで共有すると 2 回目の run が 1 回目の訂正前内容と比較し、承認済みの訂正を
+          violation として上げる (FAIL の処方は「退避物から戻す」なので従うと訂正が巻き戻る)。
+          パスに run_id が入れば「再開なら既存を使う / 新 run なら新しい基準線」が機械的に決まる。
+        - 当該 run の退避物が既にあれば作り直さない (訂正後の内容で上書きすると baseline == current に
+          なり、以降の検査は必ず PASS = 無意味化する)。
+        検査は --docs で訂正した文書集合を明示して実行する (省略すると req_delta.runs 由来の導出に
+        落ちて、本 phase の正当な訂正が FAIL と誤判定される)。
+    - path: delta/edited-screens.json
+      role: edit_ledger
+      when: "完成プロジェクト (final_approved == true OR completed_at_states set) の screens/{web,web-sm,mobile}/*.html がパイプライン外で手編集されたとき、PostToolUse hook lint-screen-html.sh が append。screen-edit delta (Step 27b) の検知ソース。"
+      primary_writer: lint-screen-html.sh   # PostToolUse hook (.claude/hooks/)
+      readers: [27b-screen-edit-detect]
+      schema: schemas/edited-screens.schema.json
+      note: "各 entry = {screen, platform, path, edited_at, tool, lint{exit,hard_violations,summary}, consumed_by_run, dismissed_at?}。27b が処理済 entry に consumed_by_run を、ユーザーが破棄を選んだ entry に dismissed_at を stamp する (唯一の二次 writer)。dismissed_at set は再提示しない終端状態 — 同一 path への新規編集は hook dedup が entry を置き換えるため再び候補に戻る。検知は git 非依存 (台帳 + 手動選択) で、download 配布の非 git 利用者も対象 (Operating Principle 1)。hook は完了ガード + in-flight ガード (delta run 完了 [figma_approved_at or figma_status] まで / step25b started_at 未記録時は sub-state 派生ファイル fallback) でパイプライン生成の HTML Write を除外する。回帰テスト: scripts/test-lint-screen-html-guards.sh。"
+    - path: delta/snapshots/screens/{platform}/{screen}.snapshot.html
+      role: pre_edit_html_snapshot
+      when: "screen-edit delta run で、編集前 HTML の backup が存在する画面について Step 27b が保存。"
+      primary_writer: 27b-screen-edit-detect
+      readers: [29b-reverse-propagate]
+      note: "逆伝播の before 基準。backup-on-edit.sh の _backup/ ミラーから複製する。外部エディタ編集で backup 不在の画面は snapshot を持たない (before=null → 29b は現行 HTML を現行 spec と diff)。"
+    - path: delta/req-promotion/
+      role: requirement_promotion_ledger
+      when: "screen-edit delta run で 29b ゲートが「要件に昇格」逸脱を選び、Step 29c が requirements/*.md へ反映したとき。昇格 0 件の run では生成されない。"
+      primary_writer: 29c-req-propagate
+      readers: []   # 検証成果物 — check-req-crossrefs.mjs の入出力 (snapshots/ + change-manifest.json + cross-reference-integrity-report.md)
+      note: "昇格反映の機械可読な台帳。change-manifest.json は req-delta と同じ変形 (directly_changed_docs + requirement_changes)、snapshots/ は反映前の requirements/NN-*.md 全件 (append-only 検証の baseline)。scripts/check-req-crossrefs.mjs を --manifest/--snapshots/--report で本ディレクトリに向けて実行し ID 整合を機械検証する。per-run 上書き。"
+    # ── 21a-21g グラフィック生成ブロック成果物 (設計 SoT: docs/graphic-generation-design.md §7) ──
+    - path: graphics/graphic-recommend.md
+      role: graphic_necessity_report
+      when: "design_output_scope.graphic_generation != 'skip' (21a 実行時。degrade skip 時は不在)"
+      primary_writer: 21a-graphic-recommend
+      readers: [21b-graphic-hearing]
+      note: "5 部構成 (推奨 3 段階/根拠/インベントリ/候補スロット/ガードレール) + §4 直後の ayatori:slot-anchors コメント (視覚レポートの位置 SoT)。derived レポート、schema なし (固定見出し — skills/21a-graphic-recommend/refs/report-guide.md §1 が SoT)。不在 = 21b が mode:plain (ユーザー完全判断) に fallback する疎結合。"
+    - path: graphics/graphic-recommend.html
+      role: graphic_slot_visual_report   # 派生ビュー (SoT = graphic-recommend.md §4)
+      when: "21a 実行時かつ §4 候補スロット 1 件以上 (0 件 / render 失敗時は不在 — fail-open)"
+      primary_writer: 21a-graphic-recommend   # scripts/render-recommend-html.mjs による決定的生成 (手焼き禁止、color-lint-report.html と同型)
+      readers: [21b-graphic-hearing]
+      note: "候補スロットを該当画面プレビュー (iframe srcdoc) 上でハイライト表示する視覚レポート (MD=テキスト詳細 / HTML=見た目で判断 の 2 ファイル構成)。21b 人間ゲートで auto-open される (human_gate.artifact_preview.step_targets)。"
+    - path: graphics/graphic-plan.json
+      role: graphic_slot_plan   # loop 不変量
+      when: "21b で「必要」選択時"
+      primary_writer: "21b-graphic-hearing (init + slots)"
+      secondary_writers: [21c-graphic-taste]   # taste キーのみ (key 分離)
+      readers: [21d-graphic-prompts, 21e-graphic-generate, 21g-graphic-embed-review, 29-partial-screen-regen]
+      schema: schemas/graphic-plan.schema.json
+      note: "slot = graphic_id/screen/platform/位置/サイズ用途/state (v1 は 'default' 固定・将来 sub-state 拡張点)。ファイルの存在はブロック有効のシグナルではない (有効判定の SoT は pipeline-state.screens.graphics.decision — 設計 §9-2b)。"
+    - path: graphics/graphic-prompts.json
+      role: graphic_prompt_confirmed
+      when: "21d 完了時"
+      primary_writer: 21d-graphic-prompts
+      readers: [21e-graphic-generate, 21f-graphic-postprocess]   # 21f は透過 slot 判定 + digest 照合 (POCTEAMA-189)
+      schema: schemas/graphic-prompts.schema.json
+    - path: graphics/graphic-embed-review.html
+      role: graphic_embed_visual_report   # 派生ビュー (SoT = screens/{platform}/*.html の埋め込みタグ + graphic-plan.json)
+      when: "21g 実行時 (render 失敗時は不在 — fail-open で link-only degrade)"
+      primary_writer: 21g-graphic-embed-review   # scripts/render-embed-review.mjs による決定的生成 (手焼き禁止、graphic-recommend.html と同型)
+      readers: []                       # 人間ゲート閲覧用 (human_gate.artifact_preview.step_targets が auto-open)
+      note: "埋め込み済みグラフィックを該当画面プレビュー (iframe srcdoc) 上でハイライト表示する視覚レポート (POCTEAMA-190 — Jira 設計観点「どのグラフィックがどの箇所に入ったかが分かるレビュー画面」)。毎回丸ごと再生成。schema なし (派生 HTML)。"
+    - path: graphics/samples/          # テイスト A/B/C サンプル (ILLUSTRATIVE)
+      role: graphic_taste_samples
+      when: "21c 実行時"
+      primary_writer: 21c-graphic-taste
+      readers: []                       # 人間ゲート閲覧用
+    - path: graphics/raw/               # {graphic_id}.png 生成直後の中間物 + generation-manifest.json (監査台帳)
+      role: graphic_intermediate
+      when: "21e 実行時"
+      primary_writer: 21e-graphic-generate
+      readers: [21f-graphic-postprocess]
+      note: "PNG は確定 size_px ちょうどの寸法で置かれる (21e がサイズ自動調整済み)。generation-manifest.json は実使用モデル / API サイズ / resize 有無の補助記録で、resume・埋め込み対象の SoT は pipeline-state.screens.graphics.generated_files[] (設計 §9-2b)。21f 正典化後も中間物として残置 (監査 + retry 差分の基準、READ-ONLY)。"
+    - path: graphics/postprocess-manifest.json
+      role: graphic_postprocess_ledger   # 後処理の監査台帳 (補助記録)
+      when: "21f 実行時"
+      primary_writer: 21f-graphic-postprocess
+      readers: [21g-graphic-embed-review]
+      note: "slot 別の透過検証 verdict (verified/waived/n/a + alpha 統計) / degrade ラベル。補助記録 — resume・埋め込み対象の SoT は pipeline-state 側 (設計 §9-2b)。21g は transparency='waived' ラベルを配置判断 (重ね置き回避) に使う。"
+    - path: screens/_shared/graphics/   # {graphic_id}.png
+      role: graphic_canonical           # 第 4 の正典系統 (root-variables / components / illustrations に続く)
+      when: "21f 完了時"
+      primary_writer: "21f-graphic-postprocess (29 は additive のみ・既存改変禁止)"
+      readers: [21g-graphic-embed-review, 29-partial-screen-regen]
+      note: "HTML から <img src> で相対参照される正典実体 (設計 §7)。raw PNG のバイト無加工コピー (圧縮 ⑫ は非搭載 — ユーザー判断でスコープ除外。C-26 / schema pattern は将来拡張として webp も許容)。実ファイル名の SoT は pipeline-state.screens.graphics.generated_files[].file。25b (inherit_main) は main HTML のタグごと継承しファイルは読まない。"
+
+# ── Skip Phases ─────────────────────────────────
+# Add phase names to skip them during execution.
+# Valid values: question, requirements, req_delta, design, screens, retro, add_feature, delta, delta_mini, export  (= pipeline.yaml の phase_order と同順)
+# 追加で指定可 (phase_order 非搭載の standalone): idea_brushup, reverse_verify
+# Typical use: skip the entire requirements or screens phase in non-production environments.
+# Example: skip_phases: [requirements, screens]
+skip_phases: []
+
+# ── Command Policy ──────────────────────────────
+# SoT for which slash commands are legitimate during a pipeline run.
+# pipeline.yaml は従来 phase/step のみを宣言し、許容コマンドを宣言していなかったため、
+# 本流に未登録の外部コマンドが誤操作で混入しても検知できなかった。
+# 受信時の手順・停止挙動は CLAUDE.md Operating Principle 5 (外部コマンド混入の検知) を参照。
+#
+# 値の形式 (重要): allowed_commands / external_command_prefixes はいずれも先頭 `/` を
+# 含まない名前で列挙する (例: `ayatori-question` / `kairo-`)。slash command 本体は
+# `/` + 値 で表記する (例: `/ayatori-question`)。受信コマンドの照合時は先頭 `/` を除去して
+# から allowed_commands と完全一致 / external_command_prefixes と前方一致を判定する。
+command_policy:
+  # repo-scoped な正規コマンド (= 各 phases/*/SKILL.md frontmatter `name:`、先頭 `/` 無し)。
+  # 注: ayatori-status は dashboard で phase_order/phase ブロックを持たない。
+  #     ayatori-reverse は alternative entry point で phase_order に含まれない。いずれも正規コマンド。
+  #     ayatori-reverse-verify は reverse 完了後の対象限定突合 (Phase 0c、phase_order 非搭載の反復実行コマンド)。
+  #     ayatori-idea は /ayatori-question 前段の独立コマンド (cm-consult 型、phase_order 非搭載)。
+  allowed_commands:
+    - ayatori-status
+    - ayatori-reverse
+    - ayatori-reverse-verify
+    - ayatori-idea
+    - ayatori-question
+    - ayatori-requirements
+    - ayatori-req-delta
+    - ayatori-add-feature
+    - ayatori-design
+    - ayatori-screens
+    - ayatori-retro
+    - ayatori-delta
+    - ayatori-delta-mini
+    - ayatori-export
+    - ayatori-cm-consult
+    - ayatori-index
+    - ayatori-train
+  # 既知の外部コマンド prefix (検知ヒント、網羅ではない)。
+  external_command_prefixes: [kairo-, rev-, tdd-, direct-]
+  # 未登録コマンド受信時の挙動: halt_and_confirm | warn | allow
+  on_unrecognized_command: halt_and_confirm
+  # パイプラインの唯一の正規出力ルート。外部コマンドがこれを逸脱する別ツリー
+  # (例: docs/design/{app_name}/) に出力しようとしたら衝突として停止する。
+  output_root: artifacts/{app_name}/
+
+# ── Reverse Handoff ─────────────────────────────
+# Declares what Phase 0b produces and which downstream steps can skip
+# re-deriving that content. Consumed by phases/design and phases/screens preambles.
+# To add a new skip rule: add an entry under skip_rules and update the relevant sub-skill.
+reverse_handoff:
+  artifacts:
+    - path: tokens.json
+      produced_by: 06-format-convert
+      consumed_by: design
+      note: "Base palette; Step 08 uses as starting point instead of deriving from scratch"
+    - path: screens/00-screen-list.md
+      produced_by: 06-format-convert
+      consumed_by: screens
+      note: "Screen list already derived; Step 14 skips re-derivation"
+    - path: requirements/
+      produced_by: 03-requirements-gen
+      consumed_by: screens
+      note: "ISO 29148 docs ready for Step 15 Confluence upload"
+    # ── E6 (Step 06) の遷移図 4 点セット ──
+    # requirements/03-user-flow.md の Mermaid から scripts/derive-transition-map.mjs で決定論変換した
+    # SSoT + 生成時 summary の sidecar + 派生 2 ファイル。E6-2 が exit 2 で fail-open した run
+    # (user-flow に Mermaid が無い / エッジ 0 本 / screen-list 不在 等) では 4 ファイルとも不在があり得る
+    # — 下流は「有る」前提で素通りせず、不在なら Step 14 / 14-lite が salvage する (skip ではなく補完)。
+    - path: screens/00-transition-map.mmd
+      produced_by: 06-format-convert   # E6-2
+      consumed_by: screens
+      note: "Transition diagram SSoT derived from requirements/03-user-flow.md; Step 14 / 14-lite reuses it as-is and never regenerates (may be absent if E6-2 failed open)"
+    - path: screens/00-transition-map.derive-summary.json
+      produced_by: 06-format-convert   # E6-2 (script が .mmd と併記する sidecar)
+      consumed_by: screens
+      note: "Generation-time summary (warnings[] + mmd_md5) written alongside the .mmd; the ONLY source of unparsed_line / dropped-edge warnings for the Step 16 gate when Phase 3 keeps the existing .mmd"
+    - path: screens/00-screen-nav.json
+      produced_by: 06-format-convert   # E6-3
+      consumed_by: screens
+      note: "Per-screen in/out derived view (scripts/derive-screen-nav.mjs); regenerable downstream (may be absent if E6-2 failed open)"
+    - path: screens/00-coverage-check.json
+      produced_by: 06-format-convert   # E6-4
+      consumed_by: screens
+      note: "L1〜L4 empty stub + user_accepted_gaps: true (早期チェック未実施の印) + L5 connectivity patched by scripts/validate-connectivity.mjs --write (may be absent if E6-2 failed open)"
+
+  skip_rules:
+    design:
+      step: 08-design-brainstorm
+      skip: discovery_hearing
+      use_instead: "derive 3 design directions directly from requirements.json; use tokens.json as palette base (Proposal A starting colors)"
+    screens:
+      step: 14-screen-list-transition
+      skip: screen_list_derivation
+      use_instead: "existing screens/00-screen-list.md from Phase 0b"
+
+# ── Global Constraints ───────────────────────────
+# Active technical constraints that apply to all projects.
+# Each phase preamble should reference these before executing steps.
+# Add new entries here after the retro phase approves them.
+constraints:
+  # ── Figma / Plugin API ──
+  - id: C-01
+    applies_to: [17-screen-gen]
+    rule: "primaryAxisSizingMode / counterAxisSizingMode に 'HUG' 禁止 → 'AUTO' を使用"
+  - id: C-02
+    applies_to: [17-screen-gen]
+    rule: "layoutSizingHorizontal/Vertical = 'FILL' は parent.appendChild(node) の後のみ設定可"
+  - id: C-03
+    applies_to: [17-screen-gen]
+    rule: "auto-layout 必須。手動 y 座標積み上げ禁止（クリッピングが発生）"
+  - id: C-04
+    applies_to: [17-screen-gen]
+    rule: "全 use_figma コール冒頭で figma.setCurrentPageAsync(ayatoriPage) 必須（前回プロジェクトのページがデフォルトのため）"
+  - id: C-05
+    applies_to: [17-screen-gen]
+    rule: "async function main() {} main() パターン禁止 → トップレベルawait必須（Plugin API は Promise を待機しない）"
+  - id: C-06
+    applies_to: [17-screen-gen]
+    rule: "SectionNode に resize() / resizeToFit() なし → children.reduce() で高さを手動計算"
+  - id: C-07
+    applies_to: [17-screen-gen]
+    rule: "progress bar は layoutMode='HORIZONTAL' + 2セグメント構成。layoutPositioning='ABSOLUTE' を layoutMode='NONE' 親に使用禁止（ValidationError）"
+  - id: C-08
+    applies_to: [25-component-build]
+    rule: "Variable binding (bv() / setBoundVariableForPaint) 実行後は get_screenshot で amber/orange 検出チェック。検出時は hardcoded hex に fallback"
+  - id: C-09
+    applies_to: [25-component-build]
+    rule: "ウィザード進行インジケーターは bv() を使わず hardcoded hex (color.primary値) で実装"
+  # ── HTML 実装 ──
+  - id: C-10
+    applies_to: [17-screen-gen]
+    rule: "ダイアログは .overlay { position:absolute; inset:0; display:flex } パターン。body への直接 flex centering 禁止"
+  - id: C-11
+    applies_to: [17-screen-gen]
+    rule: "リスト画面モックデータは利用可能高さを埋める件数設定（コンテンツ領域の高さ ÷ 1アイテム高さ 以上）"
+  - id: C-12
+    applies_to: [17-screen-gen]
+    rule: "再キャプチャ時は URL に ?v=N クエリパラメータ追加（ブラウザキャッシュ回避）"
+  # ── フォント ──
+  - id: C-13
+    applies_to: [17-screen-gen]
+    rule: "全テキストノードのフォントサイズ最小値: 12px。生成後に findAll(n=>n.type==='TEXT'&&n.fontSize<12) で一括検証・修正"
+  - id: C-14
+    applies_to: [17-screen-gen]
+    rule: "Space Grotesk は Bold/Medium/Regular/Light のみ（SemiBold は Figma に存在しない）"
+  # ── 状態フレーム ──
+  - id: C-15
+    applies_to: [17-screen-gen]
+    rule: "状態フレーム命名: 非同期処理画面は {画面名}_Success/{画面名}_Error、詳細系削除は {画面名}_DeleteDialog。基本フレームと同一 use_figma コール内で生成"
+  - id: C-16
+    applies_to: [17-screen-gen]
+    rule: "必須 annotation frames: WCAG_2.4.7_FocusRing_Annotation + API呼び出し画面の loading state フレームを⑫完了前に生成"
+  # ── Figma ページ構成 ──
+  - id: C-17
+    applies_to: [17-screen-gen, 24-design-system-update]
+    rule: "デザインシステム・モバイル・デスクトップ画面は全て {app_name} ページに統合。プロジェクトごとに専用ページを作成。デザインシステムが前回と同一なら既存セクションを再利用"
+  # ── 生成前チェック ──
+  - id: C-18
+    applies_to: [17-screen-gen]
+    rule: "生成前カラー整合チェック: design-brief.yaml の primary カラーと既存 screens/**/*.html (web/, mobile/ 配下を再帰) を照合し、不一致なら全HTML一括更新を先行してから Figma 生成へ進む"
+  # ── Figma Plugin API 列挙値 ──
+  - id: C-21
+    applies_to: [24-design-system-update, 25-component-build]
+    rule: "counterAxisAlignItems 有効値: 'MIN' | 'MAX' | 'CENTER' | 'BASELINE' のみ。'STRETCH' は無効（ValidationError）"
+  - id: C-22
+    applies_to: [24-design-system-update, 25-component-build]
+    rule: "primaryAxisAlignItems 有効値: 'MIN' | 'MAX' | 'CENTER' | 'SPACE_BETWEEN' のみ。'STRETCH' は無効（ValidationError）"
+  - id: C-23
+    applies_to: [24-design-system-update, 25-component-build]
+    rule: "Variable collection / Component page 生成前に既存チェック必須: figma.variables.getLocalVariableCollections() で重複を検出し、存在する場合は create せず update または skip"
+  # ── 要件定義 ──
+  - id: C-19
+    applies_to: [02-iso-breakdown]
+    rule: "コンテンツ消費系機能の「完了ボタン有効化条件」（常時/スクロール後/視聴時間後）を Unambiguity チェックで確認"
+  - id: C-20
+    applies_to: [02-iso-breakdown]
+    rule: "Expo/React Native 使用時はネイティブ機能ライブラリの managed workflow 互換性を Feasibility チェックで確認"
+
+  # ── 共通部品 (chrome) ──
+  - id: C-24
+    applies_to: [14-screen-list-transition, 16-design-doc-human-review, 17-screen-gen]
+    rule: "共通部品 (ボトムメニュー 1 種 + ヘッダー 2 種 A/B) は Step 14 で chrome プランを 1 度決め (00-screen-list.md)、Step 17 Phase 0b で _shared/components.html + components.css に正典化し、各画面へ verbatim ペースト + スロット (現在タブ / タイトル / 戻り先) のみ差し込む。画面ごとの chrome 再発明・ランタイム JS 注入は禁止。生成後 chrome 一貫性 self-check (byte 一致) を行い不一致は Pattern B で abort。docs/html-generation-rules.md §11 参照"
+
+  # ── 画面 content の色トークン強制 ──
+  - id: C-25
+    applies_to: [17-screen-gen, 18-design-review, 19-rubric-score, 21-screen-human-review, 24-design-system-update, 29-partial-screen-regen, 25b-state-pattern-gen, 25c-state-pattern-score]
+    rule: "画面 content は zero-literal — 色リテラル (hex / rgb() / hsl() / CSS 色名、SVG fill=/stroke=/stop-color= 属性と var() fallback 含む) を書かない。定義済み token と同じ値でも禁止。色は var(--token) / currentColor のみ (:root 系定義ブロック・raster img・プレビュー足場定数の完全一致値は除外)。アイコンは icons/{name}.svg を Step 0 で currentColor 正規化 (--normalize-icons) の上 verbatim 埋め込み (識別は形状署名 — data 属性は付けない)。繰り返しイラストは _shared/illustrations/{name}.svg 正典を逐語ペースト (docs/html-generation-rules.md §11.7。pictogram では休止 = 生成されない)。各画面の :root は _shared/root-variables.css の全変数名を含む (使う分だけの間引き禁止 = root_vars_incomplete、画面固有の追加変数は superset 許容 — P-15 丸ごと inline copy の機械強制、inherit_main の前提)。検証 = scripts/lint-screen-colors.mjs: 生成後の --check は exit 1 (hard 違反) でリトライ≤3 → Pattern B (17/29 は abort、25b は当該 file pending 残し)。未解決 --color-illustration-* (昇格候補) と派生ファイル (sub-state) の root_vars_incomplete (main 由来・当該ファイル修正不能 = soft_inherited) は soft = exit 0 で続行し、--report (color-lint-report.json) 経由で 19 機械減点 (summary 数値のみ・SoT は skill 19) / 21 Section 1-D・25d 人間判断 (台帳外 :root 色変数 extra_root_vars 含む) / 24 Step A-2b 昇格 (実体化は次回生成 run)。C-18 とは役割分担 — C-18 は生成前の primary 1 色整合、C-25 は生成後の全色 lint"
+
+  # ── AI 生成グラフィックの埋め込み形式 (挿入位置設計 docs/graphic-generation-design.md §7) ──
+  - id: C-26
+    applies_to: [21g-graphic-embed-review, 29-partial-screen-regen]
+    rule: "AI 生成グラフィックは <img src='../_shared/graphics/{graphic_id}.(png|webp)' alt='{graphic_id}' width height> の正典相対参照で埋め込む (設計 §7)。Base64 data URI インラインは使わない (LLM context 保護)。alt 必須 (Figma レイヤ名)・width/height 明示必須。CSS background-image は装飾背景のみ可。SVG 形式のグラフィックは禁止 (ラスターのみ)。object-fit は cover(→FILL)/contain(→FIT) のみ使用。"
+
+  # ── Operating Principle 4 ──
+  # CLAUDE.md Operating Principle 4 (5 分類タクソノミー) の machine-readable enforcement spec。
+  # 検出は keyword grep ではなく LLM self-reflection (skill が docs/principle4-disambiguation.md
+  # の 4-step を Write 直前に実行)。固定 keyword リストは撤去 (hardcode 管理コスト + 列挙漏れ + 誤 hit)。
+  # enforcement は schema 構造検証 (P4-06、.claude/hooks/schema-light-check.sh) が補完する。
+  # applies_to の "all" は全 skill / agent に適用 (subagent も含む)。
+  # disambiguation self-check を wire-in する対象 step (二重防御):
+  #   input 受領 = 01-question / 08-design-brainstorm / 31-req-change-detect / 27-change-detect / 00-feedback-protocol
+  #   要件昇華 = 02-iso-breakdown / 03-requirements-gen (機能追加の根拠 gap-check、P4-02 / Rule 1)
+  #   AI 生成 backup = 14-screen-list-transition / 17-screen-gen / 19-rubric-score
+  # 詳細索引は docs/principle4-disambiguation.md §3。
+  - id: P4-01
+    applies_to: [all]
+    rule: "確定していない情報を user input 以外で AI が確定生成しない。判定は Write 直前に解釈候補を文字で書き出し、書き出した候補が N≥2 なら (D) UNCERTAIN とする (候補を炙り出すのは LLM self-reflection だが判定は候補数で機械的に行う — 内部感覚『悩んだか』はトリガーにしない＝検証不可・実行ごとに揺れる / 固定 keyword リストには依存しない)。曖昧さは 3 種 (semantic 複数解釈 / softening 確信度低 / enumeration 開いた列挙) にラベル付け。検出時は ※不明 / ※推測 / [example] / [proposal] のマーカー併記、または artifacts/{app_name}/pending-questions.json への append が必須。直接 AskUserQuestion せず Pre-flight Gate で batch propose。input 受領 step は input 解釈、AI 生成 step は『書く値に CONFIRMED/DERIVED 根拠があるか』の gap-check。4-step 手順は docs/principle4-disambiguation.md (CLAUDE.md Principle 4 Rule 4)"
+  - id: P4-02
+    applies_to: [01-question, 02-iso-breakdown, 03-requirements-gen]
+    rule: "要件にない機能カテゴリの能動追加禁止。must / should / could いずれの粒度でも適用 (CLAUDE.md Rule 3 を一般化)"
+  - id: P4-03
+    applies_to: [08-design-brainstorm, 17-screen-gen]
+    rule: "視覚要素の補完は (A) CONFIRMED → (C) DERIVED ルートのみ。palette / typography / spacing の AI 単独決定禁止 (CLAUDE.md Rule 2)。注: 11-wcag-mapping は WCAG 2.2 基準を決定的に適用する step で視覚要素を新規補完しないため対象外 (over-claim 解消のため旧 applies_to から除外)"
+  - id: P4-04
+    applies_to: [09-sample-html-gen, 02-iso-breakdown, 07-human-gate-req, 29-partial-screen-regen, 29b-reverse-propagate, 03-requirements-gen, 05-review-gate, 02-source-analysis]
+    rule: "subagent contract: 生成 / 監査 subagent は判定を return し、main session が単一 writer として artifact に append する (resolve は main のみ)。(a) Step 09 = ayatori-sample-html-builder が design-brief.yaml の palette placeholder hex 等の未確定値を検出した場合 assertion_failed: pending_question を return (orchestrator が main 経由で pending-questions.json に append、出力は全体 (E) PROPOSED + 内部 placeholder (B) ILLUSTRATIVE の入れ子分類)。(b) requirements 層 self-bias 対策 (F-3): 02-iso-breakdown が generation-provenance.json に load-bearing specifics を forced-enum 自己申告 (F-3a、スキップの自由を奪う)、07-human-gate-req が ayatori-requirements-auditor subagent (layer=requirements、生成 context 隔離) を起動し provenance を user 確定 input への literal トレースで再判定して requirement-deviations.json に append する (F-3b、生成↔監査が同一 model の self-bias を構造分離で catch)。(c) delta 層 self-bias 対策 (F-3b 拡張): 29-partial-screen-regen が ayatori-requirements-auditor subagent (layer=delta、突合先=変更後 requirements.json) を起動し、再生成画面の component+挙動を独立監査して requirement-deviations.json に append する (delta は再生成↔監査が同一 session のため隔離必須。provenance 台帳は無く F-3b のみ適用)。(d) reverse 層 self-bias 対策: 03-requirements-gen が reverse-provenance.json に load-bearing specifics を forced-enum 自己申告し source_backed/derived に input-sources/{stack}/path:line の source_ref を必須化 (F-3a 相当)、05-review-gate が ayatori-requirements-auditor subagent (layer=reverse、突合先=input-sources 実コード file:line) を起動し推測を再判定して requirement-deviations.json (phase=reverse) に append する (F-3b 相当、Step 03 生成↔監査が同一 model の self-bias を構造分離で catch)。(e) delta 層の逆方向 (screen-edit): 29b-reverse-propagate が ayatori-requirements-auditor subagent (layer=delta、audit_direction=reverse、突合先=requirements/*.md) を起動し、手編集 diff が触れた要素のみを独立監査して requirement-deviations.json (要件外追加 / 要件矛盾 / 要件削除 + promotion_target) に append する (編集が導入していない既存ギャップは監査対象外)。「要件に昇格」の resolve は 29c-req-propagate が requirements/*.md 反映後に resolved_at を stamp する。(f) reverse 層の解析 pass: 02-source-analysis の pass subagent (B1 文書 / B2 module shard / B3 figma) は引用文法つき構造化 findings のみ return し、raw-analysis.md の write・Cross-Source Conflicts の採否・AskUserQuestion (B-03/B-06) は main が単一 writer として行う (B2 shard は専用 worker ayatori-code-analysis-worker [Read/Bash/Glob のみ・Write なし] が .code-inventory.json の読み取り計画に従い構造+挙動を 1 回読みで実行)。E2E で dead と確認された design-brief.yaml.uncertainty.entries[] 読取り経路は Chunk 2 で撤去済"
+  - id: P4-05
+    applies_to: [all]
+    rule: "(D) UNCERTAIN を検出 → artifacts/{app_name}/pending-questions.json に append (**未解決 entry の append 時のみ** 反映先 artifact を `reflect_to` で宣言する — appender は検出時点で反映先ファイルを持っている。**born-resolved entry [resolved_at + resolved_answer を同時に書く確定記録] には書かない** = 振り分け script は resolved を読む前に抜けるため値が使われる経路が無い。**書ける値は「いずれかの phase の target_artifacts が受け付ける pattern」に限り、かつ自分より後に通る門が受け手であること** — 受け手が上流だけの値を書くと正順の進行で二度と ask されない [その場合は反映先 phase へ user を戻す resume 指示を併記する / 反映先が定まらないものとして未設定にする の 2 択]。許容値リストと 2 択の判断基準の SoT は `skills/_shared/preflight-gate.md` § append 経路)。次 Phase 入口で main session が batch propose (propose-then-confirm パターン、Anthropic 公式 best practice)。ただし **ask するのは反映先が当該 phase の target_artifacts に解決できる entry のみ** — 振り分けは決定論 script `scripts/preflight-partition.mjs` が行い、解決できない entry は ask せず未解決のまま次の門へ持ち越す (反映先の無い phase で答えを消費すると確定値が本来の受け皿に届かない = E2E 実測。`reflect_to` 未設定の legacy entry は従来どおり全件 ask)。subagent は append のみ可、resolve は main session のみ (公式 doc: AskUserQuestion is not available to subagents)"
+  - id: P4-06
+    applies_to: [all]
+    rule: "schema required field の欠落 / null / 空文字 / placeholder 値 = (D) UNCERTAIN。補完せず ask。.claude/hooks/schema-light-check.sh が jq で pending-questions.json (R3 必須 field / R5b target dot-bracket 文法) と requirement-deviations.json (R6 必須 field + resolved 整合) と generation-provenance.json (R7 specifics 必須 field + provenance enum + derived→derived_from 整合 + ref 文法) と reverse-provenance.json (R8 specifics 必須 field + provenance enum + source_backed→source_ref(file:line) / derived→derived_from 整合 + ref 文法) の構造を検証。E2E で dead と確認された uncertainty.entries[] 検証 (旧 R1/R2/R4/R5) は Chunk 2 で撤去済"
+  - id: P4-07
+    applies_to: [all]
+    rule: "同一 field を同一 session 内で 2 回以上 ask しない (CLAUDE.md Rule 6、Constitution 過剰質問アンチパターン対策)。pending-questions.json の target literal で dedupe、resolved_at が set されたものは next session まで保持 (Pattern D 集計用)"
+
+# ── Master Documents ────────────────────────────
+# path はローカルに存在しない名目上のポインタ (docs/master/ はローカルに置かない設計)。正本は confluence_id が指す Confluence page。
+master_docs:
+  - path: docs/master/01-ayatori-spec.md
+    description: "AYATORI Specification (pipeline definition, rubrics, external standards)"
+    confluence_id: "3740237924"
+  - path: docs/master/02-ayatori-claude-code-rd.md
+    description: "Claude Code R&D (team structure, build vs reuse research, validation plan)"
+    confluence_id: "3740237934"
+  - path: docs/master/03-ayatori-web.md
+    description: "Web Implementation Design (agent architecture, state store)"
+    confluence_id: "3740893189"
+  - path: null
+    description: "AYATORI step composition (26 steps, trial 1-3 validated)"
+    confluence_id: "3767469072"

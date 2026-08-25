@@ -1,0 +1,20 @@
+{
+  "name": "ayatori",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AYATORI pipeline build dependencies (Step 12 Design System build only). Style Dictionary v5 is invoked via npx from skills/12-design-system/refs/build-tokens.md.",
+  "scripts": {
+    "test": "node --test",
+    "lint:skills": "node scripts/lint-skills.mjs --all --baseline scripts/lint-skills.baseline.json",
+    "evals:regen-goldens": "node skills/11-wcag-mapping/evals/wcag-script-evals.test.mjs --update",
+    "evals:regen-goldens:oklch": "node skills/08-design-brainstorm/evals/oklch-script-evals.test.mjs --update",
+    "profile:context": "node scripts/profile-context.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "pdf-lib": "1.17.1",
+    "style-dictionary": "5.4.0"
+  }
+}
