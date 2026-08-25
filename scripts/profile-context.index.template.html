@@ -1,0 +1,234 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>AYATORI Context Profiler</title>
+<style>
+  :root {
+    --bg: #131519; --panel: #1b1e25; --panel-2: #21252e; --line: #2b303b;
+    --ink: #e7e9ee; --ink-dim: #9aa1ad; --ink-faint: #6b7280;
+    --accent: #e8a33d; --good: #5bbf8a; --warn: #e8a33d; --crit: #e0685f;
+    --c-toolresult: #e0685f; --c-asstext: #6aa9e0; --c-tooluse: #c98be0;
+    --c-skill: #e8a33d; --c-deferred: #5bbf8a; --c-agent: #58c4c0;
+    --c-claudemd: #d9b15a; --c-user: #8f9bb3; --c-reminder: #b08968; --c-other: #4a4f5c;
+    --t-Read:#e0685f; --t-Bash:#e8a33d; --t-Edit:#d9b15a; --t-Write:#c98be0; --t-Agent:#58c4c0; --t-MCP:#6aa9e0;
+    --mono: "SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans: "Spline Sans",-apple-system,"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background: radial-gradient(1200px 600px at 80% -10%, #1d222c 0, transparent 60%), var(--bg);
+    color: var(--ink); font-family: var(--sans); line-height:1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 28px 80px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 22px; margin-bottom: 30px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; }
+  h1 { font-size: clamp(26px,4vw,38px); font-weight: 600; margin: 0 0 8px; letter-spacing: -.01em; text-wrap: balance; }
+  .sub { color: var(--ink-dim); font-size: 14px; max-width: 66ch; margin: 0; }
+  .sub code, code.inl { font-family: var(--mono); font-size: 12px; color: var(--ink); background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
+  .scope { display:inline-flex; align-items:center; gap:8px; margin-top:14px; font-family: var(--mono); font-size: 12px; color: var(--ink-dim); background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 4px 13px; }
+  .scope b { color: var(--accent); } .scope .dot { width:7px; height:7px; border-radius:50%; background: var(--good); }
+
+  .kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 28px 0 40px; }
+  @media (max-width:720px){ .kpis { grid-template-columns: repeat(2,1fr); } }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; position: relative; overflow: hidden; }
+  .kpi::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--crit); opacity:0; }
+  .kpi.flag::before { opacity:1; }
+  .kpi .label { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); }
+  .kpi .val { font-family: var(--mono); font-size: 30px; font-weight: 600; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .kpi .unit { font-size: 14px; color: var(--ink-dim); font-weight: 400; }
+  .kpi .note { font-size: 12px; color: var(--ink-dim); margin-top: 4px; }
+
+  section { margin-bottom: 44px; }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: -.005em; }
+  .sec-head .hint { font-size: 12px; color: var(--ink-faint); font-family: var(--mono); }
+  .sec-sub { font-size: 13px; color: var(--ink-dim); margin: 0 0 16px; max-width: 72ch; }
+
+  .propbar { display: flex; height: 38px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+  .propbar > div { transition: filter .15s; } .propbar > div:hover { filter: brightness(1.25); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 16px; }
+  .legend .item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .legend .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .legend .pc { font-family: var(--mono); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width:760px){ .grid2 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+  .card h3 { font-size: 13px; margin: 0 0 4px; font-weight: 600; }
+  .card .cap { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin: 0 0 16px; }
+  .hbars { display: flex; flex-direction: column; gap: 8px; }
+  .hbar { display: grid; grid-template-columns: 84px 1fr 64px; gap: 12px; align-items: center; font-size: 12.5px; }
+  .hbar.clickable { cursor: pointer; } .hbar.clickable:hover .nm { color: var(--accent); }
+  .hbar .nm { font-family: var(--mono); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display:flex; align-items:center; gap:5px; }
+  .hbar .nm .caret { color: var(--ink-faint); transition: transform .15s; font-size:10px; }
+  .hbar.open .nm .caret { transform: rotate(90deg); color: var(--accent); }
+  .hbar .track { background: var(--panel-2); border-radius: 4px; height: 18px; overflow: hidden; }
+  .hbar .fill { height: 100%; border-radius: 4px 0 0 4px; }
+  .hbar .amt { font-family: var(--mono); text-align: right; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .hbar.skill .nm { font-family: var(--sans); }
+
+  .targets { margin: 2px 0 10px 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; display: none; }
+  .targets.open { display: block; }
+  .trow { display: grid; grid-template-columns: 1fr 170px 70px; gap: 10px; align-items: center; padding: 4px 0; font-family: var(--mono); font-size: 11.5px; border-bottom: 1px dashed var(--line); }
+  .trow:last-child { border-bottom: none; }
+  .trow .tgt { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trow .mult { text-align: right; } .trow .mult .x { color: var(--crit); font-weight: 600; } .trow .mult .x.lo { color: var(--ink-faint); font-weight: 400; }
+  .trow .mult .stale { color: var(--crit); font-size: 10px; margin-right: 6px; }
+  .trow .mult .fresh { color: var(--good); font-size: 10px; margin-right: 6px; }
+  .trow .tb { text-align: right; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .thead-row { color: var(--ink-faint); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+
+  /* session cards (By size, linked) */
+  .sessions { display: flex; flex-direction: column; gap: 12px; }
+  a.session { display: block; text-decoration: none; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 15px 18px; transition: border-color .15s, background .15s; }
+  a.session:hover { border-color: var(--accent); background: var(--panel-2); }
+  .s-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .s-id { font-family: var(--mono); font-size: 14px; color: var(--ink); font-weight: 600; }
+  .s-cmds { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-left: 8px; }
+  .s-stats { font-family: var(--mono); font-size: 11.5px; color: var(--ink-dim); font-variant-numeric: tabular-nums; display:flex; gap:14px; flex-wrap:wrap; }
+  .s-stats b { color: var(--ink); }
+  .s-arrow { color: var(--ink-faint); font-family: var(--mono); font-size: 12px; }
+  a.session:hover .s-arrow { color: var(--accent); }
+  .minibar { display:flex; height: 10px; border-radius: 5px; overflow:hidden; margin-bottom: 10px; }
+  .minibar > div { height:100%; }
+  .s-top15 { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .s-top15 .t { color: var(--ink-dim); } .s-top15 .t.read { color: #f0a9a2; }
+
+  footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 12px; }
+  footer code { font-family: var(--mono); color: var(--ink-dim); }
+  .pill { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px; }
+  .callout { background: rgba(224,104,95,.08); border: 1px solid rgba(224,104,95,.3); border-radius: 8px; padding: 13px 16px; font-size: 13px; color: var(--ink); margin-top: 16px; }
+  .callout b { color: var(--crit); }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Claude Code · Pipeline Session Telemetry</p>
+    <h1>What's eating the context window</h1>
+    <p class="sub">Overall context-consumption across this project's pipeline sessions. Each session below links
+    to its own detail page (context-composition bar + vertical timeline). Bytes are exact; token figures are
+    estimated except <em>context-window</em>, from API <code>usage</code> metadata.</p>
+    <span class="scope"><span class="dot"></span><span id="scope-text">Scope: —</span></span>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section>
+    <div class="sec-head"><h2>Where the bytes come from</h2><span class="hint">pipeline sessions combined</span></div>
+    <p class="sec-sub">Top-level message sources across all sessions. <code>tool_result</code> is opened up below.</p>
+    <div class="propbar" id="propbar"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Inside <code class="inl" style="font-size:14px">tool_result</code> — read <em>what?</em></h2><span class="hint" id="tr-total"></span></div>
+    <p class="sec-sub"><strong>Click any tool bar</strong> to see the exact files / commands behind it, with a re-read multiplier (<code class="inl">×N</code>).</p>
+    <div class="grid2">
+      <div class="card"><h3>By tool — click to drill into files</h3><p class="cap">tool_result bytes, grouped by producing tool</p><div class="hbars" id="byTool"></div></div>
+      <div class="card"><h3>By skill</h3><p class="cap">tool_result bytes, grouped by active skill</p><div class="hbars" id="bySkill"></div></div>
+    </div>
+    <div class="callout" id="callout"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Total cost by skill</h2><span class="hint">every message, not just tool_result</span></div>
+    <div class="card"><div class="hbars" id="skillTotal"></div></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Sessions — by size</h2><span class="hint">click a card → full detail (composition + timeline)</span></div>
+    <p class="sec-sub">Ranked largest first. The mini-bar is the session's source composition; the line under it lists its 3 biggest messages (red = a <code class="inl">Read</code>).</p>
+    <div class="sessions" id="sessions"></div>
+  </section>
+
+  <footer>
+    <span class="pill">PROJECT <span id="proj"></span></span>
+    &nbsp; <span id="scope-foot"></span>
+    Generated by <code>scripts/profile-context.mjs</code>.
+  </footer>
+</div>
+
+<script>
+const DATA = __DATA_INJECT__;
+const SRC_COLORS = { "tool_result":"var(--c-toolresult)","assistant:text":"var(--c-asstext)","assistant:tool_use":"var(--c-tooluse)","attachment:skill_listing":"var(--c-skill)","attachment:deferred_tools_delta":"var(--c-deferred)","attachment:agent_listing_delta":"var(--c-agent)","claude_md":"var(--c-claudemd)","user:text":"var(--c-user)","system-reminder":"var(--c-reminder)" };
+// detail strings that are generic fillers (not a real file / command) — must match what
+// classify() in profile-context.mjs emits as fallbacks
+const GENERIC_DET = ["reply","prompt","result","injected"];
+const TOOL_COLORS = { Read:"var(--t-Read)",Bash:"var(--t-Bash)",Edit:"var(--t-Edit)",Write:"var(--t-Write)",Agent:"var(--t-Agent)",MCP:"var(--t-MCP)" };
+const PALETTE = ["#e0685f","#e8a33d","#d9b15a","#c98be0","#58c4c0","#6aa9e0","#5bbf8a","#8f9bb3","#b08968","#7c89f0"];
+function colorFor(s){ if(SRC_COLORS[s])return SRC_COLORS[s]; if(s.startsWith("subagent:"))return"var(--c-agent)"; if(s.startsWith("attachment"))return"var(--c-deferred)"; if(s.startsWith("meta"))return"var(--c-other)"; return"var(--c-other)"; }
+function toolColor(t){ return TOOL_COLORS[t]||"var(--c-other)"; }
+function human(n){ n=+n; if(n<1024)return n.toFixed(0)+" B"; if(n<1048576)return (n/1024).toFixed(1)+" KB"; return (n/1048576).toFixed(2)+" MB"; }
+function esc(s){ return (s+"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function commas(n){ return (+n).toLocaleString(); }
+function tokK(n){ return n==null?"—":(n>=1000?(n/1000).toFixed(0)+"k":""+n); }
+function fmtDur(s){ if(s==null)return"—"; if(s<90)return s.toFixed(0)+"s"; if(s<5400)return (s/60).toFixed(1)+"m"; return (s/3600).toFixed(1)+"h"; }
+
+document.getElementById("proj").textContent = DATA.project;
+const GT = DATA.global_total_bytes;
+const sorted = [...DATA.sessions].sort((a,b)=>b.total_bytes-a.total_bytes);
+// the session that actually HIT the peak ctx (NOT the byte-biggest one — they can differ)
+let peakSess = null;
+for (const s of DATA.sessions) { const c = s.peak_ctx||s.last_ctx||0; if (!peakSess || c > (peakSess.peak_ctx||peakSess.last_ctx||0)) peakSess = s; }
+const maxCtx = peakSess ? (peakSess.peak_ctx||peakSess.last_ctx||0) : 0;
+const tr = DATA.global_rollup["tool_result"]||{bytes:0,count:0};
+const trPct = GT?100*tr.bytes/GT:0;
+const toolEntriesAll = Object.entries(DATA.global_tool_rollup).sort((a,b)=>b[1].bytes-a[1].bytes);
+const topTool = toolEntriesAll[0]||["—",{bytes:0}];
+
+const FILTERED = DATA.scope !== "all-sessions";
+document.getElementById("scope-text").innerHTML = FILTERED
+  ? `Scope: <b>${DATA.n_sessions}</b> sessions that invoked an <code class="inl">/ayatori-*</code> command · ${DATA.n_skipped||0} non-pipeline sessions filtered out`
+  : `Scope: <b>${DATA.n_sessions}</b> sessions — ALL sessions in this project (<code class="inl">--all</code>, no filter)`;
+document.getElementById("scope-foot").innerHTML = FILTERED
+  ? `Filtered to sessions with a real <code>&lt;command-name&gt;/ayatori-*&lt;/command-name&gt;</code> invocation.`
+  : `Unfiltered (<code>--all</code>): every session in the project is included.`;
+// cache hit = prompt tokens served from the prompt cache vs re-created / uncached (all sessions)
+const GC = DATA.global_cache||{read:0,create:0,input:0};
+const cacheDen = GC.read+GC.create+GC.input;
+const cacheHit = cacheDen ? 100*GC.read/cacheDen : null;
+const GE = DATA.global_errors||{count:0,bytes:0};
+document.getElementById("kpis").innerHTML = [
+  {label:FILTERED?"Pipeline sessions":"Sessions", val:DATA.n_sessions, unit:"", note:FILTERED?((DATA.n_skipped||0)+" others filtered out"):"all sessions (no filter)"},
+  {label:"tool_result share", val:trPct.toFixed(0), unit:"%", note:"of transcript bytes", flag:trPct>40},
+  {label:"Biggest tool", val:topTool[0], unit:"", note:human(topTool[1].bytes)+" of tool_result"},
+  {label:"Peak context window", val:tokK(maxCtx), unit:"tok", note:(peakSess?peakSess.short:"—")+" · real usage", flag:maxCtx>350000},
+  {label:"Prompt-cache hit", val:cacheHit==null?"—":cacheHit.toFixed(1), unit:cacheHit==null?"":"%", note:cacheHit==null?"no usage data":tokK(GC.create)+" tok re-created (cache writes)", flag:cacheHit!=null&&cacheHit<80},
+  {label:"Failed tool calls", val:GE.count, unit:"", note:GE.count?human(GE.bytes)+" of error text kept in-window":"no is_error results", flag:GE.count>0},
+].map(k=>`<div class="kpi${k.flag?' flag':''}"><div class="label">${esc(k.label)}</div><div class="val">${esc(k.val)}<span class="unit">${k.unit?' '+k.unit:''}</span></div><div class="note">${esc(k.note)}</div></div>`).join("");
+
+const rollEntries = Object.entries(DATA.global_rollup).sort((a,b)=>b[1].bytes-a[1].bytes);
+document.getElementById("propbar").innerHTML = rollEntries.map(([s,v])=>`<div style="width:${100*v.bytes/GT}%;background:${colorFor(s)}" title="${esc(s)} — ${human(v.bytes)} (${(100*v.bytes/GT).toFixed(1)}%)"></div>`).join("");
+document.getElementById("legend").innerHTML = rollEntries.filter(([,v])=>100*v.bytes/GT>=0.4).map(([s,v])=>`<div class="item"><span class="sw" style="background:${colorFor(s)}"></span><span>${esc(s)}</span><span class="pc">${human(v.bytes)} · ${(100*v.bytes/GT).toFixed(1)}%</span></div>`).join("");
+
+const trTotal=toolEntriesAll.reduce((a,[,v])=>a+v.bytes,0);
+document.getElementById("tr-total").textContent=human(trTotal)+" total · "+commas(tr.count)+" blocks";
+const toolMax=Math.max(1,...toolEntriesAll.map(e=>e[1].bytes));
+// ×N = total reads across sessions. "stale" = re-reads WITHIN a session with no Edit/Write to
+// that file in between (pure re-pay); "after edit" = justified re-reads. Bash-mediated writes
+// (sed -i, redirects) are invisible to this classification.
+function targetsHTML(tool){ const items=(DATA.tool_targets||{})[tool]; if(!items||!items.length)return `<div class="targets"><div class="trow"><span class="tgt" style="color:var(--ink-faint)">no per-target detail for ${esc(tool)}</span></div></div>`; const head=`<div class="trow thead-row"><span>target</span><span class="mult" style="text-align:right">reads</span><span class="tb">bytes</span></div>`; const rows=items.map(it=>{const lo=it.count<2?" lo":"";const cls=[];if(it.stale)cls.push(`<span class="stale" title="${it.stale} re-read(s) of an unchanged file within a session — ${human(it.staleBytes)} re-paid for nothing">${it.stale} stale</span>`);if(it.fresh)cls.push(`<span class="fresh" title="${it.fresh} re-read(s) after an Edit/Write to the file — justified">${it.fresh} after edit</span>`);return `<div class="trow"><span class="tgt" title="${esc(it.full)}">${esc(it.target)}</span><span class="mult">${cls.join(" ")}<span class="x${lo}">×${it.count}</span></span><span class="tb">${human(it.bytes)}</span></div>`;}).join(""); return `<div class="targets">${head}${rows}</div>`; }
+document.getElementById("byTool").innerHTML = toolEntriesAll.map(([t,v])=>{ const w=Math.max(2,100*v.bytes/toolMax); return `<div class="hbar clickable" data-tool="${esc(t)}"><span class="nm"><span class="caret">▸</span>${esc(t)}</span><div class="track"><div class="fill" style="width:${w}%;background:${toolColor(t)}"></div></div><span class="amt">${human(v.bytes)}</span></div>${targetsHTML(t)}`; }).join("");
+document.getElementById("byTool").addEventListener("click", e=>{ const h=e.target.closest(".hbar.clickable"); if(!h)return; const box=h.nextElementSibling; const op=!box.classList.contains("open"); box.classList.toggle("open",op); h.classList.toggle("open",op); });
+function hbars(el,entries,colorFn,cls){ const max=Math.max(1,...entries.map(e=>e[1].bytes)); el.innerHTML=entries.map(([name,v],i)=>{const w=Math.max(2,100*v.bytes/max);const col=colorFn?colorFn(name,i):PALETTE[i%PALETTE.length];return `<div class="hbar ${cls||''}"><span class="nm" title="${esc(name)}">${esc(name)}</span><div class="track"><div class="fill" style="width:${w}%;background:${col}"></div></div><span class="amt">${human(v.bytes)}</span></div>`;}).join(""); }
+hbars(document.getElementById("bySkill"),Object.entries(DATA.global_toolresult_by_skill).sort((a,b)=>b[1].bytes-a[1].bytes),null,"skill");
+hbars(document.getElementById("skillTotal"),Object.entries(DATA.global_skill_rollup).sort((a,b)=>b[1].bytes-a[1].bytes).filter(e=>GT&&e[1].bytes/GT>=0.003),null,"skill");
+// Hotspot: rank by STALE re-read bytes (re-reads of an unchanged file within a session) —
+// the actionable waste. Falls back to the raw ×N heuristic if nothing is classified stale.
+let worst=null; for(const it of (DATA.tool_targets.Read||[])){ if((it.stale||0)>=1&&(!worst||it.staleBytes>worst.staleBytes))worst=it; }
+if(worst){ document.getElementById("callout").innerHTML=`<b>Re-read hotspot:</b> <code class="inl">${esc(worst.target)}</code> was read <b>${worst.count}×</b> (${human(worst.bytes)} total) — <b>${worst.stale}</b> of those re-read an <b>unchanged</b> file within one session, re-paying <b>${human(worst.staleBytes)}</b> for nothing.${worst.fresh?` (${worst.fresh} other re-read${worst.fresh>1?"s":""} came after an edit — justified.)`:""}`; }
+else { for(const it of (DATA.tool_targets.Read||[])){ if(it.count>=3&&(!worst||it.bytes>worst.bytes))worst=it; }
+  if(worst){ const per=worst.bytes/worst.count; document.getElementById("callout").innerHTML=`<b>Re-read hotspot:</b> <code class="inl">${esc(worst.target)}</code> was read <b>${worst.count}×</b> for <b>${human(worst.bytes)}</b> total (~${human(per)} each). Re-reading an unchanged file re-pays its full token cost each time.`; }
+  else { document.getElementById("callout").style.display="none"; } }
+
+function miniBar(roll,total){ return `<div class="minibar">`+Object.entries(roll).sort((a,b)=>b[1].bytes-a[1].bytes).map(([s,v])=>`<div style="width:${100*v.bytes/total}%;background:${colorFor(s)}" title="${esc(s)} ${(100*v.bytes/total).toFixed(0)}%"></div>`).join("")+`</div>`; }
+document.getElementById("sessions").innerHTML = sorted.map(s=>{
+  const cmds=(s.cmds||[]).length?`<span class="s-cmds">${esc(s.cmds.join(", "))}</span>`:"";
+  const top3=(s.top||[]).slice(0,3).map(m=>{ const isRead=m.tool==="Read"; const lbl=(m.detail&&!GENERIC_DET.includes(m.detail))?m.detail:m.source; return `<span class="t${isRead?' read':''}">${esc(lbl)} ${human(m.bytes)}</span>`; }).join(" · ");
+  const den=(s.cache_read||0)+(s.cache_create||0)+(s.cache_input||0);
+  const hit=den?(100*(s.cache_read||0)/den):null;
+  const extra=[
+    s.idle_s?`<span title="silent gaps ≥ 2 min (human gate / user away)">wait ${fmtDur(s.idle_s)}</span>`:"",
+    hit!=null?`<span title="prompt-cache hit rate">cache ${hit.toFixed(0)}%</span>`:"",
+    s.err_count?`<span style="color:var(--crit)" title="failed tool calls (is_error)">⚠ ${s.err_count}</span>`:"",
+  ].filter(Boolean).join("");
+  return `<a class="session" href="${esc(s.detail_href)}"><div class="s-top"><div><span class="s-id">${esc(s.short)}</span>${cmds}</div><div class="s-stats"><span><b>${human(s.total_bytes)}</b></span><span>${s.nlines} msgs</span><span>peak <b>${tokK(s.peak_ctx)}</b>/${tokK(s.window)}</span><span>${fmtDur(s.duration)}</span>${extra}<span class="s-arrow">detail →</span></div></div>${miniBar(s.rollup,s.total_bytes)}<div class="s-top15">top: ${top3}</div></a>`;
+}).join("");
+</script>

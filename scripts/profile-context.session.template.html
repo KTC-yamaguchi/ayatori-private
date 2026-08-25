@@ -1,0 +1,420 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Session detail · AYATORI Context Profiler</title>
+<style>
+  :root {
+    --bg: #131519; --panel: #1b1e25; --panel-2: #21252e; --line: #2b303b;
+    --ink: #e7e9ee; --ink-dim: #9aa1ad; --ink-faint: #6b7280;
+    --accent: #e8a33d; --good: #5bbf8a; --warn: #e8a33d; --crit: #e0685f;
+    --free: #262b35;
+    --c-toolresult: #e0685f; --c-asstext: #6aa9e0; --c-tooluse: #c98be0;
+    --c-skill: #e8a33d; --c-deferred: #5bbf8a; --c-agent: #58c4c0;
+    --c-claudemd: #d9b15a; --c-user: #8f9bb3; --c-reminder: #b08968; --c-other: #4a4f5c;
+    --mono: "SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans: "Spline Sans",-apple-system,"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background: radial-gradient(1200px 600px at 80% -10%, #1d222c 0, transparent 60%), var(--bg);
+    color: var(--ink); font-family: var(--sans); line-height:1.5; -webkit-font-smoothing: antialiased; }
+  /* wide layout: the timeline has 7 columns and the file/command column needs real room for
+     long paths + prose headlines. Cap generously; narrower viewports still shrink via the fluid
+     minmax(0,1fr) column. Prose sections stay readable via their own max-width (.sec-sub 74ch). */
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 34px 32px 90px; }
+  a.back { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); text-decoration: none; }
+  a.back:hover { color: var(--accent); }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 20px; margin: 14px 0 28px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+  h1 { font-size: clamp(22px,3vw,30px); font-weight: 600; margin: 0 0 6px; letter-spacing: -.01em; font-family: var(--mono); }
+  h1 .cmds { font-family: var(--sans); font-size: 15px; color: var(--accent); margin-left: 10px; }
+  .meta { font-family: var(--mono); font-size: 12.5px; color: var(--ink-dim); display:flex; gap:18px; flex-wrap:wrap; margin-top:8px; font-variant-numeric: tabular-nums; }
+  .meta b { color: var(--ink); }
+  code.inl { font-family: var(--mono); font-size: 12px; color: var(--ink); background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
+
+  section { margin-bottom: 40px; }
+  h2 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .sec-sub { font-size: 13px; color: var(--ink-dim); margin: 0 0 16px; max-width: 74ch; }
+
+  /* composition bar */
+  .compwrap { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+  .compbar { display: flex; height: 46px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--free); }
+  .compbar > div { position: relative; transition: filter .15s; min-width: 0; }
+  .compbar > div:hover { filter: brightness(1.3); }
+  .compbar .free { background: repeating-linear-gradient(45deg, var(--free), var(--free) 6px, #2b3038 6px, #2b3038 12px); }
+  .compscale { display:flex; justify-content:space-between; font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin-top: 6px; }
+  .complegend { display: flex; flex-wrap: wrap; gap: 7px 16px; margin-top: 16px; font-size: 12.5px; }
+  .complegend .item { display:flex; align-items:center; gap:7px; }
+  .complegend .sw { width: 11px; height: 11px; border-radius: 3px; flex:none; }
+  .complegend .tk { font-family: var(--mono); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .used-note { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); margin-top: 12px; }
+  .used-note b { color: var(--ink); }
+
+  /* 15 largest — size-ranked rows */
+  .biglist { display: flex; flex-direction: column; gap: 5px; }
+  .bigrow { display: grid; grid-template-columns: 52px 128px minmax(0,1fr) 70px; gap: 12px; align-items: center; font-family: var(--mono); font-size: 11.5px; }
+  .bigrow .ln { color: var(--ink-faint); text-align: right; }
+  .bigrow .bar { background: var(--panel-2); border-radius: 3px; height: 16px; overflow: hidden; }
+  .bigrow .fill { height: 100%; }
+  .bigrow .det { color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bigrow .det .dtool { color: var(--ink-faint); }
+  .bigrow .det .dpath { color: var(--ink); }
+  .bigrow .det .dpath.read { color: #f0a9a2; }
+  .bigrow .sz { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  /* vertical timeline */
+  .tl { position: relative; margin-top: 4px; padding-left: 0; }
+  .tlhead { display: grid; grid-template-columns: 48px 52px 118px 72px minmax(0,1fr) 62px 128px; gap: 10px; font-family: var(--mono); font-size: 9.5px; letter-spacing:.06em; text-transform:uppercase; color: var(--ink-faint); padding: 0 0 6px 6px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+  .tlhead > span:nth-child(1),.tlhead > span:nth-child(2),.tlhead > span:nth-child(4),.tlhead > span:nth-child(6) { text-align:right; }
+  .tlrow { display: grid; grid-template-columns: 48px 52px 118px 72px minmax(0,1fr) 62px 128px; gap: 10px; align-items: center; padding: 3px 0; font-family: var(--mono); font-size: 11.5px; border-left: 2px solid var(--line); position: relative; }
+  .tlrow::before { content:""; position:absolute; left:-5px; top:50%; width:8px; height:8px; border-radius:50%; background: var(--dot,var(--c-other)); transform: translateY(-50%); }
+  .tlrow.skillstart { border-left-color: var(--accent); margin-top: 10px; }
+  /* meta:* / other:* = harness bookkeeping, NOT part of the context window sent to the model.
+     De-emphasized: dimmed, smaller, hollow dot, hairline bar — present for completeness but visually skippable. */
+  .tlrow.meta { opacity: .45; font-size: 10.5px; }
+  .tlrow.meta:hover { opacity: .9; }
+  .tlrow.meta::before { background: transparent; border: 1px solid var(--ink-faint); width: 6px; height: 6px; }
+  .tlrow.meta .bar { background: transparent; }
+  .tlrow.meta .fill { opacity: .4; }
+  .tlrow.meta .src { font-style: italic; }
+  .tlrow .ln { color: var(--ink-faint); text-align:right; font-variant-numeric: tabular-nums; }
+  .tlrow .tt { color: var(--ink-dim); text-align:right; font-variant-numeric: tabular-nums; padding-right:4px; }
+  .tlrow .tt.none { color: var(--ink-faint); opacity:.5; }
+  .tlrow .src { color: var(--ink-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tlrow .bar { background: var(--panel-2); border-radius: 3px; height: 14px; overflow: hidden; }
+  .tlrow .fill { height:100%; }
+  /* detail label lives in its OWN column with light text — never clipped by / overlaid on the bar */
+  .tlrow .det { color: var(--ink-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tlrow .det .dtool { color: var(--ink-faint); }
+  .tlrow .det .dpath { color: var(--ink); }
+  .tlrow .det .dpath.read { color: #f0a9a2; }
+  .tlrow.big .det .dpath { font-weight: 600; }
+  .tlrow .sz { text-align:right; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .tlrow.big .sz { color: var(--crit); font-weight:600; }
+  /* token growth: +delta label + cumulative gauge showing ctx-so-far vs peak */
+  .tlrow .grow { display:flex; align-items:center; gap:6px; width:100%; min-width:0; }
+  .tlrow .delta { width:58px; flex:none; text-align:right; font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+  .tlrow .delta.up { color: var(--accent); }              /* measured assistant turn: total jump */
+  .tlrow .delta.big { color: var(--crit); font-weight:600; }
+  .tlrow .delta.base { color: var(--ink-dim); font-style: italic; }  /* preamble floor */
+  .tlrow .delta.inflow { color: #7d8aa0; }                /* injected content contributor */
+  .tlrow .delta.inflow.big { color: #c98be0; font-weight:600; }
+  .tlrow .delta.inflow.reply { color: #6aa9e0; }          /* Claude's own reply (exact output_tokens) */
+  .tlrow .delta.est { opacity: .82; }                     /* estimated share: 'est' suffix, muted */
+  .tlrow .delta.est::after { content:""; }
+  .tlrow .delta.contrib { color: var(--ink-faint); opacity:.6; font-size:13px; line-height:1; }  /* minor contributor: just a dot */
+  .tlrow .delta.shrink { color: var(--good); font-weight:600; }  /* window SHRANK (compaction / clear) */
+  .tlrow .delta .bust { color: var(--crit); font-weight:600; }   /* prompt-cache break marker */
+  /* failed tool call: the error text (and the retry) stay in the window — flag the row */
+  .tlrow.err::before { background: var(--crit); box-shadow: 0 0 0 2px rgba(224,104,95,.25); }
+  .tlrow.err .dpath, .bigrow .det .dpath.errp { color: var(--crit) !important; }
+  .errmark { color: var(--crit); font-weight: 600; }
+  /* wait divider: a ≥2min silent gap in the transcript (human gate / user away) */
+  .tlgap { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); padding: 7px 0 7px 10px; border-left: 2px dashed var(--line); margin: 2px 0; }
+  .tlgap b { color: var(--ink-dim); }
+  .tlrow .gauge { flex:1; height:10px; background: var(--panel-2); border-radius: 3px; overflow:hidden; position:relative; }
+  .tlrow .gaugefill { display:block; height:100%; background: linear-gradient(90deg, #8a6a2e, var(--accent)); }
+  .skillband { font-family: var(--mono); font-size: 11px; letter-spacing:.06em; text-transform:uppercase; color: var(--accent); margin: 16px 0 4px; padding-left: 4px; }
+  .tlnote { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin-bottom: 10px; }
+  .filterbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 14px; font-family: var(--mono); font-size: 11px; }
+  .filterbar button { background: var(--panel-2); border:1px solid var(--line); color: var(--ink-dim); border-radius:6px; padding:4px 10px; cursor:pointer; }
+  .filterbar button.on { background: var(--accent); color:#16130c; font-weight:600; border-color:var(--accent); }
+
+  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 12px; font-family: var(--mono); }
+</style>
+
+<div class="wrap">
+  <a class="back" href="../context-profile.html">← all sessions</a>
+  <header>
+    <p class="eyebrow">Session detail</p>
+    <h1 id="title"></h1>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <section>
+    <h2>Context composition</h2>
+    <p class="sec-sub">The <b>used</b> portion is the session's real peak context-window (from API <code class="inl">usage</code>), sliced per message-source proportionally to its share of transcript bytes. The hatched remainder is <b>free space</b> up to the window limit.</p>
+    <div class="compwrap">
+      <div class="compbar" id="compbar"></div>
+      <div class="compscale" id="compscale"></div>
+      <div class="complegend" id="complegend"></div>
+      <div class="used-note" id="usednote"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>15 largest messages</h2>
+    <p class="sec-sub">The single biggest messages in this session, ranked by size — regardless of when they occurred.
+    Bar length ∝ size; the file / command is in its own column (red path = a <code class="inl">Read</code>).
+    The same file appearing more than once is a re-read.</p>
+    <div class="biglist" id="biglist"></div>
+  </section>
+
+  <section>
+    <h2>Timeline</h2>
+    <p class="sec-sub">Every message top-to-bottom in chronological order. Bar length ∝ size, color = source; the file / command
+    it touched is in its own column (red path = a <code class="inl">Read</code>). Grouped by the skill running (amber band).
+    The rightmost <b>token growth</b> column uses the real context-window from API <code class="inl">usage</code> (measured only at assistant turns). Numbers are shown only where they're trustworthy:
+    <span style="color:var(--ink-dim);font-style:italic">base&nbsp;N</span> = the preamble already loaded before the first turn (system prompt + CLAUDE.md + listings) — <b>exact</b>.
+    <span style="color:var(--accent)">+N</span> on an assistant turn = the total window jump there (hover for the reply/injected split) — <b>exact</b>.
+    <span style="color:#7d8aa0">+N</span> on a lone <code class="inl">tool_result</code> / user row = it was the only content in that gap, so that amount entered there — <b>exact</b>.
+    <span style="color:#7d8aa0">~N&nbsp;est</span> = when several rows shared one gap, only the biggest byte-row gets a number, and it's an <b>estimate</b> (the gap total is exact; the per-row split assumes bytes≈tokens — good for <em>ranking</em> what to stop re-reading, not a billed figure). Smaller sharers show a muted <span style="color:var(--ink-faint)">·</span> instead of a fake-precise number.
+    <span style="color:var(--good)">−N</span> = the window <b>shrank</b> there (compaction / summarization / clear) — growth attribution restarts from that point and the preceding gap's rows are not credited.
+    Also flagged: <span class="errmark">⚠</span> = a <b>failed tool call</b> (its error text stays in the window),
+    <span style="color:var(--crit)">⟲ bust</span> = a <b>prompt-cache break</b> (the turn re-created far more cache than the window grew — the prefix was re-paid, e.g. after a &gt;5-min pause or a system-prompt change),
+    and dashed <b>⏸ wait</b> dividers mark silent gaps ≥ 2 min (human gate / user away).</p>
+    <div class="filterbar" id="filterbar"></div>
+    <div class="tl" id="timeline"></div>
+  </section>
+
+  <footer>Generated by <code class="inl" style="background:none;padding:0">scripts/profile-context.mjs</code> · project <span id="proj"></span></footer>
+</div>
+
+<script>
+const PAYLOAD = __DATA_INJECT__;
+const S = PAYLOAD.session;
+// colors come from the :root --c-* variables (same names as the index template) so the
+// palette is defined once per page, in CSS — var() works fine in inline styles.
+const SRC_COLORS = { "tool_result":"var(--c-toolresult)","assistant:text":"var(--c-asstext)","assistant:tool_use":"var(--c-tooluse)","attachment:skill_listing":"var(--c-skill)","attachment:deferred_tools_delta":"var(--c-deferred)","attachment:agent_listing_delta":"var(--c-agent)","claude_md":"var(--c-claudemd)","user:text":"var(--c-user)","system-reminder":"var(--c-reminder)" };
+function hexFor(s){ if(SRC_COLORS[s])return SRC_COLORS[s]; if(s.startsWith("subagent:"))return"var(--c-agent)"; if(s.startsWith("attachment"))return"var(--c-deferred)"; if(s.startsWith("meta"))return"var(--c-other)"; return"var(--c-other)"; }
+// detail strings that are generic fillers (not a real file / command) — must match what
+// classify() in profile-context.mjs emits as fallbacks
+const GENERIC_DET = ["reply","prompt","result","injected"];
+function human(n){ n=+n; if(n<1024)return n.toFixed(0)+" B"; if(n<1048576)return (n/1024).toFixed(1)+" KB"; return (n/1048576).toFixed(2)+" MB"; }
+function esc(s){ return (s+"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function commas(n){ return (+n).toLocaleString(); }
+function tokK(n){ return n==null?"—":(n>=1000?(n/1000).toFixed(0)+"k":""+n); }
+function fmtDur(s){ if(s==null)return"—"; if(s<90)return s.toFixed(0)+"s"; if(s<5400)return (s/60).toFixed(1)+"m"; return (s/3600).toFixed(1)+"h"; }
+
+document.getElementById("proj").textContent = PAYLOAD.project;
+document.getElementById("title").innerHTML = `${esc(S.short)}<span class="cmds">${esc((S.cmds||[]).join(", "))}</span>`;
+// cache hit = share of prompt tokens served from the prompt cache (main thread, all turns)
+const cacheDen = (S.cache_read||0)+(S.cache_create||0)+(S.cache_input||0);
+const cacheHit = cacheDen ? (100*(S.cache_read||0)/cacheDen) : null;
+document.getElementById("meta").innerHTML = [
+  `<span><b>${human(S.total_bytes)}</b> transcript</span>`,
+  `<span><b>${S.nlines}</b> messages</span>`,
+  `<span>peak ctx <b>${commas(S.peak_ctx)}</b> tok</span>`,
+  `<span>window <b>${tokK(S.window)}</b>${S.window_inferred?" (inferred)":""}</span>`,
+  `<span>span <b>${fmtDur(S.duration)}</b></span>`,
+  S.active_s!=null?`<span title="gaps ≥ 2 min between messages count as waiting (human gate / user away), the rest as active">active <b>${fmtDur(S.active_s)}</b> · waiting <b>${fmtDur(S.idle_s)}</b>${S.n_waits?` (${S.n_waits}×)`:""}</span>`:"",
+  cacheHit!=null?`<span title="share of prompt tokens served from the prompt cache: read ${commas(S.cache_read)} / created ${commas(S.cache_create)} / uncached ${commas(S.cache_input)}">cache hit <b>${cacheHit.toFixed(1)}%</b></span>`:"",
+  S.err_count?`<span class="errmark" title="tool calls that returned is_error — the error text (and the retry) stay in the window">⚠ <b>${S.err_count}</b> failed tool call${S.err_count>1?"s":""} · ${human(S.err_bytes)}</span>`:"",
+].filter(Boolean).join("");
+
+/* ---- composition bar ---- */
+const used = S.peak_ctx || S.last_ctx || 0;
+const win = Math.max(S.window, used);   // guard: never let used exceed the axis
+const comp = S.composition || [];
+const usedPct = 100*used/win;
+let bar = comp.map(c=>{
+  const wpct = 100*c.tokens/win;
+  const pctUsed = used ? (100*c.tokens/used).toFixed(1) : "0.0";   // guard: usage-less session → used=0
+  return `<div style="width:${wpct}%;background:${hexFor(c.source)}" title="${esc(c.source)} — ~${commas(c.tokens)} tok (${pctUsed}% of used)"></div>`;
+}).join("");
+const freePct = Math.max(0, 100 - usedPct);
+bar += `<div class="free" style="width:${freePct}%" title="free space — ~${commas(win-used)} tok"></div>`;
+document.getElementById("compbar").innerHTML = bar;
+document.getElementById("compscale").innerHTML = `<span>0</span><span>used ${tokK(used)} (${usedPct.toFixed(0)}%)</span><span>${tokK(win)} window</span>`;
+document.getElementById("complegend").innerHTML = comp.filter(c=>c.tokens>0).map(c=>`<div class="item"><span class="sw" style="background:${hexFor(c.source)}"></span><span>${esc(c.source)}</span><span class="tk">~${tokK(c.tokens)} · ${human(c.bytes)}</span></div>`).join("") + `<div class="item"><span class="sw" style="background:var(--free)"></span><span>free</span><span class="tk">~${tokK(win-used)}</span></div>`;
+document.getElementById("usednote").innerHTML = `Peak used <b>${commas(used)}</b> of ~<b>${commas(win)}</b> tokens (<b>${usedPct.toFixed(0)}%</b>). ${S.window_inferred?`Window inferred from peak usage only (the transcript records neither the limit nor the window variant) — a 1M session that stayed under 200k reads as 200k; pass <code class="inl" style="background:none;padding:0">--window &lt;tok&gt;</code> to override.`:""}`;
+
+/* ---- file/command cell — shared by the 15-largest list and the timeline ---- */
+function detCell(m, fallback) {
+  const err = m.err ? `<span class="errmark" title="failed tool call (is_error) — this error text stays in the window">⚠ </span>` : "";
+  const hasDetail = m.detail && !GENERIC_DET.includes(m.detail);
+  if (!hasDetail) return `<span class="det" style="color:var(--ink-faint)">${err}${esc(fallback)}</span>`;
+  const isRead = m.tool === "Read";
+  return `<span class="det" title="${esc((m.tool && m.tool!=="unknown" ? m.tool+" → " : "")+m.detail)}">${err}${m.tool && m.tool!=="unknown" ? `<span class="dtool">${esc(m.tool)} </span>` : ""}<span class="dpath${isRead?" read":""}${m.err?" errp":""}">${esc(m.detail)}</span></span>`;
+}
+
+/* ---- 15 largest messages (size-ranked) ---- */
+const bigMsgs = S.top || [];
+const bigMax = Math.max(1, ...bigMsgs.map(m => m.bytes));
+document.getElementById("biglist").innerHTML = bigMsgs.map(m => {
+  const w = Math.max(3, 100 * m.bytes / bigMax);
+  return `<div class="bigrow"><span class="ln">L${m.line}</span><div class="bar"><div class="fill" style="width:${w}%;background:${hexFor(m.source)}"></div></div>${detCell(m, m.source)}<span class="sz">${human(m.bytes)}</span></div>`;
+}).join("");
+
+/* ---- vertical timeline ---- */
+const tl = S.timeline || [];
+const maxB = Math.max(1,...tl.map(m=>m.bytes));
+const bigThreshold = maxB*0.35;
+// Token growth. The API `usage` on an assistant turn = tokens the model READ to produce it
+// (whole prompt so far), NOT its own reply — the reply is counted separately as output_tokens.
+// So ctx is measured ONLY at assistant turns; between them we carry it forward for the gauge.
+//
+// A window jump between two measured turns decomposes EXACTLY:
+//     Δctx(N) = output(prev measured turn)  +  inflow (tool_results / user / attachments in the gap)
+// The GAP TOTAL (inflow) is exact real tokens. The split WITHIN a multi-row gap is only a
+// byte-proportional estimate (bytes→tokens isn't a fixed ratio). So we attribute honestly:
+//   • gap with ONE contributor row  → that row IS the whole inflow → exact number (no ~).
+//   • gap with MANY rows            → don't fake per-row precision. Put the (est.) number only on
+//     the single biggest byte-row; mark the rest as contributors (tint, no number). The ranking
+//     is what matters for "which read to stop re-reading", and byte-order preserves it.
+// The first measured turn is the BASELINE (static preamble already in the window: system prompt +
+// CLAUDE.md + skill/tool listings + first user turn) — shown as its own floor, not blank.
+const peakCtx = S.peak_ctx || S.last_ctx || 1;
+let baselineCtx = 0, baselineLine = null;
+(function computeGrowth(){
+  let lastSeen = null;
+  // carried-forward ctx for the gauge on every row
+  for (const m of tl) { if (m.ctx != null) lastSeen = m.ctx; m._cum = (m.ctx != null ? m.ctx : lastSeen); m._delta = 0; m._inflow = 0; }
+
+  // indices of the real measurement points (rows with a raw measured ctx, deduped: the
+  // transcript sometimes doubles an assistant line, so collapse equal consecutive values)
+  const pts = [];
+  let prevRaw = null;
+  tl.forEach((m,i)=>{ if(m.raw_ctx!=null && m.raw_ctx!==prevRaw){ pts.push(i); prevRaw=m.raw_ctx; } });
+  if(!pts.length) return;
+
+  // fix (a): baseline = the first measured ctx (everything already loaded before any turn)
+  const b0 = tl[pts[0]];
+  baselineCtx = b0.raw_ctx; baselineLine = b0.line;
+  b0._baseline = true;
+  b0._delta = baselineCtx;          // the whole floor is "added" here, honestly attributed
+  b0._deltaOut = 0; b0._deltaInflow = baselineCtx;
+
+  // fix (b): for each subsequent measured turn, split Δ into prevOut + inflow, then spread
+  // the inflow across the gap rows by byte share.
+  for (let k=1; k<pts.length; k++){
+    const iPrev = pts[k-1], iCur = pts[k];
+    const cur = tl[iCur], prev = tl[iPrev];
+    const delta = cur.raw_ctx - prev.raw_ctx;
+    const prevOut = Math.max(0, prev.out || 0);         // reply the model wrote at the prev turn
+    const inflow = delta - prevOut;                     // tool_results / user / attachments since
+    cur._delta = delta;                                 // total jump (unchanged headline number)
+    cur._deltaOut = prevOut;                            // ...of which this much was Claude's reply
+    cur._deltaInflow = inflow;                          // ...and this much was injected content
+    // prompt-cache break: normally a turn re-caches roughly what the window grew (the new
+    // content). cache_creation far beyond the growth = an already-cached prefix was re-written
+    // and re-paid (cache TTL expired, system prompt / tool list changed, compaction rebuild).
+    const recached = (cur.cc || 0) - Math.max(0, delta);
+    if (recached >= 5000) cur._bust = recached;
+    // A NEGATIVE delta = the window shrank (compaction / summarization / clear). The
+    // grow-only decomposition doesn't apply across that boundary — surface it as its own
+    // event instead of silently dropping it, and don't credit the gap's rows.
+    if (delta < 0) { cur._shrink = true; continue; }
+
+    // gather the gap's contributor rows (exclusive of the two measured endpoints; skip
+    // bookkeeping AND sidechain rows — subagent:* content fills the sidechain's own window,
+    // only the Agent tool_result enters this one, so apportioning inflow onto large subagent
+    // rows would misattribute it and dilute the rows that actually flowed in)
+    const gap = [];
+    for (let j=iPrev+1; j<iCur; j++){ const g=tl[j]; if(!(g.source.startsWith("meta:")||g.source.startsWith("other:")||g.source.startsWith("subagent:"))) gap.push(g); }
+    const gapBytes = gap.reduce((a,g)=>a+g.bytes,0);
+    if (inflow>0 && gapBytes>0){
+      // find the biggest byte-row — it "owns" the printed number
+      let lead=gap[0]; for(const g of gap) if(g.bytes>lead.bytes) lead=g;
+      const single = gap.length===1;
+      for(const g of gap){
+        g._inflow = inflow * (g.bytes/gapBytes);   // still tracked (for tooltip / tint intensity)
+        g._contrib = true;                          // this row added to the window here
+        g._exact = single;                          // sole row → its number is exact
+        g._showNum = single || g===lead;            // print a number only on sole or biggest row
+      }
+    }
+    // the prevOut portion is Claude's own reply — belongs on the prev assistant row, exact.
+    if (prevOut>0){ prev._inflow = (prev._inflow||0) + prevOut; prev._contrib = true; prev._exact = true; prev._showNum = true; prev._reply = true; }
+  }
+})();
+const maxDelta = Math.max(1, ...tl.map(m => m._delta || 0));
+const maxInflow = Math.max(1, ...tl.map(m => m._inflow || 0));
+// "small growth" = a row whose attributed/measured growth is minor noise (single-file reads of a
+// few hundred tokens, `·` contributors). Threshold adapts per session: max(500 tok, 2% of peak).
+// The row STAYS (its size bar / detail still matter); only its growth LABEL is suppressed so the
+// eye isn't drawn to a wall of small numbers. Baseline + big jumps + dominant reads keep theirs.
+const SMALL_GROWTH = Math.max(500, Math.round(peakCtx * 0.02));
+// abs() so a shrink (negative delta = compaction) counts as a big event and keeps its label;
+// a cache bust always keeps its ⟲ label even if the window growth itself was small
+const rowGrowth = (m) => (m._baseline || m._bust) ? Infinity : (m._delta ? Math.abs(m._delta) : (m._inflow||0));
+const smallGrowthCount = tl.filter(m => (m._contrib||m._delta>0) && !m._baseline && rowGrowth(m) < SMALL_GROWTH).length;
+// source filter buttons
+const srcCounts = {};
+for(const m of tl){ const k=m.source.replace(/^subagent:/,"⊂"); srcCounts[k]=(srcCounts[k]||0)+1; }
+let activeFilter = null;
+let hideMeta = false;
+let hideSmallGrowth = false;
+const metaCount = tl.filter(m=>m.source.startsWith("meta:")||m.source.startsWith("other:")).length;
+const fb = document.getElementById("filterbar");
+fb.innerHTML = `<button class="on" data-f="">all (${tl.length})</button>`
+  + Object.entries(srcCounts).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([s,c])=>`<button data-f="${esc(s)}">${esc(s)} (${c})</button>`).join("")
+  + (smallGrowthCount ? `<button data-hidesmall="1" style="margin-left:auto" title="Hide growth numbers below ~${tokK(SMALL_GROWTH)} tok (noise). Rows stay; only the small +N / · labels are cleared.">hide small growth (${smallGrowthCount})</button>` : "")
+  + (metaCount ? `<button data-hidemeta="1"${smallGrowthCount?"":' style="margin-left:auto"'}>hide bookkeeping (${metaCount})</button>` : "");
+
+const TL_HEAD = `<div class="tlhead"><span>L#</span><span>time</span><span>source</span><span>size bar</span><span>file / command</span><span>bytes</span><span>token growth → ${tokK(peakCtx)}</span></div>`;
+function renderTimeline(){
+  let html=TL_HEAD; let lastSkill="__none__";
+  for(const m of tl){
+    const sk = m.skill||"(main)";
+    const disp = m.source.replace(/^subagent:/,"⊂");
+    const isMeta=m.source.startsWith("meta:")||m.source.startsWith("other:");
+    if(hideMeta && isMeta) continue;
+    if(activeFilter && disp!==activeFilter) continue;
+    // wait divider: a ≥2min silent gap ended AT this row — it belongs to the time before it
+    if(m.gap) html+=`<div class="tlgap">⏸ waited <b>${fmtDur(m.gap)}</b> → ${esc(m.gapKind||"next event")}</div>`;
+    if(sk!==lastSkill){ html+=`<div class="skillband">▸ ${esc(sk)}</div>`; lastSkill=sk; }
+    const w=Math.max(2,100*m.bytes/maxB);
+    const isBig=m.bytes>=bigThreshold && !isMeta;
+    const det=detCell(m, m.detail||"");
+    const szTitle=m.ctx!=null?` title="context-window here: ${commas(m.ctx)} tok"`:"";
+    // growth column. Numbers shown, in decreasing certainty:
+    //   base N   — the preamble floor (exact)
+    //   +N       — a measured turn's TOTAL window jump (exact)
+    //   +N       — a gap's SOLE contributor row, or Claude's reply row (exact: it IS the whole inflow)
+    //   ~N est   — the biggest byte-row of a MULTI-row gap (est. share; ranking-honest, not billed)
+    //   ·        — a smaller contributor in a multi-row gap (tinted dot, no fake number)
+    // The gauge is the carried-forward ctx / peak (exact tokens either way).
+    const d=m._delta, inf=m._inflow||0;
+    const cumFrac = m._cum!=null ? Math.min(100,100*m._cum/peakCtx) : 0;
+    let deltaLbl="", deltaCls="delta", growTitle="";
+    if (m._baseline) {
+      deltaLbl = `base ${tokK(d)}`; deltaCls = "delta base";
+      growTitle = ` title="baseline: ${commas(d)} tok already in the window before the first turn — system prompt + CLAUDE.md + skill/tool listings + first user turn"`;
+    } else if (d>0) {                                   // a measured turn: total jump + decomposition
+      const bigDelta = d>=maxDelta*0.5;
+      const bust = m._bust ? `<span class="bust" title="prompt-cache break: this turn re-created ${commas(m.cc||0)} tok of cache, ≈${commas(Math.round(m._bust))} beyond the window growth — an already-cached prefix was re-paid (cache TTL expired / system prompt or tool list changed)">⟲</span> ` : "";
+      deltaLbl = `${bust}+${tokK(d)}`; deltaCls = bigDelta?"delta up big":"delta up";
+      growTitle = ` title="window +${commas(d)} tok at this turn = ${commas(m._deltaOut||0)} (Claude's reply) + ${commas(m._deltaInflow||0)} (tool_results / user / attachments injected since the last turn) · ctx now ${commas(m._cum)}${m.cc!=null?` · cache created ${commas(m.cc)}`:""}"`;
+    } else if (m._shrink) {                             // the window SHRANK — compaction / clear
+      const bust = m._bust ? `<span class="bust" title="the rebuilt (post-compaction) prompt was re-cached: ${commas(m.cc||0)} tok of cache re-created">⟲</span> ` : "";
+      deltaLbl = `${bust}−${tokK(-d)}`; deltaCls = "delta shrink";
+      growTitle = ` title="window −${commas(-d)} tok — the context shrank here (compaction / summarization / clear). Growth attribution restarts from this point; rows in the preceding gap are not credited."`;
+    } else if (m._contrib) {                            // a row credited with tokens it added
+      const bigInf = inf>=maxInflow*0.5;
+      const rnd = Math.round(inf);
+      if (m._exact) {                                   // sole gap row or Claude's reply → exact
+        deltaLbl = `+${tokK(rnd)}`;
+        deltaCls = (bigInf?"delta inflow big":"delta inflow") + (m._reply?" reply":"");
+        growTitle = m._reply
+          ? ` title="+${commas(rnd)} tok — Claude's own reply written here; re-enters the window next turn (= this row's output_tokens, exact)"`
+          : ` title="+${commas(rnd)} tok — the only content in this gap, so this exact amount entered the window here"`;
+      } else if (m._showNum) {                          // biggest row of a multi-row gap → est. share
+        deltaLbl = `~${tokK(rnd)} est`;
+        deltaCls = (bigInf?"delta inflow big":"delta inflow") + " est";
+        growTitle = ` title="≈${commas(rnd)} tok — this row's byte-share of the exact inflow in this gap (multiple rows shared it). Estimate for RANKING, not a billed figure — the gap total is exact but the per-row split assumes bytes≈tokens."`;
+      } else {                                          // smaller contributor → tinted dot, no number
+        deltaLbl = `·`;
+        deltaCls = "delta contrib";
+        growTitle = ` title="contributed to this gap's inflow (~${commas(rnd)} tok by byte-share). No exact per-row figure — see the gap's biggest row for the estimate."`;
+      }
+    } else {
+      growTitle = m._cum!=null?` title="ctx ${commas(m._cum)} tok (carried forward)"`:"";
+    }
+    // "hide small growth": clear the LABEL (keep the exact gauge) on minor rows so the eye lands
+    // only on real jumps. Baseline + big measured jumps + dominant reads always keep their number.
+    if (hideSmallGrowth && deltaLbl && !m._baseline && rowGrowth(m) < SMALL_GROWTH) { deltaLbl=""; deltaCls="delta"; }
+    const grow=`<span class="grow"${growTitle}><span class="${deltaCls}">${deltaLbl}</span><span class="gauge"><span class="gaugefill" style="width:${cumFrac.toFixed(1)}%"></span></span></span>`;
+    const timeCell = m.t!=null ? `<span class="tt">${fmtDur(m.t)}</span>` : `<span class="tt none" title="no timestamp (harness bookkeeping row)">—</span>`;
+    html+=`<div class="tlrow${isBig?' big':''}${isMeta?' meta':''}${m.err?' err':''}" style="--dot:${hexFor(m.source)}"><span class="ln">L${m.line}</span>${timeCell}<span class="src">${esc(disp)}</span><div class="bar"><div class="fill" style="width:${w}%;background:${hexFor(m.source)}"></div></div>${det}<span class="sz"${szTitle}>${human(m.bytes)}</span>${grow}</div>`;
+  }
+  document.getElementById("timeline").innerHTML = html || `<div class="tlnote">no messages match this filter</div>`;
+}
+fb.addEventListener("click", e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  if(b.dataset.hidemeta){ hideMeta=!hideMeta; b.classList.toggle("on",hideMeta); renderTimeline(); return; }
+  if(b.dataset.hidesmall){ hideSmallGrowth=!hideSmallGrowth; b.classList.toggle("on",hideSmallGrowth); renderTimeline(); return; }
+  activeFilter=b.dataset.f||null;
+  fb.querySelectorAll("button:not([data-hidemeta]):not([data-hidesmall])").forEach(x=>x.classList.toggle("on",x===b));
+  renderTimeline();
+});
+renderTimeline();
+</script>

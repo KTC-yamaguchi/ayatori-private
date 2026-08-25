@@ -1,0 +1,1793 @@
+{
+  "_comment": "lint-skills Rule 6（Jira 番号 / 日付の埋め込み警告）の既知分 baseline (ratchet)。ここに載っている警告は表示を抑制し、超過分（新規追加）だけを表示する。既知分を掃除したら `node scripts/lint-skills.mjs --write-baseline scripts/lint-skills.baseline.json` で縮めること。エントリを増やす方向の手編集は、その埋め込みを意図的に許容するレビュー判断があるときのみ。",
+  "entries": [
+    {
+      "file": ".claude/agents/ayatori-build-tokens-runner.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 2
+    },
+    {
+      "file": ".claude/agents/ayatori-build-tokens-runner.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 3
+    },
+    {
+      "file": ".claude/agents/ayatori-requirements-auditor.md",
+      "kind": "date",
+      "token": "2026-06-03",
+      "count": 2
+    },
+    {
+      "file": ".claude/agents/ayatori-requirements-auditor.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 4
+    },
+    {
+      "file": ".claude/agents/ayatori-requirements-auditor.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-308",
+      "count": 1
+    },
+    {
+      "file": ".claude/agents/ayatori-sample-html-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 2
+    },
+    {
+      "file": ".claude/agents/ayatori-sample-html-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-169",
+      "count": 1
+    },
+    {
+      "file": ".claude/agents/ayatori-sample-html-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-214",
+      "count": 2
+    },
+    {
+      "file": ".claude/agents/ayatori-sample-html-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 2
+    },
+    {
+      "file": ".claude/agents/ayatori-screen-state-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 1
+    },
+    {
+      "file": ".claude/agents/ayatori-screen-state-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 9
+    },
+    {
+      "file": ".claude/agents/ayatori-screen-state-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": ".claude/agents/ayatori-screen-state-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-161",
+      "count": 14
+    },
+    {
+      "file": ".claude/agents/ayatori-screen-state-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-166",
+      "count": 2
+    },
+    {
+      "file": ".claude/agents/ayatori-screen-state-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 2
+    },
+    {
+      "file": ".claude/agents/ayatori-screen-state-builder.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 2
+    },
+    {
+      "file": ".claude/agents/ayatori-train-enumerator.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": ".claude/agents/ayatori-train-persona.md",
+      "kind": "date",
+      "token": "2026-07-13",
+      "count": 1
+    },
+    {
+      "file": ".claude/agents/ayatori-train-persona.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": ".claude/agents/figma-capture-runner.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 21
+    },
+    {
+      "file": "phases/add-feature/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-157",
+      "count": 1
+    },
+    {
+      "file": "phases/delta-mini/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 1
+    },
+    {
+      "file": "phases/delta/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 1
+    },
+    {
+      "file": "phases/delta/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "phases/design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 2
+    },
+    {
+      "file": "phases/design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 4
+    },
+    {
+      "file": "phases/design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-155",
+      "count": 3
+    },
+    {
+      "file": "phases/design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "phases/design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 5
+    },
+    {
+      "file": "phases/question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "phases/question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-309",
+      "count": 1
+    },
+    {
+      "file": "phases/question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-311",
+      "count": 1
+    },
+    {
+      "file": "phases/req-delta/SKILL.md",
+      "kind": "date",
+      "token": "2026-05-27",
+      "count": 1
+    },
+    {
+      "file": "phases/req-delta/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-157",
+      "count": 1
+    },
+    {
+      "file": "phases/req-delta/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "phases/requirements/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "phases/retro/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 3
+    },
+    {
+      "file": "phases/retro/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 3
+    },
+    {
+      "file": "phases/retro/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-279",
+      "count": 2
+    },
+    {
+      "file": "phases/reverse/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-155",
+      "count": 1
+    },
+    {
+      "file": "phases/reverse/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-155",
+      "count": 2
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 29
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 1
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-179",
+      "count": 6
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-185",
+      "count": 2
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-186",
+      "count": 2
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-187",
+      "count": 3
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-188",
+      "count": 4
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-189",
+      "count": 1
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-190",
+      "count": 1
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-193",
+      "count": 2
+    },
+    {
+      "file": "phases/screens/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": "phases/train/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "date",
+      "token": "2026-06-01",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "date",
+      "token": "2026-06-03",
+      "count": 2
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "date",
+      "token": "2026-07-28",
+      "count": 2
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-104",
+      "count": 6
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-140",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-157",
+      "count": 2
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 16
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 7
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-161",
+      "count": 6
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-165",
+      "count": 2
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 4
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-179",
+      "count": 7
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-180",
+      "count": 3
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-181",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-182",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-185",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-186",
+      "count": 2
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-187",
+      "count": 2
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-188",
+      "count": 2
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-189",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-190",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-192",
+      "count": 2
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-193",
+      "count": 3
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 3
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-215",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-217",
+      "count": 4
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-279",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-288",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": "pipeline.yaml",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 1
+    },
+    {
+      "file": "skills/_shared/human-gate-preview.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-165",
+      "count": 2
+    },
+    {
+      "file": "skills/_shared/human-gate-preview.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-193",
+      "count": 1
+    },
+    {
+      "file": "skills/_shared/preflight-gate.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 2
+    },
+    {
+      "file": "skills/_shared/preflight-gate.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-309",
+      "count": 1
+    },
+    {
+      "file": "skills/00-feedback-protocol/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-105",
+      "count": 2
+    },
+    {
+      "file": "skills/00-memory-write/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": "skills/00-transition-figjam-sync/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-104",
+      "count": 8
+    },
+    {
+      "file": "skills/00-transition-figjam-sync/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-158",
+      "count": 3
+    },
+    {
+      "file": "skills/00b-source-analysis/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 1
+    },
+    {
+      "file": "skills/00d2-reverse-review-gate/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-288",
+      "count": 1
+    },
+    {
+      "file": "skills/00e-ayatori-format-convert/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/intake-dispatcher.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-156",
+      "count": 2
+    },
+    {
+      "file": "skills/01-question/refs/intake-dispatcher.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/internal-scorer.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-179",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/internal-scorer.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-215",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/internal-scorer.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/open-interview.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-156",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/open-interview.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-179",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/open-interview.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-215",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/open-interview.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 2
+    },
+    {
+      "file": "skills/01-question/refs/output-templates.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-166",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/output-templates.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-172",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/output-templates.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/refs/scoring-criteria.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 4
+    },
+    {
+      "file": "skills/01-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-122",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-166",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-179",
+      "count": 2
+    },
+    {
+      "file": "skills/01-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-215",
+      "count": 1
+    },
+    {
+      "file": "skills/01-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 4
+    },
+    {
+      "file": "skills/01-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-309",
+      "count": 1
+    },
+    {
+      "file": "skills/01b-add-feature-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-157",
+      "count": 14
+    },
+    {
+      "file": "skills/01b-add-feature-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 1
+    },
+    {
+      "file": "skills/01b-add-feature-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "skills/01b-add-feature-question/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-279",
+      "count": 1
+    },
+    {
+      "file": "skills/02-iso-breakdown/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 2
+    },
+    {
+      "file": "skills/02-iso-breakdown/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 2
+    },
+    {
+      "file": "skills/04-scoring/refs/ai-human-tag-rules-v0.1.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-54",
+      "count": 1
+    },
+    {
+      "file": "skills/04-scoring/refs/scoring-guide.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-54",
+      "count": 1
+    },
+    {
+      "file": "skills/04-scoring/refs/scoring-rubric-v0.1.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-54",
+      "count": 1
+    },
+    {
+      "file": "skills/04-scoring/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-118",
+      "count": 2
+    },
+    {
+      "file": "skills/07-human-gate-req/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 2
+    },
+    {
+      "file": "skills/07-human-gate-req/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-165",
+      "count": 1
+    },
+    {
+      "file": "skills/07-human-gate-req/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-288",
+      "count": 1
+    },
+    {
+      "file": "skills/08-design-brainstorm/evals/README.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-316",
+      "count": 1
+    },
+    {
+      "file": "skills/08-design-brainstorm/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 15
+    },
+    {
+      "file": "skills/08-design-brainstorm/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 2
+    },
+    {
+      "file": "skills/08-design-brainstorm/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-155",
+      "count": 1
+    },
+    {
+      "file": "skills/08-design-brainstorm/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 3
+    },
+    {
+      "file": "skills/08-design-brainstorm/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 1
+    },
+    {
+      "file": "skills/08-design-brainstorm/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-316",
+      "count": 4
+    },
+    {
+      "file": "skills/09-sample-html-gen/SKILL.md",
+      "kind": "date",
+      "token": "2026-06-16",
+      "count": 1
+    },
+    {
+      "file": "skills/09-sample-html-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-119",
+      "count": 1
+    },
+    {
+      "file": "skills/09-sample-html-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 2
+    },
+    {
+      "file": "skills/09-sample-html-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-214",
+      "count": 2
+    },
+    {
+      "file": "skills/09-sample-html-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 1
+    },
+    {
+      "file": "skills/09-sample-html-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 2
+    },
+    {
+      "file": "skills/10-sample-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-165",
+      "count": 1
+    },
+    {
+      "file": "skills/11-wcag-mapping/evals/README.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-300",
+      "count": 1
+    },
+    {
+      "file": "skills/11-wcag-mapping/evals/README.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-316",
+      "count": 1
+    },
+    {
+      "file": "skills/11-wcag-mapping/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 8
+    },
+    {
+      "file": "skills/11-wcag-mapping/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-122",
+      "count": 1
+    },
+    {
+      "file": "skills/11-wcag-mapping/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 6
+    },
+    {
+      "file": "skills/11-wcag-mapping/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-316",
+      "count": 3
+    },
+    {
+      "file": "skills/12-design-system/refs/build-tokens.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 5
+    },
+    {
+      "file": "skills/12-design-system/refs/build-tokens.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-138",
+      "count": 1
+    },
+    {
+      "file": "skills/12-design-system/refs/build-tokens.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 9
+    },
+    {
+      "file": "skills/12-design-system/refs/generate-style-guide.md",
+      "kind": "date",
+      "token": "2026-04-08",
+      "count": 1
+    },
+    {
+      "file": "skills/12-design-system/refs/generate-style-guide.md",
+      "kind": "date",
+      "token": "2026-04-14",
+      "count": 1
+    },
+    {
+      "file": "skills/12-design-system/refs/generate-style-guide.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 7
+    },
+    {
+      "file": "skills/12-design-system/refs/generate-style-guide.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 1
+    },
+    {
+      "file": "skills/12-design-system/refs/generate-style-guide.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 2
+    },
+    {
+      "file": "skills/12-design-system/refs/generate-tokens.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 8
+    },
+    {
+      "file": "skills/12-design-system/refs/generate-tokens.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 2
+    },
+    {
+      "file": "skills/12-design-system/refs/generate-tokens.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 9
+    },
+    {
+      "file": "skills/12-design-system/refs/generate-tokens.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 5
+    },
+    {
+      "file": "skills/12-design-system/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 3
+    },
+    {
+      "file": "skills/12-design-system/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-138",
+      "count": 1
+    },
+    {
+      "file": "skills/12-design-system/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-139",
+      "count": 1
+    },
+    {
+      "file": "skills/12-design-system/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 1
+    },
+    {
+      "file": "skills/12-design-system/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 2
+    },
+    {
+      "file": "skills/12-design-system/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-268",
+      "count": 2
+    },
+    {
+      "file": "skills/12-design-system/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 1
+    },
+    {
+      "file": "skills/13-human-gate-design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-155",
+      "count": 3
+    },
+    {
+      "file": "skills/13-human-gate-design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "skills/13-human-gate-design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-165",
+      "count": 1
+    },
+    {
+      "file": "skills/13-human-gate-design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-288",
+      "count": 1
+    },
+    {
+      "file": "skills/14-screen-list-transition/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-104",
+      "count": 10
+    },
+    {
+      "file": "skills/14-screen-list-transition/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 5
+    },
+    {
+      "file": "skills/14-screen-list-transition/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-217",
+      "count": 6
+    },
+    {
+      "file": "skills/15-confluence-save-design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-104",
+      "count": 5
+    },
+    {
+      "file": "skills/15-confluence-save-design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-179",
+      "count": 1
+    },
+    {
+      "file": "skills/16-design-doc-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-104",
+      "count": 2
+    },
+    {
+      "file": "skills/16-design-doc-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-165",
+      "count": 1
+    },
+    {
+      "file": "skills/16-design-doc-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 1
+    },
+    {
+      "file": "skills/17-screen-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-104",
+      "count": 2
+    },
+    {
+      "file": "skills/17-screen-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 3
+    },
+    {
+      "file": "skills/17-screen-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 2
+    },
+    {
+      "file": "skills/17-screen-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 16
+    },
+    {
+      "file": "skills/17-screen-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-161",
+      "count": 1
+    },
+    {
+      "file": "skills/17-screen-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 14
+    },
+    {
+      "file": "skills/17-screen-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 10
+    },
+    {
+      "file": "skills/17-screen-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-222",
+      "count": 1
+    },
+    {
+      "file": "skills/18-design-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 4
+    },
+    {
+      "file": "skills/18-design-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 4
+    },
+    {
+      "file": "skills/18-design-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 2
+    },
+    {
+      "file": "skills/18-design-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 3
+    },
+    {
+      "file": "skills/18-design-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 1
+    },
+    {
+      "file": "skills/19-rubric-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 3
+    },
+    {
+      "file": "skills/19-rubric-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 6
+    },
+    {
+      "file": "skills/19-rubric-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 2
+    },
+    {
+      "file": "skills/19-rubric-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 2
+    },
+    {
+      "file": "skills/19-rubric-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-217",
+      "count": 4
+    },
+    {
+      "file": "skills/20-loop-design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 1
+    },
+    {
+      "file": "skills/20-loop-design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 1
+    },
+    {
+      "file": "skills/20-loop-design/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-217",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-105",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-165",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-217",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-288",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": "skills/21-screen-human-review/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-312",
+      "count": 1
+    },
+    {
+      "file": "skills/21a-graphic-recommend/refs/report-guide.md",
+      "kind": "date",
+      "token": "2026-07-28",
+      "count": 4
+    },
+    {
+      "file": "skills/21a-graphic-recommend/refs/report-guide.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-192",
+      "count": 3
+    },
+    {
+      "file": "skills/21a-graphic-recommend/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-192",
+      "count": 2
+    },
+    {
+      "file": "skills/21a-graphic-recommend/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-193",
+      "count": 1
+    },
+    {
+      "file": "skills/21b-graphic-hearing/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-192",
+      "count": 2
+    },
+    {
+      "file": "skills/21c-graphic-taste/refs/taste-guide.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-181",
+      "count": 4
+    },
+    {
+      "file": "skills/21e-graphic-generate/refs/generate-guide.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-182",
+      "count": 1
+    },
+    {
+      "file": "skills/22-figma-export/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 2
+    },
+    {
+      "file": "skills/22-figma-export/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 14
+    },
+    {
+      "file": "skills/22-figma-export/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-179",
+      "count": 1
+    },
+    {
+      "file": "skills/23-human-final-approval/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-165",
+      "count": 1
+    },
+    {
+      "file": "skills/24-design-system-update/refs/sync-figma-tokens.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 4
+    },
+    {
+      "file": "skills/24-design-system-update/refs/sync-figma-tokens.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 5
+    },
+    {
+      "file": "skills/24-design-system-update/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 1
+    },
+    {
+      "file": "skills/24-design-system-update/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-141",
+      "count": 4
+    },
+    {
+      "file": "skills/24-design-system-update/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-166",
+      "count": 1
+    },
+    {
+      "file": "skills/24-design-system-update/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 4
+    },
+    {
+      "file": "skills/25-component-build/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-121",
+      "count": 1
+    },
+    {
+      "file": "skills/25a-state-pattern-plan/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 3
+    },
+    {
+      "file": "skills/25a-state-pattern-plan/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-215",
+      "count": 2
+    },
+    {
+      "file": "skills/25a-state-pattern-plan/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-309",
+      "count": 1
+    },
+    {
+      "file": "skills/25b-state-pattern-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 5
+    },
+    {
+      "file": "skills/25b-state-pattern-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "skills/25b-state-pattern-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-161",
+      "count": 6
+    },
+    {
+      "file": "skills/25b-state-pattern-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 2
+    },
+    {
+      "file": "skills/25b-state-pattern-gen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 1
+    },
+    {
+      "file": "skills/25c-state-pattern-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 2
+    },
+    {
+      "file": "skills/25c-state-pattern-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 1
+    },
+    {
+      "file": "skills/25c-state-pattern-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-161",
+      "count": 2
+    },
+    {
+      "file": "skills/25c-state-pattern-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 1
+    },
+    {
+      "file": "skills/25c-state-pattern-score/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-202",
+      "count": 2
+    },
+    {
+      "file": "skills/25d-state-pattern-approval/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 1
+    },
+    {
+      "file": "skills/25d-state-pattern-approval/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-288",
+      "count": 1
+    },
+    {
+      "file": "skills/25e-figma-pattern-export/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 8
+    },
+    {
+      "file": "skills/26-retro/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 2
+    },
+    {
+      "file": "skills/26-retro/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-165",
+      "count": 1
+    },
+    {
+      "file": "skills/26-retro/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-288",
+      "count": 1
+    },
+    {
+      "file": "skills/27-change-detect/refs/feature-add-interview.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-172",
+      "count": 1
+    },
+    {
+      "file": "skills/27-change-detect/SKILL.md",
+      "kind": "date",
+      "token": "2026-05-13",
+      "count": 1
+    },
+    {
+      "file": "skills/27-change-detect/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-279",
+      "count": 1
+    },
+    {
+      "file": "skills/27-change-detect/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-309",
+      "count": 1
+    },
+    {
+      "file": "skills/27b-screen-edit-detect/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-279",
+      "count": 1
+    },
+    {
+      "file": "skills/27b-screen-edit-detect/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-309",
+      "count": 2
+    },
+    {
+      "file": "skills/28-impact-analysis/SKILL.md",
+      "kind": "date",
+      "token": "2026-05-27",
+      "count": 4
+    },
+    {
+      "file": "skills/28-impact-analysis/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-104",
+      "count": 2
+    },
+    {
+      "file": "skills/28-impact-analysis/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 11
+    },
+    {
+      "file": "skills/28-impact-analysis/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-171",
+      "count": 2
+    },
+    {
+      "file": "skills/28-impact-analysis/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-217",
+      "count": 2
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "date",
+      "token": "2026-05-27",
+      "count": 3
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "date",
+      "token": "2026-06-03",
+      "count": 1
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-104",
+      "count": 2
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 7
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-160",
+      "count": 2
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-161",
+      "count": 1
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-170",
+      "count": 4
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-171",
+      "count": 1
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-216",
+      "count": 4
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-217",
+      "count": 4
+    },
+    {
+      "file": "skills/29-partial-screen-regen/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-288",
+      "count": 1
+    },
+    {
+      "file": "skills/29b-reverse-propagate/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-288",
+      "count": 2
+    },
+    {
+      "file": "skills/30-partial-figma-update/SKILL.md",
+      "kind": "date",
+      "token": "2026-05-27",
+      "count": 5
+    },
+    {
+      "file": "skills/30-partial-figma-update/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 8
+    },
+    {
+      "file": "skills/31-req-change-detect/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-157",
+      "count": 1
+    },
+    {
+      "file": "skills/31-req-change-detect/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-309",
+      "count": 1
+    },
+    {
+      "file": "skills/32-req-impact-analysis/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-157",
+      "count": 3
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/fail-manifest-doc-missing-ref/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-06",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/fail-mid-insertion/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-06",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/fail-missing-baseline-id/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-06",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/fail-removed-residue/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-06",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/fail-residue-hidden-in-modified-summary/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-07",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/kanten3-skipped-no-snapshots/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-06",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/pass-clean-full-coverage/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-06",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/qw3-partial-coverage-pass/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-06",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/removed-id-also-added/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-06",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/evals/fixtures/removed-section-without-id/expected-report.md",
+      "kind": "date",
+      "token": "2026-07-07",
+      "count": 2
+    },
+    {
+      "file": "skills/33-req-revision/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-157",
+      "count": 5
+    },
+    {
+      "file": "skills/34-delta-mini-retro/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-159",
+      "count": 1
+    },
+    {
+      "file": "skills/35-md-to-html-export/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-140",
+      "count": 1
+    },
+    {
+      "file": "skills/35-md-to-html-export/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-195",
+      "count": 1
+    },
+    {
+      "file": "skills/train-02-hearing/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": "skills/train-03-goal-setting/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": "skills/train-04-handoff/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": "skills/train-07-retro/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    },
+    {
+      "file": "skills/train-handbook/SKILL.md",
+      "kind": "ticket",
+      "token": "POCTEAMA-291",
+      "count": 1
+    }
+  ]
+}

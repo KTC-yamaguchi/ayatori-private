@@ -1,0 +1,65 @@
+{
+  "_comment": "lint-repo-refs の既知違反 baseline (ratchet)。ここに載っている違反は CI で許容され、超過分 (新規 drift) だけが exit 1 でブロックされる。既知違反を修正したら `node scripts/lint-repo-refs.mjs --write-baseline scripts/lint-repo-refs.baseline.json` で縮めること。エントリを増やす方向の手編集は「その drift を意図的に許容する」レビュー判断があるときのみ。",
+  "entries": [
+    {
+      "check": "deprecated-token",
+      "file": "phases/screens/SKILL.md",
+      "message": "廃止トークン: all_states_and_platforms — 廃止 enum。新 enum: user_selected | all_platforms (pipeline.yaml screens.figma_export.scope)",
+      "count": 1
+    },
+    {
+      "check": "deprecated-token",
+      "file": "skills/22-figma-export/SKILL.md",
+      "message": "廃止トークン: mcp__plugin_figma_figma__ — 旧 Figma MCP ツール名 prefix。現行: mcp__figma__",
+      "count": 2
+    },
+    {
+      "check": "path-ref",
+      "file": "CLAUDE.md",
+      "message": "参照先が存在しない (case-sensitive 照合): docs/master/01-ayatori-spec.md",
+      "count": 1
+    },
+    {
+      "check": "path-ref",
+      "file": "CLAUDE.md",
+      "message": "参照先が存在しない (case-sensitive 照合): docs/master/02-ayatori-claude-code-rd.md",
+      "count": 1
+    },
+    {
+      "check": "path-ref",
+      "file": "CLAUDE.md",
+      "message": "参照先が存在しない (case-sensitive 照合): docs/master/03-ayatori-web.md",
+      "count": 1
+    },
+    {
+      "check": "path-ref",
+      "file": "pipeline.yaml",
+      "message": "参照先が存在しない (case-sensitive 照合): docs/master/01-ayatori-spec.md",
+      "count": 1
+    },
+    {
+      "check": "path-ref",
+      "file": "pipeline.yaml",
+      "message": "参照先が存在しない (case-sensitive 照合): docs/master/02-ayatori-claude-code-rd.md",
+      "count": 1
+    },
+    {
+      "check": "path-ref",
+      "file": "pipeline.yaml",
+      "message": "参照先が存在しない (case-sensitive 照合): docs/master/03-ayatori-web.md",
+      "count": 1
+    },
+    {
+      "check": "path-ref",
+      "file": "skills/11-wcag-mapping/evals/glue/cases.json",
+      "message": "参照先が存在しない (case-sensitive 照合): skills/11-wcag-mapping/skill.md",
+      "count": 1
+    },
+    {
+      "check": "skill-md-case",
+      "file": "skills/11-wcag-mapping/evals/glue/cases.json",
+      "message": "小文字 skill.md 参照 (正: 大文字 SKILL.md。case-sensitive な Linux 環境で参照が壊れる)",
+      "count": 2
+    }
+  ]
+}
