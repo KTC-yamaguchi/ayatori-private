@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{APP_NAME}} 採点履歴</title>
+<link rel="stylesheet" href="scoring.css">
+</head>
+<body class="history">
+
+<!-- ════════════ HEADER ════════════ -->
+<div class="dash-header">
+  <div class="dash-header-top">
+    <span class="app-badge">{{APP_NAME}}</span>
+    <span class="attempt-badge">最新 · 第{{ATTEMPT_CURRENT}}回</span>
+  </div>
+  <h1>{{APP_NAME}} スコア履歴</h1>
+  <p class="subtitle">合計 {{TOTAL_CURRENT}} · {{SLOT_COUNT}}回 · {{GENERATED_AT}} · Rubric v1 · ISO/IEC/IEEE 29148:2018</p>
+</div>
+
+<div class="dash-container">
+
+<!-- ════════════ SCORE TREND ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>スコア推移</h2>
+    <span class="info">{{SLOT_COUNT}}回分</span>
+  </div>
+  <div class="card-body">
+    <div class="attempts">
+<!-- attempts:start -->
+{{ATTEMPT_CARDS}}
+<!-- attempts:end -->
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ AXES × ATTEMPTS ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>軸別スコア</h2>
+    <span class="info">5軸 × {{SLOT_COUNT}}回</span>
+  </div>
+  <div class="card-body">
+    <div class="grid axis-grid">
+      <div class="grid-h left">軸</div>
+<!-- axis-heads:start -->
+{{AXIS_HEADS}}
+<!-- axis-heads:end -->
+<!-- axis-rows:start -->
+{{AXIS_ROWS}}
+<!-- axis-rows:end -->
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ HEATMAP ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>チェックヒートマップ</h2>
+    <span class="info">20チェック × {{SLOT_COUNT}}回</span>
+  </div>
+  <div class="card-body">
+    <div class="grid heatmap">
+      <div class="grid-h left">チェック</div>
+<!-- heat-heads:start -->
+{{HEAT_HEADS}}
+<!-- heat-heads:end -->
+<!-- heat-rows:start -->
+{{HEAT_ROWS}}
+<!-- heat-rows:end -->
+    </div>
+    <div class="legend">
+      <span><span class="swatch yes"></span>合格 · 5</span>
+      <span><span class="swatch partial"></span>部分 · 2</span>
+      <span><span class="swatch no"></span>不合格 · 0</span>
+      <span><span class="swatch improved"></span>改善あり</span>
+      <span class="legend-note">セルにカーソルを合わせると根拠が表示されます</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ DEFICIENCY TREND ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>不備件数推移</h2>
+    <span class="info">重要度別</span>
+  </div>
+  <div class="card-body">
+    <div class="def-rows">
+<!-- def-rows:start -->
+{{DEFICIENCY_ROWS}}
+<!-- def-rows:end -->
+    </div>
+  </div>
+</div>
+
+</div><!-- /dash-container -->
+
+</body>
+</html>

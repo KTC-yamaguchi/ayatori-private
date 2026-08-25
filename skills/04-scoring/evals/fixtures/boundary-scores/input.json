@@ -1,0 +1,171 @@
+{
+  "app_name": "fixture-boundary",
+  "attempts": [
+    {
+      "attempt_count": 0,
+      "timestamp": "2026-07-05T10:00:00+09:00",
+      "total": 80,
+      "scores": {
+        "correctness": 20,
+        "unambiguity": 17,
+        "completeness": 15,
+        "consistency": 17,
+        "feasibility": 11
+      },
+      "check_results": [
+        {
+          "check_id": "correctness-C1",
+          "axis": "correctness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "correctness C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "correctness-C2",
+          "axis": "correctness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "correctness C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "correctness-C3",
+          "axis": "correctness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "correctness C3 の判定根拠 [example]"
+        },
+        {
+          "check_id": "correctness-C4",
+          "axis": "correctness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "correctness C4 の判定根拠 [example]"
+        },
+        {
+          "check_id": "unambiguity-C1",
+          "axis": "unambiguity",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "unambiguity C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "unambiguity-C2",
+          "axis": "unambiguity",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "unambiguity C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "unambiguity-C3",
+          "axis": "unambiguity",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "unambiguity C3 の判定根拠 [example]"
+        },
+        {
+          "check_id": "unambiguity-C4",
+          "axis": "unambiguity",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "unambiguity C4 の判定根拠 [example]"
+        },
+        {
+          "check_id": "completeness-C1",
+          "axis": "completeness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "completeness C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "completeness-C2",
+          "axis": "completeness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "completeness C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "completeness-C3",
+          "axis": "completeness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "completeness C3 の判定根拠 [example]"
+        },
+        {
+          "check_id": "completeness-C4",
+          "axis": "completeness",
+          "verdict": "no",
+          "awarded_points": 0,
+          "evidence": "completeness C4 の判定根拠 [example]"
+        },
+        {
+          "check_id": "consistency-C1",
+          "axis": "consistency",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "consistency C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "consistency-C2",
+          "axis": "consistency",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "consistency C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "consistency-C3",
+          "axis": "consistency",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "consistency C3 の判定根拠 [example]"
+        },
+        {
+          "check_id": "consistency-C4",
+          "axis": "consistency",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "consistency C4 の判定根拠 [example]"
+        },
+        {
+          "check_id": "feasibility-C1",
+          "axis": "feasibility",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "feasibility C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "feasibility-C2",
+          "axis": "feasibility",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "feasibility C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "feasibility-C3",
+          "axis": "feasibility",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "feasibility C3 の判定根拠 [example]"
+        },
+        {
+          "check_id": "feasibility-C4",
+          "axis": "feasibility",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "feasibility C4 の判定根拠 [example]"
+        }
+      ],
+      "deficiencies": [
+        {
+          "axis": "feasibility",
+          "doc": "08-constraints.md",
+          "issue": "対象環境の下限バージョンが実現可能性を左右するが未確定",
+          "severity": "high",
+          "check_id": "feasibility-C2",
+          "tag": "人間対応必要"
+        }
+      ],
+      "ai_improvable_count": 0,
+      "human_required_count": 1
+    }
+  ]
+}

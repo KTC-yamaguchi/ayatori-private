@@ -1,0 +1,212 @@
+{
+  "app_name": "fixture-pass",
+  "attempts": [
+    {
+      "attempt_count": 0,
+      "timestamp": "2026-07-01T10:00:00+09:00",
+      "total": 82,
+      "scores": {
+        "correctness": 20,
+        "unambiguity": 14,
+        "completeness": 14,
+        "consistency": 17,
+        "feasibility": 17
+      },
+      "check_results": [
+        {
+          "check_id": "correctness-C1",
+          "axis": "correctness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "correctness C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "correctness-C2",
+          "axis": "correctness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "correctness C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "correctness-C3",
+          "axis": "correctness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "correctness C3 の判定根拠 [example]"
+        },
+        {
+          "check_id": "correctness-C4",
+          "axis": "correctness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "correctness C4 の判定根拠 [example]"
+        },
+        {
+          "check_id": "unambiguity-C1",
+          "axis": "unambiguity",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "unambiguity C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "unambiguity-C2",
+          "axis": "unambiguity",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "unambiguity C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "unambiguity-C3",
+          "axis": "unambiguity",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "一覧画面の仕様に既定の並び順の記載が無く、更新系ユースケースの事後条件からも導出できないことを確認した。関連する非機能要件にも該当の記述は見当たらないため部分充足と判定した (120 字超の切り詰め確認用テキストをここに続ける。この部分は title には現れないはず)"
+        },
+        {
+          "check_id": "unambiguity-C4",
+          "axis": "unambiguity",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "unambiguity C4 の判定根拠 [example]"
+        },
+        {
+          "check_id": "completeness-C1",
+          "axis": "completeness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "completeness C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "completeness-C2",
+          "axis": "completeness",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "completeness C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "completeness-C3",
+          "axis": "completeness",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "completeness C3 の判定根拠 [example]"
+        },
+        {
+          "check_id": "completeness-C4",
+          "axis": "completeness",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "completeness C4 の判定根拠 [example]"
+        },
+        {
+          "check_id": "consistency-C1",
+          "axis": "consistency",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "consistency C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "consistency-C2",
+          "axis": "consistency",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "consistency C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "consistency-C3",
+          "axis": "consistency",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "consistency C3 の判定根拠 [example]"
+        },
+        {
+          "check_id": "consistency-C4",
+          "axis": "consistency",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "consistency C4 の判定根拠 [example]"
+        },
+        {
+          "check_id": "feasibility-C1",
+          "axis": "feasibility",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "feasibility C1 の判定根拠 [example]"
+        },
+        {
+          "check_id": "feasibility-C2",
+          "axis": "feasibility",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "feasibility C2 の判定根拠 [example]"
+        },
+        {
+          "check_id": "feasibility-C3",
+          "axis": "feasibility",
+          "verdict": "yes",
+          "awarded_points": 5,
+          "evidence": "feasibility C3 の判定根拠 [example]"
+        },
+        {
+          "check_id": "feasibility-C4",
+          "axis": "feasibility",
+          "verdict": "partial",
+          "awarded_points": 2,
+          "evidence": "feasibility C4 の判定根拠 [example]"
+        }
+      ],
+      "deficiencies": [
+        {
+          "axis": "unambiguity",
+          "doc": "04-use-cases.md",
+          "issue": "代替フローの分岐条件が自然文のみで判定式が無い",
+          "severity": "medium",
+          "check_id": "unambiguity-C3",
+          "tag": "AI改善可能"
+        },
+        {
+          "axis": "completeness",
+          "doc": "05-features.md",
+          "issue": "対象一覧の並び順が未指定のため実装者によって解釈が分かれる。既定の並び順 (更新日時降順など) と切替可否を明記する必要がある (80 字超の切り詰め確認用テキスト)",
+          "severity": "medium",
+          "check_id": "completeness-C3",
+          "tag": "AI改善可能"
+        },
+        {
+          "axis": "completeness",
+          "doc": "06-non-functional.md",
+          "issue": "オフライン時の同期方針が未記載",
+          "severity": "medium",
+          "check_id": "completeness-C4",
+          "tag": "人間対応必要",
+          "tag_reason": "業務ポリシー確認が必要なため既定タグを上書き"
+        },
+        {
+          "axis": "unambiguity",
+          "doc": "05-features.md",
+          "issue": "「即時に反映」の許容遅延が数値化されていない",
+          "severity": "low",
+          "check_id": "unambiguity-C4",
+          "tag": "AI改善可能"
+        },
+        {
+          "axis": "consistency",
+          "doc": "07-data-definition.md",
+          "issue": "画面仕様とエンティティ定義で項目名の表記が揺れている",
+          "severity": "low",
+          "check_id": "consistency-C4",
+          "tag": "AI改善可能"
+        },
+        {
+          "axis": "feasibility",
+          "doc": "08-constraints.md",
+          "issue": "外部連携の呼出頻度制限と要件の更新間隔が未突合",
+          "severity": "low",
+          "check_id": "feasibility-C4",
+          "tag": "人間対応必要"
+        }
+      ],
+      "ai_improvable_count": 4,
+      "human_required_count": 2
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "app_name": "fixture-minimal",
+  "attempts": [
+    {
+      "attempt_count": 0,
+      "timestamp": "2026-07-06",
+      "total": 60,
+      "scores": {
+        "correctness": 12,
+        "unambiguity": 12,
+        "completeness": 12,
+        "consistency": 12,
+        "feasibility": 12
+      }
+    }
+  ]
+}

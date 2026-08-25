@@ -1,0 +1,173 @@
+{
+  "$schema": "AYATORI ③ ルーブリック生成 出力サンプル（v0.2 sub-rubric checks 構造）",
+  "_note": "このファイルは ③ ayatori-evaluation-criteria スキルが生成すべき rubric.json の構造サンプル。実プロジェクトの artifacts/{app_name}/rubric.json と同じスキーマに従う。詳細は docs/interface-contracts.md の rubric.json セクション参照。",
+  "criteria": [
+    {
+      "axis": "correctness",
+      "weight": 20,
+      "description": "課題と解決策の一致度。05-features.md の各機能が 01-overview.md の課題ステートメントと対応し、外部 API 等の技術選定が実現可能か。",
+      "checks": [
+        {
+          "id": "correctness-C1",
+          "question": "05-features.md の各 Must 機能が 01-overview.md の課題ステートメントとトレーサブルに対応しているか（課題に紐付かない機能が含まれていないか）",
+          "max_points": 5,
+          "doc_targets": ["01-overview.md", "05-features.md"]
+        },
+        {
+          "id": "correctness-C2",
+          "question": "07-data-definition.md で参照される外部 API のエンドポイント名・命名が、公式ドキュメントの命名と一致しているか",
+          "max_points": 5,
+          "doc_targets": ["07-data-definition.md"]
+        },
+        {
+          "id": "correctness-C3",
+          "question": "08-constraints.md で指定された技術スタック（言語・フレームワーク・SDK）が、想定機能群を実装するために必要十分かつ整合しているか",
+          "max_points": 5,
+          "doc_targets": ["08-constraints.md", "05-features.md"]
+        },
+        {
+          "id": "correctness-C4",
+          "question": "06-non-functional.md の性能・可用性指標が、05-features.md の機能要件と矛盾しない範囲で設定されているか（実現不可能な指標が含まれていないか）",
+          "max_points": 5,
+          "doc_targets": ["05-features.md", "06-non-functional.md"]
+        }
+      ]
+    },
+    {
+      "axis": "unambiguity",
+      "weight": 20,
+      "description": "数値基準・定量的記述の充実度。曖昧な表現の排除度。",
+      "checks": [
+        {
+          "id": "unambiguity-C1",
+          "question": "06-non-functional.md の性能要件（応答時間・スループット）が、計測対象操作・パーセンタイル（P95/P99 等）付きで数値定義されているか",
+          "max_points": 5,
+          "doc_targets": ["06-non-functional.md"]
+        },
+        {
+          "id": "unambiguity-C2",
+          "question": "05-features.md の各機能で、入出力フォーマット（型・サイズ上限・enum 値）が具体的に定義されているか",
+          "max_points": 5,
+          "doc_targets": ["05-features.md", "07-data-definition.md"]
+        },
+        {
+          "id": "unambiguity-C3",
+          "question": "全要件文書を通じて曖昧語（『適切に』『柔軟に』『高品質』『〜程度』『概ね』）が排除されているか",
+          "max_points": 5,
+          "doc_targets": ["01-overview.md", "02-scope.md", "05-features.md", "06-non-functional.md", "08-constraints.md"]
+        },
+        {
+          "id": "unambiguity-C4",
+          "question": "08-constraints.md の受け入れ条件（AC）が、yes/no で判定可能な数値またはテスト手順を含んでいるか",
+          "max_points": 5,
+          "doc_targets": ["08-constraints.md"]
+        }
+      ]
+    },
+    {
+      "axis": "completeness",
+      "weight": 20,
+      "description": "全要件の網羅度。実装に必要な情報が抜けなく揃っているか。",
+      "checks": [
+        {
+          "id": "completeness-C1",
+          "question": "04-use-cases.md の全 UC に『アクター』『事前条件』『主フロー』『後条件』の4項目が記載されているか",
+          "max_points": 5,
+          "doc_targets": ["04-use-cases.md"]
+        },
+        {
+          "id": "completeness-C2",
+          "question": "03-user-flow.md または 04-use-cases.md にエラー系・例外系のフロー（外部 API 障害・ネットワーク断・認証切れ）が網羅されているか",
+          "max_points": 5,
+          "doc_targets": ["03-user-flow.md", "04-use-cases.md"]
+        },
+        {
+          "id": "completeness-C3",
+          "question": "07-data-definition.md の全データエンティティに型・必須/任意・値域が定義されているか",
+          "max_points": 5,
+          "doc_targets": ["07-data-definition.md"]
+        },
+        {
+          "id": "completeness-C4",
+          "question": "06-non-functional.md にセキュリティ（認証・通信暗号化・データ保持期間）が記述されているか",
+          "max_points": 5,
+          "doc_targets": ["06-non-functional.md"]
+        }
+      ]
+    },
+    {
+      "axis": "consistency",
+      "weight": 20,
+      "description": "ファイル間・記述間の矛盾がないか。",
+      "checks": [
+        {
+          "id": "consistency-C1",
+          "question": "01-overview.md と 04-use-cases.md・03-user-flow.md でアクター・ロール定義が一致しているか",
+          "max_points": 5,
+          "doc_targets": ["01-overview.md", "03-user-flow.md", "04-use-cases.md"]
+        },
+        {
+          "id": "consistency-C2",
+          "question": "05-features.md の機能 ID（F-XXX）と 04-use-cases.md の UC ID（UC-XXX）が1対1または明示的なマッピングで整合しているか",
+          "max_points": 5,
+          "doc_targets": ["04-use-cases.md", "05-features.md"]
+        },
+        {
+          "id": "consistency-C3",
+          "question": "02-scope.md の Out of Scope に挙げた機能が、05-features.md の Should/Could に重複していないか",
+          "max_points": 5,
+          "doc_targets": ["02-scope.md", "05-features.md"]
+        },
+        {
+          "id": "consistency-C4",
+          "question": "全要件文書を通じて同一概念の用語・データ項目名が統一されているか（例: user_id / ユーザーID / uid の混在がないか）",
+          "max_points": 5,
+          "doc_targets": ["01-overview.md", "04-use-cases.md", "05-features.md", "07-data-definition.md"]
+        }
+      ]
+    },
+    {
+      "axis": "feasibility",
+      "weight": 20,
+      "description": "実現可能性。スコープ・期間・体制と技術選定の妥当性。",
+      "checks": [
+        {
+          "id": "feasibility-C1",
+          "question": "08-constraints.md のスケジュール（マイルストーン・週単位の機能配分）が定義されており、Phase 1 期間と機能数の整合性が示されているか",
+          "max_points": 5,
+          "doc_targets": ["02-scope.md", "08-constraints.md"]
+        },
+        {
+          "id": "feasibility-C2",
+          "question": "08-constraints.md に主要リスク（外部 API 契約・技術選定・データ取得）が列挙され、各リスクに対処策がセットで提示されているか",
+          "max_points": 5,
+          "doc_targets": ["08-constraints.md"]
+        },
+        {
+          "id": "feasibility-C3",
+          "question": "08-constraints.md または 02-scope.md で前提条件（契約・素材・体制）が POC キックオフ前に整備可能なタイムラインで記述されているか",
+          "max_points": 5,
+          "doc_targets": ["02-scope.md", "08-constraints.md"]
+        },
+        {
+          "id": "feasibility-C4",
+          "question": "06-non-functional.md の対応環境（OS バージョン・端末スペック）が、08-constraints.md の技術選定で実現可能か",
+          "max_points": 5,
+          "doc_targets": ["06-non-functional.md", "08-constraints.md"]
+        }
+      ]
+    }
+  ],
+  "scores": {
+    "correctness": 0,
+    "unambiguity": 0,
+    "completeness": 0,
+    "consistency": 0,
+    "feasibility": 0
+  },
+  "total": 0,
+  "check_results": [],
+  "attempt_count": 0,
+  "escalated": false,
+  "deficiencies": []
+}

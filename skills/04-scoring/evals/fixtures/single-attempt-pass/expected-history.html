@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fixture-pass 採点履歴</title>
+<link rel="stylesheet" href="scoring.css">
+</head>
+<body class="history">
+
+<!-- ════════════ HEADER ════════════ -->
+<div class="dash-header">
+  <div class="dash-header-top">
+    <span class="app-badge">fixture-pass</span>
+    <span class="attempt-badge">最新 · 第1回</span>
+  </div>
+  <h1>fixture-pass スコア履歴</h1>
+  <p class="subtitle">合計 82 · 3回 · 2026-07-01 · Rubric v1 · ISO/IEC/IEEE 29148:2018</p>
+</div>
+
+<div class="dash-container">
+
+<!-- ════════════ SCORE TREND ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>スコア推移</h2>
+    <span class="info">3回分</span>
+  </div>
+  <div class="card-body">
+    <div class="attempts">
+<!-- attempts:start -->
+      <div class="attempt-card">
+        <div class="a-n">ATTEMPT #1 · 2026-07-01</div>
+        <div class="a-v">82</div>
+        <div class="a-delta">初回 · 合格</div>
+      </div>
+      <div class="attempt-card empty">
+        <div class="a-n">ATTEMPT #2</div>
+        <div class="a-v">—</div>
+        <div class="a-delta">未実施</div>
+      </div>
+      <div class="attempt-card empty">
+        <div class="a-n">ATTEMPT #3</div>
+        <div class="a-v">—</div>
+        <div class="a-delta">未実施</div>
+      </div>
+<!-- attempts:end -->
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ AXES × ATTEMPTS ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>軸別スコア</h2>
+    <span class="info">5軸 × 3回</span>
+  </div>
+  <div class="card-body">
+    <div class="grid axis-grid">
+      <div class="grid-h left">軸</div>
+<!-- axis-heads:start -->
+      <div class="grid-h">第1回</div>
+      <div class="grid-h">第2回</div>
+      <div class="grid-h">第3回</div>
+<!-- axis-heads:end -->
+<!-- axis-rows:start -->
+      <div class="grid-label axis">正確性</div>
+      <div class="cell-num yes">20</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label axis">明確性</div>
+      <div class="cell-num partial">14</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label axis">完全性</div>
+      <div class="cell-num partial">14</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label axis">一貫性</div>
+      <div class="cell-num yes">17</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label axis">実現可能性</div>
+      <div class="cell-num yes">17</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+<!-- axis-rows:end -->
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ HEATMAP ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>チェックヒートマップ</h2>
+    <span class="info">20チェック × 3回</span>
+  </div>
+  <div class="card-body">
+    <div class="grid heatmap">
+      <div class="grid-h left">チェック</div>
+<!-- heat-heads:start -->
+      <div class="grid-h">第1回</div>
+      <div class="grid-h">第2回</div>
+      <div class="grid-h">第3回</div>
+<!-- heat-heads:end -->
+<!-- heat-rows:start -->
+      <div class="grid-label check">正確性 · C1</div>
+      <div class="cell-num yes" title="yes (5/5) — correctness C1 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">正確性 · C2</div>
+      <div class="cell-num yes" title="yes (5/5) — correctness C2 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">正確性 · C3</div>
+      <div class="cell-num yes" title="yes (5/5) — correctness C3 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">正確性 · C4</div>
+      <div class="cell-num yes" title="yes (5/5) — correctness C4 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">明確性 · C1</div>
+      <div class="cell-num yes" title="yes (5/5) — unambiguity C1 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">明確性 · C2</div>
+      <div class="cell-num yes" title="yes (5/5) — unambiguity C2 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">明確性 · C3</div>
+      <div class="cell-num partial" title="partial (2/5) — 一覧画面の仕様に既定の並び順の記載が無く、更新系ユースケースの事後条件からも導出できないことを確認した。関連する非機能要件にも該当の記述は見当たらないため部分充足と判定した (120 字超の切り詰め確認用テキストをここに続ける。この部分は ">2</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">明確性 · C4</div>
+      <div class="cell-num partial" title="partial (2/5) — unambiguity C4 の判定根拠 [example]">2</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">完全性 · C1</div>
+      <div class="cell-num yes" title="yes (5/5) — completeness C1 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">完全性 · C2</div>
+      <div class="cell-num yes" title="yes (5/5) — completeness C2 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">完全性 · C3</div>
+      <div class="cell-num partial" title="partial (2/5) — completeness C3 の判定根拠 [example]">2</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">完全性 · C4</div>
+      <div class="cell-num partial" title="partial (2/5) — completeness C4 の判定根拠 [example]">2</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">一貫性 · C1</div>
+      <div class="cell-num yes" title="yes (5/5) — consistency C1 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">一貫性 · C2</div>
+      <div class="cell-num yes" title="yes (5/5) — consistency C2 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">一貫性 · C3</div>
+      <div class="cell-num yes" title="yes (5/5) — consistency C3 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">一貫性 · C4</div>
+      <div class="cell-num partial" title="partial (2/5) — consistency C4 の判定根拠 [example]">2</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">実現可能性 · C1</div>
+      <div class="cell-num yes" title="yes (5/5) — feasibility C1 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">実現可能性 · C2</div>
+      <div class="cell-num yes" title="yes (5/5) — feasibility C2 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">実現可能性 · C3</div>
+      <div class="cell-num yes" title="yes (5/5) — feasibility C3 の判定根拠 [example]">5</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label check">実現可能性 · C4</div>
+      <div class="cell-num partial" title="partial (2/5) — feasibility C4 の判定根拠 [example]">2</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+<!-- heat-rows:end -->
+    </div>
+    <div class="legend">
+      <span><span class="swatch yes"></span>合格 · 5</span>
+      <span><span class="swatch partial"></span>部分 · 2</span>
+      <span><span class="swatch no"></span>不合格 · 0</span>
+      <span><span class="swatch improved"></span>改善あり</span>
+      <span class="legend-note">セルにカーソルを合わせると根拠が表示されます</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ DEFICIENCY TREND ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>不備件数推移</h2>
+    <span class="info">重要度別</span>
+  </div>
+  <div class="card-body">
+    <div class="def-rows">
+<!-- def-rows:start -->
+      <div class="a-n">第1回 (2026-07-01)</div>
+      <div class="stack">
+        <div class="stack-high" style="width:0%"></div>
+        <div class="stack-medium" style="width:50%"></div>
+        <div class="stack-low" style="width:50%"></div>
+      </div>
+      <div class="def-count">High: 0 · Medium: 3 · Low: 3</div>
+
+      <div class="a-n">第2回</div>
+      <div class="stack"><div style="width:100%;background:var(--surface-2)"></div></div>
+      <div class="def-count">— 未実施 —</div>
+
+      <div class="a-n">第3回</div>
+      <div class="stack"><div style="width:100%;background:var(--surface-2)"></div></div>
+      <div class="def-count">— 未実施 —</div>
+<!-- def-rows:end -->
+    </div>
+  </div>
+</div>
+
+</div><!-- /dash-container -->
+
+</body>
+</html>

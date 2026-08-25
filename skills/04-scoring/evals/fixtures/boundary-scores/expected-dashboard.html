@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fixture-boundary 採点ダッシュボード · 第1回</title>
+<link rel="stylesheet" href="scoring.css">
+</head>
+<body class="dashboard">
+
+<!-- ════════════ HEADER ════════════ -->
+<div class="dash-header">
+  <div class="dash-header-top">
+    <span class="app-badge">fixture-boundary</span>
+    <span class="attempt-badge">第1回</span>
+  </div>
+  <h1>fixture-boundary 採点ダッシュボード</h1>
+  <p class="subtitle">ISO/IEC/IEEE 29148:2018 準拠 5軸ルーブリック · 2026-07-05 · 20チェック</p>
+</div>
+
+<div class="dash-container">
+
+<!-- ════════════ HERO (score + scale + summary) ════════════ -->
+<section class="dash-hero">
+  <div class="dash-hero-score">
+    <div class="label">合計スコア</div>
+    <div class="value">
+      <span class="num">80</span>
+      <span class="den">/ 100</span>
+    </div>
+    <div class="scale">
+      <div class="scale-bar">
+        <div class="scale-fill yes" style="width:80%"></div>
+        <div class="scale-threshold" title="合格ライン 80"></div>
+      </div>
+      <div class="scale-ticks">
+        <span>0</span>
+        <span class="t-mid">合格ライン 80</span>
+        <span>100</span>
+      </div>
+    </div>
+  </div>
+  <div class="dash-hero-summary">
+    <div class="pill-row"><span class="pill fail">要改善</span></div>
+    <dl>
+      <div>
+        <dt>不備件数</dt>
+        <dd>1</dd>
+      </div>
+      <div>
+        <dt>AI 改善可能</dt>
+        <dd>0</dd>
+      </div>
+      <div>
+        <dt>人間対応必要</dt>
+        <dd>1</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<!-- ════════════ AXIS BAR CHART ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>軸別スコア</h2>
+    <span class="info">各軸 20点満点 / 赤破線 = 軸別最低点 (12点)</span>
+  </div>
+  <div class="card-body" style="position:relative">
+    <div class="axis-row">
+  <div class="axis-label">正確性</div>
+  <div class="bar-track">
+    <div class="bar-fill yes" style="width:100%"><span class="bar-value">20</span></div>
+    <div class="pass-line"></div>
+  </div>
+  <div class="axis-score">20/20</div>
+</div>
+<div class="axis-row">
+  <div class="axis-label">明確性</div>
+  <div class="bar-track">
+    <div class="bar-fill yes" style="width:85%"><span class="bar-value">17</span></div>
+    <div class="pass-line"></div>
+  </div>
+  <div class="axis-score">17/20</div>
+</div>
+<div class="axis-row">
+  <div class="axis-label">完全性</div>
+  <div class="bar-track">
+    <div class="bar-fill partial" style="width:75%"><span class="bar-value">15</span></div>
+    <div class="pass-line"></div>
+  </div>
+  <div class="axis-score">15/20</div>
+</div>
+<div class="axis-row">
+  <div class="axis-label">一貫性</div>
+  <div class="bar-track">
+    <div class="bar-fill yes" style="width:85%"><span class="bar-value">17</span></div>
+    <div class="pass-line"></div>
+  </div>
+  <div class="axis-score">17/20</div>
+</div>
+<div class="axis-row">
+  <div class="axis-label">実現可能性</div>
+  <div class="bar-track">
+    <div class="bar-fill partial" style="width:55%"><span class="bar-value">11</span></div>
+    <div class="pass-line"></div>
+  </div>
+  <div class="axis-score">11/20</div>
+</div>
+  </div>
+</div>
+
+<!-- ════════════ CHECK VERDICT GRID ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>チェック判定グリッド</h2>
+    <span class="info">5 = 合格 / 2 = 部分 / 0 = 不合格 · 20チェック</span>
+  </div>
+  <div class="card-body" style="overflow-x:auto">
+    <table class="verdict-table">
+      <thead>
+        <tr>
+          <th>軸</th>
+          <th class="score-col">スコア</th>
+          <th>C1</th>
+          <th>C2</th>
+          <th>C3</th>
+          <th>C4</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+  <td class="verdict-row-label">正確性</td>
+  <td class="verdict-row-score">20/20</td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+</tr>
+<tr>
+  <td class="verdict-row-label">明確性</td>
+  <td class="verdict-row-score">17/20</td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-partial"><span class="pts">2</span><span class="lbl">部分</span></td>
+</tr>
+<tr>
+  <td class="verdict-row-label">完全性</td>
+  <td class="verdict-row-score">15/20</td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-no"><span class="pts">0</span><span class="lbl">不合格</span></td>
+</tr>
+<tr>
+  <td class="verdict-row-label">一貫性</td>
+  <td class="verdict-row-score">17/20</td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-partial"><span class="pts">2</span><span class="lbl">部分</span></td>
+</tr>
+<tr>
+  <td class="verdict-row-label">実現可能性</td>
+  <td class="verdict-row-score">11/20</td>
+  <td class="verdict-cell vc-yes"><span class="pts">5</span><span class="lbl">合格</span></td>
+  <td class="verdict-cell vc-partial"><span class="pts">2</span><span class="lbl">部分</span></td>
+  <td class="verdict-cell vc-partial"><span class="pts">2</span><span class="lbl">部分</span></td>
+  <td class="verdict-cell vc-partial"><span class="pts">2</span><span class="lbl">部分</span></td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════ DEFICIENCY TABLE ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>不備一覧</h2>
+    <span class="info">1件 — 重要度順</span>
+  </div>
+  <div class="card-body" style="padding:0;overflow-x:auto">
+    <table class="def-table">
+      <thead>
+        <tr>
+          <th style="width:110px">重要度</th>
+          <th style="width:100px">軸</th>
+          <th style="width:64px">チェック</th>
+          <th style="width:150px">ドキュメント</th>
+          <th>問題</th>
+          <th style="width:120px">タグ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+  <td>
+    <span class="sev-dot sev-high"></span>
+    <span class="sev-label high">High</span>
+  </td>
+  <td>実現可能性</td>
+  <td class="col-check">C2</td>
+  <td class="col-doc">08-constraints.md</td>
+  <td>対象環境の下限バージョンが実現可能性を左右するが未確定</td>
+  <td><span class="tag tag-human">人間対応必要</span></td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════ PROJECTION ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>改善シミュレーション</h2>
+    <span class="info">Deficiency 解消時の予測スコア</span>
+  </div>
+  <div class="card-body">
+    <div class="sim-grid">
+      <div class="sim-card sim-current">
+        <div class="sim-label">現在</div>
+        <div class="sim-val">80</div>
+      </div>
+      <div class="sim-card sim-ai">
+        <div class="sim-label">AI 0 件解消</div>
+        <div class="sim-val">80</div>
+      </div>
+      <div class="sim-card sim-full">
+        <div class="sim-label">+ 人間 1 件解消</div>
+        <div class="sim-val">83</div>
+      </div>
+      <div class="sim-card sim-threshold">
+        <div class="sim-label">合格閾値</div>
+        <div class="sim-val">80</div>
+      </div>
+    </div>
+    <p class="sim-note">AI 改善 <strong>0 件解消で 80 点</strong>（合格圏）到達見込み。人間対応 <strong>1 件</strong>はステークホルダー確認が必要。</p>
+    <div class="gap-counts">
+      <div class="gap-count-item gc-ai">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 8.5L7 10.5L11 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        AI改善可能: 0件
+      </div>
+      <div class="gap-count-item gc-human">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5V8.5M8 11H8.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        人間対応必要: 1件
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /dash-container -->
+
+<script>
+  // Animate bars on load
+  document.addEventListener('DOMContentLoaded', function() {
+    var bars = document.querySelectorAll('.bar-fill');
+    bars.forEach(function(bar) {
+      var w = bar.style.width;
+      bar.style.width = '0%';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          bar.style.width = w;
+        });
+      });
+    });
+  });
+</script>
+</body>
+</html>

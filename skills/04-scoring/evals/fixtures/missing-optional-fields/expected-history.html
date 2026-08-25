@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fixture-minimal 採点履歴</title>
+<link rel="stylesheet" href="scoring.css">
+</head>
+<body class="history">
+
+<!-- ════════════ HEADER ════════════ -->
+<div class="dash-header">
+  <div class="dash-header-top">
+    <span class="app-badge">fixture-minimal</span>
+    <span class="attempt-badge">最新 · 第1回</span>
+  </div>
+  <h1>fixture-minimal スコア履歴</h1>
+  <p class="subtitle">合計 60 · 3回 · 2026-07-06 · Rubric v1 · ISO/IEC/IEEE 29148:2018</p>
+</div>
+
+<div class="dash-container">
+
+<!-- ════════════ SCORE TREND ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>スコア推移</h2>
+    <span class="info">3回分</span>
+  </div>
+  <div class="card-body">
+    <div class="attempts">
+<!-- attempts:start -->
+      <div class="attempt-card">
+        <div class="a-n">ATTEMPT #1 · 2026-07-06</div>
+        <div class="a-v">60</div>
+        <div class="a-delta">初回 · 要改善</div>
+      </div>
+      <div class="attempt-card empty">
+        <div class="a-n">ATTEMPT #2</div>
+        <div class="a-v">—</div>
+        <div class="a-delta">未実施</div>
+      </div>
+      <div class="attempt-card empty">
+        <div class="a-n">ATTEMPT #3</div>
+        <div class="a-v">—</div>
+        <div class="a-delta">未実施</div>
+      </div>
+<!-- attempts:end -->
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ AXES × ATTEMPTS ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>軸別スコア</h2>
+    <span class="info">5軸 × 3回</span>
+  </div>
+  <div class="card-body">
+    <div class="grid axis-grid">
+      <div class="grid-h left">軸</div>
+<!-- axis-heads:start -->
+      <div class="grid-h">第1回</div>
+      <div class="grid-h">第2回</div>
+      <div class="grid-h">第3回</div>
+<!-- axis-heads:end -->
+<!-- axis-rows:start -->
+      <div class="grid-label axis">正確性</div>
+      <div class="cell-num partial">12</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label axis">明確性</div>
+      <div class="cell-num partial">12</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label axis">完全性</div>
+      <div class="cell-num partial">12</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label axis">一貫性</div>
+      <div class="cell-num partial">12</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+
+      <div class="grid-label axis">実現可能性</div>
+      <div class="cell-num partial">12</div>
+      <div class="cell-num empty">—</div>
+      <div class="cell-num empty">—</div>
+<!-- axis-rows:end -->
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ HEATMAP ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>チェックヒートマップ</h2>
+    <span class="info">20チェック × 3回</span>
+  </div>
+  <div class="card-body">
+    <div class="grid heatmap">
+      <div class="grid-h left">チェック</div>
+<!-- heat-heads:start -->
+      <div class="grid-h">第1回</div>
+      <div class="grid-h">第2回</div>
+      <div class="grid-h">第3回</div>
+<!-- heat-heads:end -->
+<!-- heat-rows:start -->
+
+<!-- heat-rows:end -->
+    </div>
+    <div class="legend">
+      <span><span class="swatch yes"></span>合格 · 5</span>
+      <span><span class="swatch partial"></span>部分 · 2</span>
+      <span><span class="swatch no"></span>不合格 · 0</span>
+      <span><span class="swatch improved"></span>改善あり</span>
+      <span class="legend-note">セルにカーソルを合わせると根拠が表示されます</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ DEFICIENCY TREND ════════════ -->
+<div class="card">
+  <div class="card-header">
+    <h2>不備件数推移</h2>
+    <span class="info">重要度別</span>
+  </div>
+  <div class="card-body">
+    <div class="def-rows">
+<!-- def-rows:start -->
+      <div class="a-n">第1回 (2026-07-06)</div>
+      <div class="stack">
+        <div class="stack-high" style="width:0%"></div>
+        <div class="stack-medium" style="width:0%"></div>
+        <div class="stack-low" style="width:0%"></div>
+      </div>
+      <div class="def-count">High: 0 · Medium: 0 · Low: 0</div>
+
+      <div class="a-n">第2回</div>
+      <div class="stack"><div style="width:100%;background:var(--surface-2)"></div></div>
+      <div class="def-count">— 未実施 —</div>
+
+      <div class="a-n">第3回</div>
+      <div class="stack"><div style="width:100%;background:var(--surface-2)"></div></div>
+      <div class="def-count">— 未実施 —</div>
+<!-- def-rows:end -->
+    </div>
+  </div>
+</div>
+
+</div><!-- /dash-container -->
+
+</body>
+</html>
