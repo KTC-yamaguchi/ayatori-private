@@ -1,0 +1,39 @@
+# skill 整形ロジック eval (glue) fixture: dual-mode + 1 件の既知 palette 違反。
+# このファイルは skill 11 の整形ロジック検証専用の最小 design-brief。
+# 数値計算自体は script CLI 契約テスト (../../../fixtures/dual-mode) で golden 固定済みなので、
+# ここでは skill が「(1) themes_required を読んで modes を dark,light と判定し
+# (2) tokens の hex を一字も書き換えず script に渡し (3) script 出力の
+# pass==false を violation に整形し pair_kind/mode を埋め (4) wcag-history に
+# attempt を append する」という整形挙動だけを見る。
+#
+# 仕込んだ違反: case A の dark mode で primary(#2A4A55) vs surface(#141414) が 3:1 未達。
+
+schema: "draft:v1"
+app_name: "glue-demo"
+common:
+  themes_required: ["dark", "light"]
+  target_audience: "一般業務ユーザー"
+  platforms: ["web"]
+cases:
+  - candidate_id: "A"
+    palette:
+      tokens:
+        - { name: "--color-bg",                hex: "#0E0E0E", mode: "dark" }
+        - { name: "--color-surface",           hex: "#141414", mode: "dark" }
+        - { name: "--color-on-surface",        hex: "#E8DCC8", mode: "dark" }
+        - { name: "--color-on-surface-variant", hex: "#A8A090", mode: "dark" }
+        - { name: "--color-primary",           hex: "#2A4A55", mode: "dark" }
+        - { name: "--color-on-primary",        hex: "#FFFFFF", mode: "dark" }
+        - { name: "--color-focus-ring",        hex: "#6FB3C9", mode: "dark" }
+        - { name: "--color-border",            hex: "#6B6B6B", mode: "dark" }
+        - { name: "--color-on-bg",             hex: "#E8DCC8", mode: "dark" }
+
+        - { name: "--color-bg",                hex: "#EAF2F4", mode: "light" }
+        - { name: "--color-surface",           hex: "#FFFFFF", mode: "light" }
+        - { name: "--color-on-surface",        hex: "#13242B", mode: "light" }
+        - { name: "--color-on-surface-variant", hex: "#52636B", mode: "light" }
+        - { name: "--color-primary",           hex: "#0E7C90", mode: "light" }
+        - { name: "--color-on-primary",        hex: "#FFFFFF", mode: "light" }
+        - { name: "--color-focus-ring",        hex: "#0E7C90", mode: "light" }
+        - { name: "--color-border",            hex: "#5E7077", mode: "light" }
+        - { name: "--color-on-bg",             hex: "#13242B", mode: "light" }

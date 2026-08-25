@@ -1,0 +1,32 @@
+{
+  "_note": "両モード対称: --modes dark,light → 1 case あたり 2 entry (mode=dark, mode=light)。token は (name,mode) 複合一致で引く。dark 側の primary は intentionally 低 (3:1 未達) で違反を 1 件含む — pass=false の result が混ざる経路を固定する。",
+  "modes": "dark,light",
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-bg", "hex": "#0E0E0E", "mode": "dark" },
+          { "name": "--color-surface", "hex": "#141414", "mode": "dark" },
+          { "name": "--color-on-surface", "hex": "#E8DCC8", "mode": "dark" },
+          { "name": "--color-on-surface-variant", "hex": "#A8A090", "mode": "dark" },
+          { "name": "--color-primary", "hex": "#2A4A55", "mode": "dark" },
+          { "name": "--color-on-primary", "hex": "#FFFFFF", "mode": "dark" },
+          { "name": "--color-focus-ring", "hex": "#6FB3C9", "mode": "dark" },
+          { "name": "--color-border", "hex": "#6B6B6B", "mode": "dark" },
+          { "name": "--color-on-bg", "hex": "#E8DCC8", "mode": "dark" },
+
+          { "name": "--color-bg", "hex": "#EAF2F4", "mode": "light" },
+          { "name": "--color-surface", "hex": "#FFFFFF", "mode": "light" },
+          { "name": "--color-on-surface", "hex": "#13242B", "mode": "light" },
+          { "name": "--color-on-surface-variant", "hex": "#52636B", "mode": "light" },
+          { "name": "--color-primary", "hex": "#0E7C90", "mode": "light" },
+          { "name": "--color-on-primary", "hex": "#FFFFFF", "mode": "light" },
+          { "name": "--color-focus-ring", "hex": "#0E7C90", "mode": "light" },
+          { "name": "--color-border", "hex": "#5E7077", "mode": "light" },
+          { "name": "--color-on-bg", "hex": "#13242B", "mode": "light" }
+        ]
+      }
+    }
+  ]
+}

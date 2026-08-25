@@ -1,0 +1,28 @@
+{
+  "_note": "state_colors の optional / skip 挙動を固定。error は dark+light 両方定義 (light は light.hex から引く)、info は dark のみ (light は skip:true)、warning/success は未定義 (pair 自体が出ない)。pair_kind=state_colors の生成・skip 分岐を黒箱で検証する。--modes dark,light。",
+  "modes": "dark,light",
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-surface", "hex": "#FFFFFF", "mode": "light" },
+          { "name": "--color-on-surface", "hex": "#13242B", "mode": "light" },
+          { "name": "--color-surface", "hex": "#141414", "mode": "dark" },
+          { "name": "--color-on-surface", "hex": "#E8DCC8", "mode": "dark" }
+        ],
+        "state_colors": {
+          "error": {
+            "bg":     { "hex": "#3A1414", "light": { "hex": "#FBEAE7" } },
+            "text":   { "hex": "#F2B8B0", "light": { "hex": "#A8281A" } },
+            "border": { "hex": "#C8534A", "light": { "hex": "#D24E3A" } }
+          },
+          "info": {
+            "bg":   { "hex": "#10262B" },
+            "text": { "hex": "#9FD4DE" }
+          }
+        }
+      }
+    }
+  ]
+}

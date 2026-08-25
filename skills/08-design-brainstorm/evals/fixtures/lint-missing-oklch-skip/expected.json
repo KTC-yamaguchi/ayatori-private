@@ -1,0 +1,86 @@
+{
+  "tolerance": 10,
+  "pass": true,
+  "summary": {
+    "entries_checked": 1,
+    "drift_count": 0,
+    "skipped_no_oklch": 7,
+    "invalid_count": 0
+  },
+  "cases": [
+    {
+      "candidate_id": "A",
+      "entries": [
+        {
+          "path": "palette.tokens[0]",
+          "name": "--color-bg",
+          "mode": null,
+          "skipped": true,
+          "skip_reason": "oklch 欠落"
+        },
+        {
+          "path": "palette.tokens[1]",
+          "name": "--color-primary",
+          "mode": null,
+          "recorded_hex": "#0E78A8",
+          "recorded_oklch": {
+            "l": 0.542,
+            "c": 0.113,
+            "h": 236
+          },
+          "derived_hex": "#0E78A8",
+          "oklch_in_gamut": true,
+          "channel_delta": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          "max_channel_delta": 0,
+          "drift": false
+        },
+        {
+          "path": "palette.state_colors.error.bg",
+          "name": "state_colors.error.bg",
+          "mode": null,
+          "skipped": true,
+          "skip_reason": "oklch 欠落"
+        },
+        {
+          "path": "palette.state_colors.error.text",
+          "name": "state_colors.error.text",
+          "mode": null,
+          "skipped": true,
+          "skip_reason": "oklch 欠落"
+        },
+        {
+          "path": "palette.state_colors.error.text.light",
+          "name": "state_colors.error.text",
+          "mode": "light",
+          "skipped": true,
+          "skip_reason": "oklch 欠落"
+        },
+        {
+          "path": "palette.state_colors.error.border",
+          "name": "state_colors.error.border",
+          "mode": null,
+          "skipped": true,
+          "skip_reason": "oklch 欠落"
+        },
+        {
+          "path": "palette.domain_surfaces[0].modes[0]",
+          "name": "domain_surfaces[board]",
+          "mode": "dark",
+          "skipped": true,
+          "skip_reason": "oklch 欠落"
+        },
+        {
+          "path": "palette.illustration_colors[0]",
+          "name": "illustration_colors[leaf]",
+          "mode": null,
+          "skipped": true,
+          "skip_reason": "oklch 欠落"
+        }
+      ]
+    }
+  ]
+}

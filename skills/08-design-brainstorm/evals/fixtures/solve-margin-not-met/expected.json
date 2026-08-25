@@ -1,0 +1,41 @@
+{
+  "pairs": [
+    {
+      "id": "gray-needs-more",
+      "input": {
+        "id": "gray-needs-more",
+        "fg_hex": "#777777",
+        "bg_hex": "#FFFFFF",
+        "required_ratio": 4.5,
+        "margin": 5,
+        "target_ratio": 9.5,
+        "fg_oklch": {
+          "l": 0.569,
+          "c": 0,
+          "h": 0
+        },
+        "initial_ratio": 4.48,
+        "direction": "darken"
+      },
+      "solved": true,
+      "already_passing": false,
+      "margin_not_met": true,
+      "policy_step": 1,
+      "result": {
+        "oklch": {
+          "l": 0.419,
+          "c": 0,
+          "h": 0
+        },
+        "hex": "#4D4D4D",
+        "achieved_ratio": 8.45,
+        "delta": {
+          "dl": -0.15,
+          "dc": 0
+        },
+        "summary": "L 0.569→0.419 (-0.150)、C・H 固定 → 8.45:1 (必要 4.5) ※ 安全マージン (+5) は未達"
+      },
+      "reason": null
+    }
+  ]
+}

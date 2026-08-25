@@ -1,0 +1,41 @@
+{
+  "pairs": [
+    {
+      "id": "gamut-apex-red",
+      "input": {
+        "id": "gamut-apex-red",
+        "fg_hex": "#FF0000",
+        "bg_hex": "#FFFFFF",
+        "required_ratio": 4.5,
+        "margin": 0.1,
+        "target_ratio": 4.6,
+        "fg_oklch": {
+          "l": 0.628,
+          "c": 0.257,
+          "h": 29.2
+        },
+        "initial_ratio": 4,
+        "direction": "darken"
+      },
+      "solved": true,
+      "already_passing": false,
+      "margin_not_met": false,
+      "policy_step": 2,
+      "result": {
+        "oklch": {
+          "l": 0.591,
+          "c": 0.238,
+          "h": 29.2
+        },
+        "hex": "#EA0E09",
+        "achieved_ratio": 4.6,
+        "delta": {
+          "dl": -0.037,
+          "dc": -0.019
+        },
+        "summary": "L 0.628→0.591 (-0.037)・C 0.257→0.238 (-0.019)、H 固定 → 4.6:1 (必要 4.5)"
+      },
+      "reason": null
+    }
+  ]
+}

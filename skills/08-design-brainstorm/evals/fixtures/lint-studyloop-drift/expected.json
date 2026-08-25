@@ -1,0 +1,117 @@
+{
+  "tolerance": 10,
+  "pass": false,
+  "summary": {
+    "entries_checked": 5,
+    "drift_count": 3,
+    "skipped_no_oklch": 0,
+    "invalid_count": 0
+  },
+  "cases": [
+    {
+      "candidate_id": "A",
+      "entries": [
+        {
+          "path": "palette.tokens[0]",
+          "name": "--color-bg",
+          "mode": null,
+          "recorded_hex": "#F8F9FA",
+          "recorded_oklch": {
+            "l": 0.97,
+            "c": 0.005,
+            "h": 260
+          },
+          "derived_hex": "#F3F5F9",
+          "oklch_in_gamut": true,
+          "channel_delta": {
+            "r": 5,
+            "g": 4,
+            "b": 1
+          },
+          "max_channel_delta": 5,
+          "drift": false
+        },
+        {
+          "path": "palette.tokens[1]",
+          "name": "--color-surface",
+          "mode": null,
+          "recorded_hex": "#FFFFFF",
+          "recorded_oklch": {
+            "l": 1,
+            "c": 0,
+            "h": 0
+          },
+          "derived_hex": "#FFFFFF",
+          "oklch_in_gamut": true,
+          "channel_delta": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          "max_channel_delta": 0,
+          "drift": false
+        },
+        {
+          "path": "palette.tokens[2]",
+          "name": "--color-on-surface",
+          "mode": null,
+          "recorded_hex": "#1D1F3C",
+          "recorded_oklch": {
+            "l": 0.18,
+            "c": 0.04,
+            "h": 265
+          },
+          "derived_hex": "#091123",
+          "oklch_in_gamut": true,
+          "channel_delta": {
+            "r": 20,
+            "g": 14,
+            "b": 25
+          },
+          "max_channel_delta": 25,
+          "drift": true
+        },
+        {
+          "path": "palette.tokens[3]",
+          "name": "--color-primary",
+          "mode": null,
+          "recorded_hex": "#3B5BDB",
+          "recorded_oklch": {
+            "l": 0.5,
+            "c": 0.18,
+            "h": 253
+          },
+          "derived_hex": "#0063B7",
+          "oklch_in_gamut": false,
+          "channel_delta": {
+            "r": 59,
+            "g": 8,
+            "b": 36
+          },
+          "max_channel_delta": 59,
+          "drift": true
+        },
+        {
+          "path": "palette.tokens[4]",
+          "name": "--color-focus-ring",
+          "mode": null,
+          "recorded_hex": "#4263EB",
+          "recorded_oklch": {
+            "l": 0.52,
+            "c": 0.2,
+            "h": 258
+          },
+          "derived_hex": "#0062D4",
+          "oklch_in_gamut": false,
+          "channel_delta": {
+            "r": 66,
+            "g": 1,
+            "b": 23
+          },
+          "max_channel_delta": 66,
+          "drift": true
+        }
+      ]
+    }
+  ]
+}

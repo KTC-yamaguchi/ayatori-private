@@ -1,0 +1,163 @@
+/* ==================================================
+   Platform Frame Decorations
+   ==================================================
+   09 サンプル HTML 生成時にプラットフォーム別のフレーム装飾を
+   インラインで HTML <style> に組み込むためのリファレンス。
+
+   有効な platform 値: web / mobile の 2 値のみ（ios / android を撤廃）。
+   mobile は iOS ベース・iPhone 15 標準で代表描画する。
+
+   参照:
+   - docs/html-generation-rules.md §4 — プラットフォーム別 body サイズ
+   - docs/html-generation-rules.md §2 — SVG アイコンルール（stroke-linecap="round"）
+   ================================================== */
+
+
+/* ==================================================
+   Mobile Frame (390x844 — iOS ベース・iPhone 15 標準)
+   ==================================================
+   mobile を 1 枚に集約し iOS ベースで代表描画する。
+   生成 HTML は <body data-platform="mobile"> を使う。
+   ================================================== */
+
+/* Mobile レイアウト構造（修正済み）:
+   - body: 390px 固定（§4 キャプチャ契約維持）+ flex column + gap 24px（variant-switcher ↔ .phone-frame の余白）
+   - nav.variant-switcher: body 直下（.phone-frame の前・フレーム外）
+   - .phone-frame: ベゼル（border-radius 48px、body 幅と同幅）
+   - .phone-frame::before: Dynamic Island ダミー
+   - .viewport: 画面エリア（border-radius 40px、overflow hidden）
+
+   NG: sticky / fixed の .variant-switcher を .viewport 内に置くと
+       .phone-frame::before (Dynamic Island) と重なる（過去に発生した重なり不具合の根本原因）
+*/
+
+body[data-platform="mobile"] {
+  width: 390px;         /* §4 固定幅（キャプチャ基準） */
+  min-height: 844px;    /* §4 最小高さ（.variant-switcher 分で実際はより高くなる） */
+  margin: 40px auto;    /* 表示用センタリング（キャプチャ幅には影響しない） */
+  display: flex;
+  flex-direction: column;
+  gap: 24px;            /* variant-switcher と .phone-frame の最低余白（レイアウト要件） */
+  background: #111;
+}
+
+body[data-platform="mobile"] > .phone-frame {
+  width: 390px;
+  min-height: 844px;
+  background: #000000;  /* ベゼル部分のみ黒は許容 */
+  border-radius: 48px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+  position: relative;
+  padding: 12px;
+}
+
+body[data-platform="mobile"] > .phone-frame > .viewport {
+  min-height: 820px;
+  background: var(--color-bg);
+  border-radius: 40px;
+  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+body[data-platform="mobile"] > .phone-frame::before {
+  /* Dynamic Island */
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 36px;
+  background: #0F0F0F;
+  border-radius: 20px;
+  z-index: 10;
+}
+
+
+/* ==================================================
+   Web Frame (1440x900 — Desktop)
+   ==================================================
+   Web ではフレーム装飾は通常不要。
+   必要なら軽いブラウザウィンドウ風の装飾を追加可能。
+*/
+
+body[data-platform="web"] {
+  width: 1440px;
+  min-height: 900px;
+  margin: 0 auto;
+  /* フレーム装飾なし（ブラウザ枠はブラウザ自体が表示する） */
+}
+
+/* ブラウザウィンドウダミー（オプション — より明示したい場合） */
+body[data-platform="web"].with-browser-chrome {
+  padding: 48px 0 0 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px 12px 0 0;
+  position: relative;
+}
+
+body[data-platform="web"].with-browser-chrome::before {
+  /* 3つの丸（traffic lights） */
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 52px;
+  height: 14px;
+  background:
+    radial-gradient(circle at 7px 7px, #FF5F57 0, #FF5F57 6px, transparent 7px),
+    radial-gradient(circle at 26px 7px, #FEBC2E 0, #FEBC2E 6px, transparent 7px),
+    radial-gradient(circle at 45px 7px, #28C840 0, #28C840 6px, transparent 7px);
+}
+
+
+/* ==================================================
+   Status Bar (mobile 共通)
+   ==================================================
+   プロジェクトによっては、status bar（時刻・バッテリー表示）を
+   描画するとよりリアル。今は簡易版。
+
+   【ノッチとの垂直整合 — 必須】
+   実機の iPhone は 時刻(左) / 電波・バッテリー(右) を Dynamic Island と
+   「同じ水平位置」に左右へ振り分けて表示する（ノッチを左右から挟む）。
+   この frame では Dynamic Island は .phone-frame::before で
+   top:24px / height:36px。.phone-frame の padding:12px 込みで
+   viewport 座標に直すと **12px〜48px（中心 30px）** を占める。
+   status-bar は viewport の最初の子なので、height をノッチ中心の 2 倍
+   (= 60px) にして align-items:center で中身をノッチ中心 (30px) に合わせる。
+   こうすると時刻とアイコンがノッチと同じ高さに並ぶ。
+   NG: padding-top（例 52px）でステータスバーをノッチの下へ押し下げると、
+       時刻・電波・バッテリーがノッチの真下に落ちて不揃いに見える（本バグの原因）。
+*/
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;        /* ノッチ中心 (viewport 30px) × 2 → 中身がノッチと同じ高さに揃う */
+  padding: 0 24px;     /* 垂直は height + align-items:center が担うので padding-top を入れない */
+  font-family: var(--font-numeric);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-on-bg);
+}
+
+.status-bar-time {
+  font-weight: 700;
+}
+
+.status-bar-icons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.status-bar-icons svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-linecap: round;      /* docs/html-generation-rules.md §2 */
+  fill: none;
+}

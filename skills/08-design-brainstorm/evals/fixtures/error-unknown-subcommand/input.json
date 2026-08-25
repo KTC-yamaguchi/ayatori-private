@@ -1,0 +1,3 @@
+{
+  "_note": "未知サブコマンド → exit 2 + stderr [oklch-color] + stdout 空。argv は runner の ERROR_FIXTURES 側で frobnicate を指定"
+}

@@ -1,0 +1,7 @@
+{
+  "_note": "Stage 2 (C 削減) 到達経路を pin。純赤は gamut 頂点のため L を動かすと即座に色域外 → Stage 1 不成立 → C を -0.02 削減して L 再走査で解ける (policy_step:2)",
+  "argv": ["solve"],
+  "pairs": [
+    { "id": "gamut-apex-red", "fg_hex": "#FF0000", "bg_hex": "#FFFFFF", "required_ratio": 4.5 }
+  ]
+}

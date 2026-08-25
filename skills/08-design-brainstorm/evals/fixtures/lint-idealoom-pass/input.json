@@ -1,0 +1,17 @@
+{
+  "_note": "整合実例 (artifacts/IdeaLoom/design-brief.yaml 案 A — レビュー実測で唯一 drift 0 だったプロジェクト)。全エントリ maxΔ=0 → pass、exit 0",
+  "argv": ["lint"],
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-bg", "hex": "#F1F5F8", "oklch": { "l": 0.968, "c": 0.006, "h": 240 } },
+          { "name": "--color-on-surface", "hex": "#19212E", "oklch": { "l": 0.246, "c": 0.028, "h": 260 } },
+          { "name": "--color-primary", "hex": "#0E78A8", "oklch": { "l": 0.542, "c": 0.113, "h": 236 } },
+          { "name": "--color-border", "hex": "#8A93A1", "oklch": { "l": 0.661, "c": 0.023, "h": 259 } }
+        ]
+      }
+    }
+  ]
+}

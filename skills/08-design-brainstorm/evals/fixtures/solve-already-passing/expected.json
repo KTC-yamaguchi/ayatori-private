@@ -1,0 +1,41 @@
+{
+  "pairs": [
+    {
+      "id": "black-on-white",
+      "input": {
+        "id": "black-on-white",
+        "fg_hex": "#000000",
+        "bg_hex": "#FFFFFF",
+        "required_ratio": 4.5,
+        "margin": 0.1,
+        "target_ratio": 4.6,
+        "fg_oklch": {
+          "l": 0,
+          "c": 0,
+          "h": 0
+        },
+        "initial_ratio": 21,
+        "direction": "darken"
+      },
+      "solved": true,
+      "already_passing": true,
+      "margin_not_met": false,
+      "policy_step": 0,
+      "result": {
+        "oklch": {
+          "l": 0,
+          "c": 0,
+          "h": 0
+        },
+        "hex": "#000000",
+        "achieved_ratio": 21,
+        "delta": {
+          "dl": 0,
+          "dc": 0
+        },
+        "summary": "補正不要 — 21:1 (必要 4.5) を既に満たす"
+      },
+      "reason": null
+    }
+  ]
+}

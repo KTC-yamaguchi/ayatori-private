@@ -1,0 +1,101 @@
+{
+  "cases": [
+    {
+      "candidate_id": "A",
+      "mode": "dark",
+      "results": [
+        {
+          "pair_kind": "palette",
+          "n": 1,
+          "criterion_id": "1.4.3",
+          "required_ratio": 4.5,
+          "mode": "dark",
+          "fg_token": "--color-on-surface",
+          "bg_token": "--color-surface",
+          "fg_hex": "#E8DCC8",
+          "bg_hex": "#141414",
+          "actual_ratio": 13.6,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 2,
+          "criterion_id": "1.4.3",
+          "required_ratio": 4.5,
+          "mode": "dark",
+          "fg_token": "--color-on-surface-variant",
+          "bg_token": "--color-surface",
+          "fg_hex": "#A8A090",
+          "bg_hex": "#141414",
+          "actual_ratio": 7.1,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 3,
+          "criterion_id": "1.4.11",
+          "required_ratio": 3,
+          "mode": "dark",
+          "fg_token": "--color-primary",
+          "bg_token": "--color-surface",
+          "fg_hex": "#6FB3C9",
+          "bg_hex": "#141414",
+          "actual_ratio": 7.87,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 4,
+          "criterion_id": "1.4.3",
+          "required_ratio": 4.5,
+          "mode": "dark",
+          "fg_token": "--color-on-primary",
+          "bg_token": "--color-primary",
+          "fg_hex": "#0E0E0E",
+          "bg_hex": "#6FB3C9",
+          "actual_ratio": 8.24,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 5,
+          "criterion_id": "1.4.11",
+          "required_ratio": 3,
+          "mode": "dark",
+          "fg_token": "--color-focus-ring",
+          "bg_token": "--color-surface",
+          "fg_hex": "#6FB3C9",
+          "bg_hex": "#141414",
+          "actual_ratio": 7.87,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 6,
+          "criterion_id": "1.4.11",
+          "required_ratio": 3,
+          "mode": "dark",
+          "fg_token": "--color-border",
+          "bg_token": "--color-surface",
+          "fg_hex": "#6B6B6B",
+          "bg_hex": "#141414",
+          "actual_ratio": 3.46,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 7,
+          "criterion_id": "1.4.3",
+          "required_ratio": 4.5,
+          "mode": "dark",
+          "fg_token": "--color-on-bg",
+          "bg_token": "--color-bg",
+          "fg_hex": "#E8DCC8",
+          "bg_hex": "#0E0E0E",
+          "actual_ratio": 14.25,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

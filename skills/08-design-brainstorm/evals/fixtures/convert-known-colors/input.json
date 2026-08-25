@@ -1,0 +1,10 @@
+{
+  "_note": "既知色の双方向変換と丸め桁 (l/c 3 桁・h 1 桁・無彩色 h:0) を pin。白/黒/純赤 (CSS Color 4 参考値) + IdeaLoom primary (整合実例: artifacts/IdeaLoom/design-brief.yaml:135-139)",
+  "argv": ["convert"],
+  "items": [
+    { "id": "white-hex", "hex": "#FFFFFF" },
+    { "id": "black-hex", "hex": "#000000" },
+    { "id": "red-hex", "hex": "#FF0000" },
+    { "id": "idealoom-primary-oklch", "oklch": { "l": 0.542, "c": 0.113, "h": 236 } }
+  ]
+}

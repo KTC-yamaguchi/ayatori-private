@@ -1,0 +1,46 @@
+{
+  "_note": "domain_surfaces[] の NFR 由来 pair を固定 (盤面スケール等の領域固有 surface を想定した縮約例)。fg は palette.tokens[] から、bg は surface.modes[] から引く。required_ratio は pair 固有 (NFR 由来)。hex 欠落 surface (modes に当該 mode 無し) は skipped:true になる経路も含める。--modes light。",
+  "modes": "light",
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-surface", "hex": "#FFFFFF" },
+          { "name": "--color-on-surface", "hex": "#13242B" },
+          { "name": "piece-black", "hex": "#0B3D22" },
+          { "name": "sector-green", "hex": "#1E8A4B" }
+        ],
+        "domain_surfaces": [
+          {
+            "name": "ring-sector-scale",
+            "modes": [
+              { "mode": "light", "hex": "#FFFFFF" }
+            ],
+            "contrast_pairs": [
+              { "fg": "sector-green", "required_ratio": 3, "criterion": "1.4.11" }
+            ]
+          },
+          {
+            "name": "ring-best-fill",
+            "modes": [
+              { "mode": "light", "hex": "#BFE8CC" }
+            ],
+            "contrast_pairs": [
+              { "fg": "piece-black", "required_ratio": 4.5, "criterion": "1.4.3" }
+            ]
+          },
+          {
+            "name": "dark-only-surface",
+            "modes": [
+              { "mode": "dark", "hex": "#101010" }
+            ],
+            "contrast_pairs": [
+              { "fg": "sector-green", "required_ratio": 3, "criterion": "1.4.11" }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

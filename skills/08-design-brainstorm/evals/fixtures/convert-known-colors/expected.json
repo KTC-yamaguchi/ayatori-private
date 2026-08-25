@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "id": "white-hex",
+      "input_kind": "hex",
+      "hex": "#FFFFFF",
+      "oklch": {
+        "l": 1,
+        "c": 0,
+        "h": 0
+      },
+      "in_gamut": true,
+      "mapped_oklch": null
+    },
+    {
+      "id": "black-hex",
+      "input_kind": "hex",
+      "hex": "#000000",
+      "oklch": {
+        "l": 0,
+        "c": 0,
+        "h": 0
+      },
+      "in_gamut": true,
+      "mapped_oklch": null
+    },
+    {
+      "id": "red-hex",
+      "input_kind": "hex",
+      "hex": "#FF0000",
+      "oklch": {
+        "l": 0.628,
+        "c": 0.257,
+        "h": 29.2
+      },
+      "in_gamut": true,
+      "mapped_oklch": null
+    },
+    {
+      "id": "idealoom-primary-oklch",
+      "input_kind": "oklch",
+      "hex": "#0E78A8",
+      "oklch": {
+        "l": 0.542,
+        "c": 0.113,
+        "h": 236
+      },
+      "in_gamut": true,
+      "mapped_oklch": null
+    }
+  ]
+}

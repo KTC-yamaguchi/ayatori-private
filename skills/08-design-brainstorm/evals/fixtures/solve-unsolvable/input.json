@@ -1,0 +1,7 @@
+{
+  "_note": "解なし経路を pin: 近接グレー required 7 は §5 予算 (L±0.15, C-0.05) 内に解なし → solved:false + Step 4 (用途変更) 誘導。exit は 0 (解なしはエラーではなく正常な回答)",
+  "argv": ["solve"],
+  "pairs": [
+    { "id": "near-gray-aaa", "fg_hex": "#777777", "bg_hex": "#888888", "required_ratio": 7 }
+  ]
+}

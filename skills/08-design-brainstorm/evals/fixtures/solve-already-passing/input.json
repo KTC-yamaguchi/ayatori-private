@@ -1,0 +1,7 @@
+{
+  "_note": "冪等経路を pin: 既に required を満たす pair は色を触らない (policy_step:0、hex 無改変、delta 0)。margin 未達でも既存合格色は動かさない",
+  "argv": ["solve"],
+  "pairs": [
+    { "id": "black-on-white", "fg_hex": "#000000", "bg_hex": "#FFFFFF", "required_ratio": 4.5 }
+  ]
+}

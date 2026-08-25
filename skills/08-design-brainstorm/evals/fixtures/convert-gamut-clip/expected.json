@@ -1,0 +1,36 @@
+{
+  "results": [
+    {
+      "id": "synthetic-out-of-gamut",
+      "input_kind": "oklch",
+      "hex": "#BB0C00",
+      "oklch": {
+        "l": 0.5,
+        "c": 0.4,
+        "h": 30
+      },
+      "in_gamut": false,
+      "mapped_oklch": {
+        "l": 0.5,
+        "c": 0.201,
+        "h": 30
+      }
+    },
+    {
+      "id": "studyloop-primary-recorded",
+      "input_kind": "oklch",
+      "hex": "#0063B7",
+      "oklch": {
+        "l": 0.5,
+        "c": 0.18,
+        "h": 253
+      },
+      "in_gamut": false,
+      "mapped_oklch": {
+        "l": 0.5,
+        "c": 0.154,
+        "h": 253
+      }
+    }
+  ]
+}

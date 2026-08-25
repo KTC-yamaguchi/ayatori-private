@@ -1,0 +1,7 @@
+{
+  "_note": "閾値エッジ実例 (artifacts/ShinMemo/wcag-history.json: border 2.99:1 vs 必要 3.0 の 0.01 差でループ 1 周浪費)。最小補正 dl=-0.009 + 安全マージンで 3.11:1 に着地することを pin",
+  "argv": ["solve"],
+  "pairs": [
+    { "id": "A/border-vs-surface", "fg_hex": "#8C847C", "bg_hex": "#EDE7DC", "required_ratio": 3.0 }
+  ]
+}

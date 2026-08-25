@@ -1,0 +1,405 @@
+<!--
+  09 サンプル画面HTML生成 — 3案切替1ファイルHTML 骨格テンプレート
+
+  このファイルは **骨格のみを規定するテンプレート**。09 実行時に以下の placeholder
+  を design-brief.yaml から転記して artifacts/{app_name}/design-samples/{platform}/index.html を生成する。
+  **ベタ書きの例示値は意図的に置いていない** — placeholder が残っていたら展開漏れ。
+
+  ■ placeholder 一覧（09 実行時に全て置換必須）
+
+  基本:
+  - {APP_NAME}: アプリ名
+  - {PLATFORM}: web / mobile（mobile は iOS ベースで描画）。生成する <body> には
+    data-platform="{PLATFORM}" を必ず付与する（platform-frames.css の
+    body[data-platform="..."] 装飾が適用される条件）
+  - {LANG}: ja / en / ko 等（pipeline.yaml の output_language）
+
+  案名（X = A | B | C）:
+  - {VARIANT_X_NAME}: 各案の方向性名（例: 影の間 / 深藍回路 / 白刃）
+
+  Palette（design-brief.yaml cases[X].palette.tokens[] の hex を転記。X = A | B | C）:
+  - {{ CASE_X_COLOR_BG }} / {{ CASE_X_COLOR_SURFACE }} /
+    {{ CASE_X_COLOR_ON_SURFACE }} / {{ CASE_X_COLOR_ON_SURFACE_VARIANT }} /
+    {{ CASE_X_COLOR_PRIMARY }} / {{ CASE_X_COLOR_ON_PRIMARY }} /
+    {{ CASE_X_COLOR_FOCUS_RING }} / {{ CASE_X_COLOR_BORDER }}
+
+  Typography（design-brief.yaml cases[X].typography[] の family を転記）:
+  - {{ CASE_X_FONT_DISPLAY_STACK }}: display 用 font-family stack
+  - {{ CASE_X_FONT_BASE_STACK }}: base 用 font-family stack
+  - {{ CASE_X_FONT_NUMERIC_STACK }}: numeric 用 font-family stack
+  - {VARIANT_X_DISPLAY_FONT} / {VARIANT_X_BASE_FONT}: Google Fonts URL 用の family 名
+
+  Layout（design-brief.yaml cases[X].dials から導出）:
+  - {{ CASE_X_DENSITY_PADDING }}: VISUAL_DENSITY から決定（高=tight / 低=余白広め）
+
+  Motion（design-brief.yaml cases[X].signature_animation.name から）:
+  - {{ CASE_X_SIGNATURE_ANIM_NAME }}: signature animation の keyframe 名
+
+  ■ 可変実装箇所（placeholder ではなく生成時に書き下ろす）
+
+  - @keyframes の実装（下記 signature animation 節）: §9 Agent Prompt Guide の narrative を
+    忠実に実装する。keyframe 名だけ差し替えて動作を固定パターン化しないこと。
+  - <main class="sample-screen">: requirements.json の Must 機能から 1 画面を選び、
+    archetype / DESIGN_VARIANCE に沿って骨格を書き下ろす（ヒーロー中央揃え固定ではない）
+  - 主コンテンツ一覧: class 名は design-brief.yaml の cases[X].layout.descriptor.content_anchor
+    を**そのまま使い**、list_container / columns / item_layout を CSS の display/flex-direction/列数へ転記する。
+    3 案 A/B/C は装飾(border/shadow)だけでなく **一覧構造そのものを作り分ける**（同一だと Step 09 Phase 3.6 で FAIL）
+  - body { width / min-height }: {PLATFORM} に応じて 1440×900 (web) / 390×844 (mobile) を有効化
+
+  ■ CSS セレクタ規律（selector-DOM 整合のための guardrail）
+  - 原則 class-only セレクタ（`.console` / `.kpi-tile`）。tag 修飾は避ける
+  - `tag.class` 形を使う場合は **Phase 5.05 の Component Inventory に宣言された組合せに限定**
+  - `html[data-variant="X"]` は attribute selector なので対象外。従来通り variant スコープとして使える
+  - 疑似クラス（`:focus-visible` / `:hover` / `:where(...)`）も対象外
+  - 生成後に Phase 6.1 で selector-DOM 整合を grep で自動検証。不整合があれば内部再生成
+  - 理由: LLM 生成時に `main.dashboard` の中の `<section class="console">` を CSS で `main.console` と書いてしまうサイレント無効化を防ぐため
+
+  ■ 参照
+  - docs/html-generation-rules.md — CSS変数命名・SVG・フォーム・サイズ規約
+  - docs/wcag-standards.md — focus ring / touch target 閾値
+  - skills/08-design-brainstorm/refs/anti-slop-rules.md — 禁止ルール
+  - skills/09-sample-html-gen/SKILL.md Phase 5.0 — creative context priming
+  - skills/09-sample-html-gen/SKILL.md Phase 5.05 — Component Inventory（tag × class 宣言）
+  - skills/09-sample-html-gen/SKILL.md Phase 6.1 — Selector-DOM 整合チェック
+-->
+<!DOCTYPE html>
+<html lang="{LANG}" data-variant="A">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{APP_NAME} - デザイン方向性 3案サンプル（{PLATFORM}）</title>
+
+  <!-- Google Fonts preconnect（必須 — docs/html-generation-rules.md §5） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family={VARIANT_A_DISPLAY_FONT}&family={VARIANT_A_BASE_FONT}&family={VARIANT_B_DISPLAY_FONT}&family={VARIANT_B_BASE_FONT}&family={VARIANT_C_DISPLAY_FONT}&family={VARIANT_C_BASE_FONT}&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==================================================
+       リセット・基本
+       ================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ==================================================
+       プラットフォーム別 body 固定サイズ
+       docs/html-generation-rules.md §4 準拠
+       ================================================== */
+
+    /* web: 1440x900 */
+    /* body { width: 1440px; min-height: 900px; margin: 0 auto; } */
+
+    /* mobile: 390x844（iOS ベース・iPhone 15 標準。mobile 1 枚に集約） */
+    /* body { width: 390px; min-height: 844px; margin: 0 auto; } */
+
+    body {
+      /* 実装時にプラットフォームに応じて有効化 */
+      margin: 0 auto;
+      font-family: var(--font-base);
+      color: var(--color-on-bg);
+      background: var(--color-bg);
+      transition: background 300ms ease-out, color 300ms ease-out;
+    }
+
+    /* ==================================================
+       案A: {VARIANT_A_NAME} の palette / typography / motion
+       すべて design-brief.yaml cases[X].palette / typography / dials から転記する。
+       placeholder が残っていたら展開漏れ（ベタ書き例示値は意図的に置いていない）。
+       ================================================== */
+    :root[data-variant="A"] {
+      /* Color tokens — design-brief.yaml cases[A].palette.tokens[] から転記 */
+      --color-bg: {{ CASE_A_COLOR_BG }};
+      --color-surface: {{ CASE_A_COLOR_SURFACE }};
+      --color-on-surface: {{ CASE_A_COLOR_ON_SURFACE }};
+      --color-on-surface-variant: {{ CASE_A_COLOR_ON_SURFACE_VARIANT }};
+      --color-primary: {{ CASE_A_COLOR_PRIMARY }};
+      --color-on-primary: {{ CASE_A_COLOR_ON_PRIMARY }};
+      --color-focus-ring: {{ CASE_A_COLOR_FOCUS_RING }};
+      --color-border: {{ CASE_A_COLOR_BORDER }};
+      --color-on-bg: var(--color-on-surface);
+
+      /* Typography — design-brief.yaml cases[A].typography[] から転記 */
+      --font-display: {{ CASE_A_FONT_DISPLAY_STACK }};
+      --font-base: {{ CASE_A_FONT_BASE_STACK }};
+      --font-numeric: {{ CASE_A_FONT_NUMERIC_STACK }};
+
+      /* Layout dials — design-brief.yaml cases[A].dials から導出
+         VISUAL_DENSITY 高=tight(≤16px) / 中=20px / 低=余白広め(≥24px) */
+      --density-padding: {{ CASE_A_DENSITY_PADDING }};
+
+      /* Motion — design-brief.yaml cases[A].signature_animation.name */
+      --signature-anim: {{ CASE_A_SIGNATURE_ANIM_NAME }};
+    }
+
+    /* ==================================================
+       案B: {VARIANT_B_NAME} の palette / typography / motion
+       ================================================== */
+    :root[data-variant="B"] {
+      --color-bg: {{ CASE_B_COLOR_BG }};
+      --color-surface: {{ CASE_B_COLOR_SURFACE }};
+      --color-on-surface: {{ CASE_B_COLOR_ON_SURFACE }};
+      --color-on-surface-variant: {{ CASE_B_COLOR_ON_SURFACE_VARIANT }};
+      --color-primary: {{ CASE_B_COLOR_PRIMARY }};
+      --color-on-primary: {{ CASE_B_COLOR_ON_PRIMARY }};
+      --color-focus-ring: {{ CASE_B_COLOR_FOCUS_RING }};
+      --color-border: {{ CASE_B_COLOR_BORDER }};
+      --color-on-bg: var(--color-on-surface);
+
+      --font-display: {{ CASE_B_FONT_DISPLAY_STACK }};
+      --font-base: {{ CASE_B_FONT_BASE_STACK }};
+      --font-numeric: {{ CASE_B_FONT_NUMERIC_STACK }};
+
+      --density-padding: {{ CASE_B_DENSITY_PADDING }};
+
+      --signature-anim: {{ CASE_B_SIGNATURE_ANIM_NAME }};
+    }
+
+    /* ==================================================
+       案C: {VARIANT_C_NAME} の palette / typography / motion
+       ================================================== */
+    :root[data-variant="C"] {
+      --color-bg: {{ CASE_C_COLOR_BG }};
+      --color-surface: {{ CASE_C_COLOR_SURFACE }};
+      --color-on-surface: {{ CASE_C_COLOR_ON_SURFACE }};
+      --color-on-surface-variant: {{ CASE_C_COLOR_ON_SURFACE_VARIANT }};
+      --color-primary: {{ CASE_C_COLOR_PRIMARY }};
+      --color-on-primary: {{ CASE_C_COLOR_ON_PRIMARY }};
+      --color-focus-ring: {{ CASE_C_COLOR_FOCUS_RING }};
+      --color-border: {{ CASE_C_COLOR_BORDER }};
+      --color-on-bg: var(--color-on-surface);
+
+      --font-display: {{ CASE_C_FONT_DISPLAY_STACK }};
+      --font-base: {{ CASE_C_FONT_BASE_STACK }};
+      --font-numeric: {{ CASE_C_FONT_NUMERIC_STACK }};
+
+      --density-padding: {{ CASE_C_DENSITY_PADDING }};
+
+      --signature-anim: {{ CASE_C_SIGNATURE_ANIM_NAME }};
+    }
+
+    /* ==================================================
+       prefers-reduced-motion（必須 — docs/html-generation-rules.md §6）
+       ================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* ==================================================
+       フォーカスリング（必須 — docs/html-generation-rules.md §7）
+       ================================================== */
+    :where(button, a, input, textarea, select, [tabindex]):focus-visible {
+      outline: 2px solid var(--color-focus-ring);
+      outline-offset: 2px;
+      scroll-margin-top: 80px;
+      scroll-margin-bottom: 96px;
+    }
+
+    /* ==================================================
+       variant-switcher（フレーム外・上に独立配置）
+
+       mobile の場合: body 直下（.phone-frame の前）に配置。
+       sticky / fixed 禁止 — .phone-frame::before の
+       Dynamic Island と重なる原因になる。
+       web の場合: .sample-screen の前に配置（フレームなし）。
+       ================================================== */
+    .variant-switcher {
+      display: flex;
+      gap: 4px;
+      padding: 6px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+    }
+    .variant-switcher button {
+      min-height: 44px;       /* touch target 44px */
+      padding: 10px 16px;
+      font-family: var(--font-base);
+      font-size: 14px;
+      border: none;
+      background: transparent;
+      color: var(--color-on-surface-variant);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform 100ms ease-out, background 200ms ease-out, color 200ms ease-out;
+    }
+    .variant-switcher button[aria-pressed="true"] {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .variant-switcher button:active {
+      transform: scale(0.96);
+    }
+
+    /* ==================================================
+       サンプル画面セクション（Must機能の代表1画面）
+       ================================================== */
+    main.sample-screen {
+      padding: var(--density-padding);
+    }
+    /* ==================================================
+       [hidden] 打ち消しガード（多画面方式の縦積みバグ恒久対策）
+
+       本テンプレ既定の variant 切替は「1 画面 + html[data-variant] で CSS 変数を差し替える」方式
+       （下の JS は documentElement.dataset.variant のみ更新）。だが案ごとに主コンテンツ
+       一覧の **DOM 構造** を変える必要がある場合、各案を <main class="sample-screen" id="screen-x" hidden>
+       で並べて JS で hidden をトグルする多画面方式を採ることがある。そのとき:
+       UA 既定の [hidden]{display:none}（specificity 0,1,0）は main.sample-screen{display:flex} 等
+       （0,1,1）に **負けて効かず**、hidden 画面が消えずに 3 画面が縦積み（約 3 倍高）になる実バグが観測された。
+       下の明示ガード（0,2,1）でこれを恒久的に打ち消す。単一画面方式では [hidden] 付き main が無いため無害。
+       ※ 多画面ではなく「1 画面に全 section を置き :root[data-variant=X] .xxx-section{display:none} で
+          出し分ける」方式を採るなら、構造差を CSS だけで実現でき本ガードにも依存しない（こちらも可）。
+       ================================================== */
+    main.sample-screen[hidden] { display: none; }
+    .sample-hero {
+      padding: 32px var(--density-padding);
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--color-on-surface);
+    }
+    .sample-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 12px 24px;
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      font-family: var(--font-base);
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 100ms ease-out;
+    }
+    .sample-cta:active { transform: translateY(-1px); }
+
+    /* Platform frame 装飾（refs/platform-frames.css を参照） */
+    /* @import 'platform-frames.css'; は使わず、09 実行時にインライン結合 */
+    /* mobile の場合: body はラッパー、.phone-frame がフレーム */
+
+    /* ==================================================
+       signature animation（案ごとに異なる）
+       各案の keyframe 名は §5 / §9 から、**実装**は §9 Agent Prompt Guide の
+       narrative を忠実に書き下ろす。keyframe 名だけ差し替えて固定パターン
+       （単純な scale / opacity / translateX）で済ませないこと。
+
+       narrative に動詞がある場合はその動詞を実装に落とす:
+       - 「タップ点から N 方向伝播」→ transform-origin をタップ点に寄せた N 個の
+         pseudo 要素 or SVG path アニメで方向性を表現
+       - 「scroll-driven で A→B に変化」→ scroll listener + CSS custom property
+         で fluid 実装（固定値禁止）
+       - 「1Hz sync 振動」→ animation-duration: 1s + step timing 等で sync を明示
+       - 「staggered reveal」→ animation-delay: calc(var(--i) * {delay}ms) で個別遅延
+
+       §9 の narrative に適用先（例: 車両マーカー / KPI 値 / primary CTA 周辺）が
+       書かれていればそこに class/セレクタを当てる。
+       ================================================== */
+
+    /* 案A signature animation（keyframe 名: {{ CASE_A_SIGNATURE_ANIM_NAME }}）
+       09 実行時に §9 Agent Prompt Guide の narrative から実装を書き下ろす */
+    @keyframes {{ CASE_A_SIGNATURE_ANIM_NAME }} {
+      /* §9 narrative に沿って実装 */
+    }
+
+    /* 案B signature animation（keyframe 名: {{ CASE_B_SIGNATURE_ANIM_NAME }}） */
+    @keyframes {{ CASE_B_SIGNATURE_ANIM_NAME }} {
+      /* §9 narrative に沿って実装 */
+    }
+
+    /* 案C signature animation（keyframe 名: {{ CASE_C_SIGNATURE_ANIM_NAME }}） */
+    @keyframes {{ CASE_C_SIGNATURE_ANIM_NAME }} {
+      /* §9 narrative に沿って実装 */
+    }
+
+    /* Staggered reveal（anti-slop Do B） */
+    .reveal-item {
+      opacity: 0;
+      animation: fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: calc(var(--i, 0) * 80ms);
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-platform="{PLATFORM}">
+
+  <!-- 3案切替ナビ: フレーム外・上に独立配置
+       mobile: body 直下、.phone-frame の前に置く。sticky/fixed 禁止。
+       web: .sample-screen の前に置く（フレームなし）。 -->
+  <nav class="variant-switcher" role="toolbar" aria-label="デザイン方向性切替">
+    <button type="button" data-set-variant="A" aria-pressed="true">A案: {VARIANT_A_NAME}</button>
+    <button type="button" data-set-variant="B" aria-pressed="false">B案: {VARIANT_B_NAME}</button>
+    <button type="button" data-set-variant="C" aria-pressed="false">C案: {VARIANT_C_NAME}</button>
+  </nav>
+
+  <!-- mobile: .phone-frame は必須実タグ。
+       .phone-frame::before が Dynamic Island を担う（platform-frames.css 参照）。
+       web の場合のみ: この <div class="phone-frame"> と対応する </div> を丸ごと除去し、
+       .viewport を body 直下に置く。 -->
+  <div class="phone-frame"><!-- web の場合は削除 -->
+
+    <div class="viewport">
+
+      <!-- サンプル画面（Must機能の代表1画面）
+           以下のヒーロー + CTA は**最小骨格の例示**。09 は §1 concept / archetype /
+           §9 Agent Prompt Guide に応じて **書き換えてよい**（ヒーロー中央揃え固定ではない）。
+           - DESIGN_VARIANCE >= 5 の案: 中央揃えヒーローを採用せず、非対称 / overlap /
+             エディトリアル判型 等に骨格を書き換える
+           - archetype が「判型エディトリアル型」「密度過飽和型」「計器機能美型」等:
+             ヒーロー + CTA 以外に archetype 固有のレイアウト骨格を選ぶ
+           - その下の Must 機能代表画面（カードリスト / テーブル / フォーム等）は
+             requirements.json の Must 機能から選定し、archetype narrative に沿って実装 -->
+      <main class="sample-screen" role="main">
+        <section class="sample-hero reveal-item" style="--i: 0;">
+          <h1>{APP_NAME}</h1>
+          <p class="reveal-item" style="--i: 1;">
+            ※ 本画面は方向性確認用のサンプルです。表示内容は仮データ。
+          </p>
+          <button type="button" class="sample-cta reveal-item" style="--i: 2;">
+            サンプル CTA
+          </button>
+        </section>
+
+        <!-- Must 機能の代表画面をここに実装（archetype 骨格に沿って書き下ろす） -->
+
+      </main>
+
+    </div><!-- /.viewport -->
+
+  </div><!-- /.phone-frame（web の場合は上の開始タグごと削除） -->
+
+  <script>
+    // variant 切替
+    document.querySelectorAll('[data-set-variant]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const variant = btn.dataset.setVariant;
+        document.documentElement.dataset.variant = variant;
+        document.querySelectorAll('[data-set-variant]').forEach(b => {
+          b.setAttribute('aria-pressed', b.dataset.setVariant === variant ? 'true' : 'false');
+        });
+        history.replaceState(null, '', `?v=${variant}`);
+      });
+    });
+
+    // 初期状態を URL から復元
+    const initialVariant = new URLSearchParams(location.search).get('v') || 'A';
+    if (['A', 'B', 'C'].includes(initialVariant)) {
+      document.documentElement.dataset.variant = initialVariant;
+      document.querySelectorAll('[data-set-variant]').forEach(b => {
+        b.setAttribute('aria-pressed', b.dataset.setVariant === initialVariant ? 'true' : 'false');
+      });
+    }
+  </script>
+
+</body>
+</html>

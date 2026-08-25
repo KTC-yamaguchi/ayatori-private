@@ -1,0 +1,8 @@
+{
+  "_note": "色域外 oklch → chroma reduction 写像 (L・H 固定) + in_gamut:false + mapped_oklch 報告を pin。2 件目は StudyLoop primary の記録 oklch (物理的に不可能な座標の実例: artifacts/StudyLoop/design-brief.yaml:128-132)",
+  "argv": ["convert"],
+  "items": [
+    { "id": "synthetic-out-of-gamut", "oklch": { "l": 0.5, "c": 0.4, "h": 30 } },
+    { "id": "studyloop-primary-recorded", "oklch": { "l": 0.5, "c": 0.18, "h": 253 } }
+  ]
+}

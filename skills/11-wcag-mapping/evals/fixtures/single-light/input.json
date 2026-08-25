@@ -1,0 +1,22 @@
+{
+  "_note": "新仕様 default: themes_required=['light'] → --modes light。mode field の無い legacy token を light で引く (lookupTokenHex の legacy fallback)。全 pair AA 合格を意図した健全 palette。",
+  "modes": "light",
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-bg", "hex": "#EAF2F4" },
+          { "name": "--color-surface", "hex": "#FFFFFF" },
+          { "name": "--color-on-surface", "hex": "#13242B" },
+          { "name": "--color-on-surface-variant", "hex": "#52636B" },
+          { "name": "--color-primary", "hex": "#0E7C90" },
+          { "name": "--color-on-primary", "hex": "#FFFFFF" },
+          { "name": "--color-focus-ring", "hex": "#0E7C90" },
+          { "name": "--color-border", "hex": "#5E7077" },
+          { "name": "--color-on-bg", "hex": "#13242B" }
+        ]
+      }
+    }
+  ]
+}

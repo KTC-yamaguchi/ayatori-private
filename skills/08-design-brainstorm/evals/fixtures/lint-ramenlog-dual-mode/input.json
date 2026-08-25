@@ -1,0 +1,18 @@
+{
+  "_note": "dual theme の (name, mode) 複合キー処理を pin (artifacts/RamenLog/design-brief.yaml — 同名 token が mode:dark/light で 2 回現れ、各々独立に検査される)。bg dark と on-surface light (同一色 #1B1510) が Δ14 で drift → exit 1",
+  "argv": ["lint"],
+  "expect_exit": 1,
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-bg", "mode": "dark", "hex": "#1B1510", "oklch": { "l": 0.14, "c": 0.025, "h": 58 } },
+          { "name": "--color-on-surface", "mode": "dark", "hex": "#EDE5D0", "oklch": { "l": 0.91, "c": 0.02, "h": 72 } },
+          { "name": "--color-bg", "mode": "light", "hex": "#FAF5EB", "oklch": { "l": 0.97, "c": 0.01, "h": 80 } },
+          { "name": "--color-on-surface", "mode": "light", "hex": "#1B1510", "oklch": { "l": 0.14, "c": 0.025, "h": 58 } }
+        ]
+      }
+    }
+  ]
+}

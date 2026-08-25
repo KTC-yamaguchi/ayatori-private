@@ -1,0 +1,6 @@
+{
+  "_note": "バッチモード + CLI --margin → exit 2 を pin (PR レビュー nitpick: 修正前は --margin 5 が無言で無視され既定 0.1 で解いていた)。バッチの margin は JSON の top-level margin / pairs[].margin で指定する。argv は runner の ERROR_FIXTURES 側で指定",
+  "pairs": [
+    { "id": "any", "fg_hex": "#8C847C", "bg_hex": "#EDE7DC", "required_ratio": 3.0 }
+  ]
+}

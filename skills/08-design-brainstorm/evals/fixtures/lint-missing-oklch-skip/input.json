@@ -1,0 +1,31 @@
+{
+  "_note": "oklch 欠落エントリの skip 計上を pin (drift/invalid 扱いしない → pass、exit 0)。state_colors の light sub-block と domain_surfaces / illustration_colors の走査もここで pin",
+  "argv": ["lint"],
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-bg", "hex": "#F1F5F8" },
+          { "name": "--color-primary", "hex": "#0E78A8", "oklch": { "l": 0.542, "c": 0.113, "h": 236 } }
+        ],
+        "state_colors": {
+          "error": {
+            "bg": { "hex": "#2C1214" },
+            "text": {
+              "hex": "#FC8080",
+              "light": { "hex": "#B91C1C" }
+            },
+            "border": { "hex": "#E05454" }
+          }
+        },
+        "domain_surfaces": [
+          { "name": "board", "modes": [{ "mode": "dark", "hex": "#223322" }] }
+        ],
+        "illustration_colors": [
+          { "name": "leaf", "hex": "#88AA88" }
+        ]
+      }
+    }
+  ]
+}

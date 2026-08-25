@@ -1,0 +1,101 @@
+{
+  "cases": [
+    {
+      "candidate_id": "A",
+      "mode": "light",
+      "results": [
+        {
+          "pair_kind": "palette",
+          "n": 1,
+          "criterion_id": "1.4.3",
+          "required_ratio": 4.5,
+          "mode": "light",
+          "fg_token": "--color-on-surface",
+          "bg_token": "--color-surface",
+          "fg_hex": "#767676",
+          "bg_hex": "#FFFFFF",
+          "actual_ratio": 4.54,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 2,
+          "criterion_id": "1.4.3",
+          "required_ratio": 4.5,
+          "mode": "light",
+          "fg_token": "--color-on-surface-variant",
+          "bg_token": "--color-surface",
+          "fg_hex": "#777777",
+          "bg_hex": "#FFFFFF",
+          "actual_ratio": 4.48,
+          "pass": false
+        },
+        {
+          "pair_kind": "palette",
+          "n": 3,
+          "criterion_id": "1.4.11",
+          "required_ratio": 3,
+          "mode": "light",
+          "fg_token": "--color-primary",
+          "bg_token": "--color-surface",
+          "fg_hex": "#949494",
+          "bg_hex": "#FFFFFF",
+          "actual_ratio": 3.03,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 4,
+          "criterion_id": "1.4.3",
+          "required_ratio": 4.5,
+          "mode": "light",
+          "fg_token": "--color-on-primary",
+          "bg_token": "--color-primary",
+          "fg_hex": "#000000",
+          "bg_hex": "#949494",
+          "actual_ratio": 6.92,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 5,
+          "criterion_id": "1.4.11",
+          "required_ratio": 3,
+          "mode": "light",
+          "fg_token": "--color-focus-ring",
+          "bg_token": "--color-surface",
+          "fg_hex": "#959595",
+          "bg_hex": "#FFFFFF",
+          "actual_ratio": 3,
+          "pass": true
+        },
+        {
+          "pair_kind": "palette",
+          "n": 6,
+          "criterion_id": "1.4.11",
+          "required_ratio": 3,
+          "mode": "light",
+          "fg_token": "--color-border",
+          "bg_token": "--color-surface",
+          "fg_hex": "#9A9A9A",
+          "bg_hex": "#FFFFFF",
+          "actual_ratio": 2.81,
+          "pass": false
+        },
+        {
+          "pair_kind": "palette",
+          "n": 7,
+          "criterion_id": "1.4.3",
+          "required_ratio": 4.5,
+          "mode": "light",
+          "fg_token": "--color-on-bg",
+          "bg_token": "--color-bg",
+          "fg_hex": "#767676",
+          "bg_hex": "#FFFFFF",
+          "actual_ratio": 4.54,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

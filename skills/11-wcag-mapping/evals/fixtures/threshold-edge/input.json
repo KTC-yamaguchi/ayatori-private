@@ -1,0 +1,22 @@
+{
+  "_note": "閾値近傍の pass/fail 境界を固定 (これが LLM 推算時代に偽 violation を生んでいた箇所)。white surface 基準で: on-surface=#767676 (4.54, 4.5 を辛うじて pass) / on-surface-variant=#777777 (4.48, 4.5 を辛うじて fail) / primary=#949494 (3.03, 3.0 pass) / border=#9A9A9A (2.81, 3.0 fail) / focus-ring=#959595 (3.00 ちょうど — passes() の境界等値判定を pin)。--modes light。",
+  "modes": "light",
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-bg", "hex": "#FFFFFF" },
+          { "name": "--color-surface", "hex": "#FFFFFF" },
+          { "name": "--color-on-surface", "hex": "#767676" },
+          { "name": "--color-on-surface-variant", "hex": "#777777" },
+          { "name": "--color-primary", "hex": "#949494" },
+          { "name": "--color-on-primary", "hex": "#000000" },
+          { "name": "--color-focus-ring", "hex": "#959595" },
+          { "name": "--color-border", "hex": "#9A9A9A" },
+          { "name": "--color-on-bg", "hex": "#767676" }
+        ]
+      }
+    }
+  ]
+}

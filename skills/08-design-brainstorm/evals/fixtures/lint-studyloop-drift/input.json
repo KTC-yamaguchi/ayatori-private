@@ -1,0 +1,19 @@
+{
+  "_note": "drift 検出の実例 (artifacts/StudyLoop/design-brief.yaml 案 A、POCTEAMA-316 の動機となった実測)。on-surface Δ25 / primary Δ59 (色域外) / focus-ring Δ66 (色域外) が drift、bg Δ5 / surface Δ0 は許容内 → exit 1",
+  "argv": ["lint"],
+  "expect_exit": 1,
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-bg", "hex": "#F8F9FA", "oklch": { "l": 0.97, "c": 0.005, "h": 260 } },
+          { "name": "--color-surface", "hex": "#FFFFFF", "oklch": { "l": 1.0, "c": 0.0, "h": 0 } },
+          { "name": "--color-on-surface", "hex": "#1D1F3C", "oklch": { "l": 0.18, "c": 0.04, "h": 265 } },
+          { "name": "--color-primary", "hex": "#3B5BDB", "oklch": { "l": 0.5, "c": 0.18, "h": 253 } },
+          { "name": "--color-focus-ring", "hex": "#4263EB", "oklch": { "l": 0.52, "c": 0.2, "h": 258 } }
+        ]
+      }
+    }
+  ]
+}

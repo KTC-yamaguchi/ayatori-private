@@ -1,0 +1,28 @@
+{
+  "pairs": [
+    {
+      "id": "near-gray-aaa",
+      "input": {
+        "id": "near-gray-aaa",
+        "fg_hex": "#777777",
+        "bg_hex": "#888888",
+        "required_ratio": 7,
+        "margin": 0.1,
+        "target_ratio": 7.1,
+        "fg_oklch": {
+          "l": 0.569,
+          "c": 0,
+          "h": 0
+        },
+        "initial_ratio": 1.26,
+        "direction": "darken"
+      },
+      "solved": false,
+      "already_passing": false,
+      "margin_not_met": null,
+      "policy_step": null,
+      "result": null,
+      "reason": "§5 予算内 (L±0.15, C-0.05) に解なし → Step 4 (トークンの用途変更) へ"
+    }
+  ]
+}

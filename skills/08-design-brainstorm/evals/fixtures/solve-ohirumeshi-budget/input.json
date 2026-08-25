@@ -1,0 +1,7 @@
+{
+  "_note": "予算尊重の実例 (artifacts/OhiruMeshi/wcag-history.json: LLM は「L 0.40→0.56 (+0.16)」と §5 上限 ±0.15 を超える補正案を出していた)。決定論 solver は予算内 dl=+0.092 で解けることを pin (|dl| ≤ 0.15 の検証は目視レビュー必須項目)",
+  "argv": ["solve"],
+  "pairs": [
+    { "id": "B/border-vs-surface-dark", "fg_hex": "#4A5E4C", "bg_hex": "#232B24", "required_ratio": 3.0 }
+  ]
+}

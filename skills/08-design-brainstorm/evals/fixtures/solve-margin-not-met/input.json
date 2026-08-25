@@ -1,0 +1,7 @@
+{
+  "_note": "margin_not_met 経路を pin: target (required+margin) は予算内で不達だが、予算端 (dl=-0.15) で required は満たす → best-effort で予算端候補を返し summary に未達を明記",
+  "argv": ["solve"],
+  "pairs": [
+    { "id": "gray-needs-more", "fg_hex": "#777777", "bg_hex": "#FFFFFF", "required_ratio": 4.5, "margin": 5 }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "skill_name": "11-wcag-mapping",
+  "_about": "skill 整形ロジック eval (glue) の cases。script CLI 契約テスト (fixtures/) が wcag-contrast.mjs の数値を固定するのに対し、本層は skill 11 が script の周りで行う LLM 処理を検証する: mode 検出 / hex 無改変の入力構築 / result→violation 整形 / pair_kind・mode 充填 / actual_ratio null→1 正規化 / first-write vs loop-rerun 分岐 / wcag-history への append。トークンコストがかかるため CI ではなく on-demand 実行 (run-glue-eval.md 参照)。",
+  "_fixture_layout_note": "fixture_app は fixtures/<case>/app 配下を指す (skill が読む実 runtime path は artifacts/{app_name}/ だが、repo の .gitignore が artifacts/ を ignore するため fixture source を app/ に置く)。run-glue-eval.md の手順 1 が app/glue-demo を一時 artifacts/ にコピーしてから skill を回す。",
+  "evals": [
+    {
+      "id": 0,
+      "name": "dual-mode-first-write",
+      "prompt": "skills/11-wcag-mapping/skill.md を Read して実行せよ。対象プロジェクトは glue-demo (artifacts/glue-demo/)。これは初回実行 (wcag-mapping.json / wcag-history.json はまだ存在しない)。",
+      "fixture_app": "fixtures/dual-mode-violation/app",
+      "app_name": "glue-demo",
+      "expected_output": "wcag-mapping.json に constraints+criteria が初回 write され、wcag-history.json に attempt 0 が append される。dark mode で primary vs surface の 3:1 未達違反が 1 件記録される。",
+      "expectations": [
+        { "id": "history-exists", "text": "artifacts/glue-demo/wcag-history.json が生成され、attempts に 1 件 (attempt_count=0) を持つ", "checkable": "script" },
+        { "id": "mapping-firstwrite", "text": "artifacts/glue-demo/wcag-mapping.json が生成され constraints と criteria を持つ (初回 write モード)", "checkable": "script" },
+        { "id": "violation-fields-complete", "text": "各 violation が schema 必須 field (candidate_id / criterion_id / pair / actual_ratio / required_ratio) を全て持つ", "checkable": "script" },
+        { "id": "pair-kind-present", "text": "各 violation の pair_kind が enum (palette/state_colors/domain_surface/schema_violation) のいずれか", "checkable": "script" },
+        { "id": "mode-present-in-dual", "text": "dual-mode なので各 violation に mode (dark|light) が埋まっている", "checkable": "script" },
+        { "id": "actual-ratio-min1", "text": "全 violation の actual_ratio が >= 1 (null→1 正規化が効いている、schema minimum:1 準拠)", "checkable": "script" },
+        { "id": "hex-not-mutated", "text": "violation の fg_hex/bg_hex が design-brief.yaml の原文 hex と一致 (skill が hex を書き換えていない)", "checkable": "script" },
+        { "id": "dark-primary-violation", "text": "dark mode の --color-primary(#2A4A55) vs --color-surface(#141414) が 3:1 未達違反として記録されている", "checkable": "script" },
+        { "id": "suggested-correction-actionable", "text": "違反の suggested_correction が具体的 (どの token を / どれだけ動かすか / 想定 ratio / §5 参照) で、08 が実行可能な形になっている", "checkable": "judgment" }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "loop-rerun-invariants",
+      "prompt": "skills/11-wcag-mapping/skill.md を Read して実行せよ。対象は glue-demo。これはループ再実行 (wcag-mapping.json は既に存在し constraints/criteria 充填済み、wcag-history.json に attempt が 1 件ある)。",
+      "fixture_app": "fixtures/dual-mode-violation/app",
+      "app_name": "glue-demo",
+      "_setup": "case 0 を先に実行してから、または手で wcag-mapping.json(constraints+criteria) と attempt 1 件入りの wcag-history.json を置いてから実行する",
+      "expected_output": "wcag-mapping.json の constraints/criteria は再書き込みされない (ループ不変量、Phase 3/4 skip)。wcag-history.json に新たな attempt が 1 件 append され attempts が 2 件になる。",
+      "expectations": [
+        { "id": "mapping-unchanged", "text": "wcag-mapping.json の constraints/criteria が再 write されていない (Phase 3/4 が skip された)", "checkable": "judgment" },
+        { "id": "history-appended", "text": "wcag-history.json の attempts が 1 件増えている (新 attempt_count が前回+1)", "checkable": "script" }
+      ]
+    }
+  ]
+}

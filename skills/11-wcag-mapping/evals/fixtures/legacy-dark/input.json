@@ -1,0 +1,22 @@
+{
+  "_note": "legacy 互換: --modes 省略時の default は dark。mode field の無い token を dark で引く。dark 基調の健全 palette (全 pair 合格)。--modes を渡さず default 経路を踏ませるため modes は null。",
+  "modes": null,
+  "cases": [
+    {
+      "candidate_id": "A",
+      "palette": {
+        "tokens": [
+          { "name": "--color-bg", "hex": "#0E0E0E" },
+          { "name": "--color-surface", "hex": "#141414" },
+          { "name": "--color-on-surface", "hex": "#E8DCC8" },
+          { "name": "--color-on-surface-variant", "hex": "#A8A090" },
+          { "name": "--color-primary", "hex": "#6FB3C9" },
+          { "name": "--color-on-primary", "hex": "#0E0E0E" },
+          { "name": "--color-focus-ring", "hex": "#6FB3C9" },
+          { "name": "--color-border", "hex": "#6B6B6B" },
+          { "name": "--color-on-bg", "hex": "#E8DCC8" }
+        ]
+      }
+    }
+  ]
+}
