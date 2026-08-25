@@ -1,0 +1,39 @@
+{
+  "app_name": "テスト用タスク管理アプリ",
+  "attempt_count": 0,
+  "escalated": false,
+  "current": {
+    "layer1": {
+      "score": 0,
+      "max": 40,
+      "breakdown": {
+        "design_system": 0,
+        "contrast_1_4_3": 0,
+        "typography": 0,
+        "interaction": 0
+      }
+    },
+    "layer2": {
+      "score": 0,
+      "max": 30,
+      "breakdown": {
+        "navigation": 0,
+        "consistency": 0,
+        "feedback": 0
+      }
+    },
+    "layer3": {
+      "score": 0,
+      "max": 30,
+      "breakdown": {
+        "aesthetic": 0,
+        "layout": 0,
+        "brand": 0
+      }
+    },
+    "total": 0,
+    "ai_improvable_deductions": 0,
+    "human_required_deductions": 0,
+    "tags": []
+  }
+}

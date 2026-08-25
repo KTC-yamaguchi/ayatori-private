@@ -1,0 +1,6 @@
+{
+  "_comment": "01 完了後の期待スキーマ。スコアは非決定的なため、キー構造と型のみを検証すること。state 系 (Confluence page_id 等) は pipeline-state.json に分離されている。",
+  "app_name": "テスト用タスク管理アプリ",
+  "created_at": "YYYY-MM-DD",
+  "confluence_parent_id": null
+}

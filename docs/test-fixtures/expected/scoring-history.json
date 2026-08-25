@@ -1,0 +1,30 @@
+{
+  "_comment": "04 完了後の期待スキーマ。Phase 1b スコアリング履歴。attempts[] は attempt ごとに 1 件 append される。スコアは非決定的なため、構造のみ検証する。",
+  "_validation_rules": {
+    "attempts": "配列。長さ >= 1。先頭が最古、末尾が最新",
+    "attempts[].attempt_count": "数値。配列 index と一致 (0 始まり)",
+    "attempts[].total": "数値。>= 80 で合格 (合格パスなら attempts[-1].total >= 80)",
+    "attempts[].scores": "各 axis (correctness / unambiguity / completeness / consistency / feasibility) に数値（0〜20）が設定されている",
+    "attempts[].deficiencies": "配列。合格時は空配列が期待されるが、軽微な指摘が残ることもある",
+    "attempts[].check_results": "配列。長さ 20 (5 軸 × 4 checks)。verdict は yes/partial/no"
+  },
+  "app_name": "テスト用タスク管理アプリ",
+  "attempts": [
+    {
+      "attempt_count": 0,
+      "timestamp": "YYYY-MM-DD",
+      "total": 82,
+      "scores": {
+        "correctness": 16,
+        "unambiguity": 17,
+        "completeness": 17,
+        "consistency": 16,
+        "feasibility": 16
+      },
+      "check_results": [],
+      "deficiencies": [],
+      "ai_improvable_count": 0,
+      "human_required_count": 0
+    }
+  ]
+}

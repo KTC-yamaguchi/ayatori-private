@@ -1,0 +1,27 @@
+{
+  "_comment": "06 完了後の期待スキーマ。cross-phase hot state コンテナ。Phase 1b の Confluence ページ ID と承認時刻はここに格納される (旧 rubric.json から分離)。06-confluence-save-req が confluence.requirements.* を書き、07-human-gate-req が approvals.step07_approved_at を書く。",
+  "_validation_rules": {
+    "app_name": "プロジェクト識別子。artifacts/{app_name}/ と一致",
+    "confluence.requirements.page_id": "プロジェクトメインページの Confluence ID (06 で新規作成 or 既存値再利用)",
+    "confluence.requirements.doc_page_ids": "8 ドキュメント (01-overview ~ 08-constraints) の Confluence ページ ID オブジェクト",
+    "confluence.requirements.save_status": "'pending' | 'success' | 'failed' | 'skipped' のいずれか",
+    "approvals.step07_approved_at": "07 承認時の ISO 8601 タイムスタンプ (Phase 1b 完了後のみ)"
+  },
+  "app_name": "テスト用タスク管理アプリ",
+  "confluence": {
+    "requirements": {
+      "page_id": "<confluence page id>",
+      "doc_page_ids": {
+        "01-overview": "<confluence page id>",
+        "02-scope": "<confluence page id>",
+        "03-user-flow": "<confluence page id>",
+        "04-use-cases": "<confluence page id>",
+        "05-features": "<confluence page id>",
+        "06-non-functional": "<confluence page id>",
+        "07-data-definition": "<confluence page id>",
+        "08-constraints": "<confluence page id>"
+      },
+      "save_status": "success"
+    }
+  }
+}

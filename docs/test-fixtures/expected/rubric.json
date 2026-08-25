@@ -1,0 +1,16 @@
+{
+  "_comment": "03 完了後の期待スキーマ。rubric.json は criteria 定義のみを保持する (ループ不変量)。attempt ごとの total/scores/deficiencies は scoring-history.json に分離されており、Confluence ページ ID / save_status は pipeline-state.json.confluence.requirements に分離されている。",
+  "_validation_rules": {
+    "criteria": "長さ 5 の配列。axis は correctness / unambiguity / completeness / consistency / feasibility の5種すべてが含まれる",
+    "criteria[].weight": "数値。5つの合計が 100 になること",
+    "criteria[].checks": "長さ 4 の配列。max_points 合計が weight と一致 (4×5=20)"
+  },
+  "app_name": "テスト用タスク管理アプリ",
+  "criteria": [
+    { "axis": "correctness", "weight": 20, "description": "（Claude が生成したアプリ固有の記述が入る）" },
+    { "axis": "unambiguity", "weight": 20, "description": "（Claude が生成したアプリ固有の記述が入る）" },
+    { "axis": "completeness", "weight": 20, "description": "（Claude が生成したアプリ固有の記述が入る）" },
+    { "axis": "consistency", "weight": 20, "description": "（Claude が生成したアプリ固有の記述が入る）" },
+    { "axis": "feasibility", "weight": 20, "description": "（Claude が生成したアプリ固有の記述が入る）" }
+  ]
+}
