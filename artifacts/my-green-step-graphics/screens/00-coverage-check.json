@@ -1,0 +1,38 @@
+{
+  "coverage_check": {
+    "checked_at": "2026-08-14T17:25:00+09:00",
+    "scope": "screen_list",
+    "layers": {
+      "l1_ui_states": {
+        "missing": [
+          {
+            "screen": "scr-06-action-list",
+            "state": "Nothing",
+            "classification": "テンプレート代表1枚",
+            "reason": "実施中アクションが 0 件のときの空状態。design_output_scope.state_pattern = default_only のため Step 17 では default のみ生成し、sub-state は Step 25a 以降で追加する（二段階完了モデル）"
+          },
+          {
+            "screen": "scr-07-action-detail",
+            "state": "Ideal",
+            "classification": "テンプレート代表1枚",
+            "reason": "「やった」記録直後の CO2 フィードバック表示状態。同一画面内インライン表示のため sub-state 扱い。Step 25a 以降で追加する"
+          }
+        ]
+      },
+      "l2_action_result": { "missing": [] },
+      "l3_flow_end": { "missing": [] },
+      "l4_content_replace": { "missing": [] },
+      "l5_connectivity": { "defects": [] }
+    },
+    "summary": {
+      "total_missing": 2,
+      "by_classification": {
+        "個別画面化": 0,
+        "テンプレート代表1枚": 2,
+        "DS吸収": 0
+      },
+      "connectivity_defects": 0
+    },
+    "user_accepted_gaps": true
+  }
+}

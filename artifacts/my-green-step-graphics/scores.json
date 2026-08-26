@@ -1,0 +1,157 @@
+{
+  "app_name": "my-green-step-graphics",
+  "attempt_count": 1,
+  "escalated": false,
+  "current": {
+    "evaluated_at": "2026-08-14T18:20:00+09:00",
+    "attempt_count": 1,
+    "layer1": {
+      "score": 40,
+      "max": 40,
+      "breakdown": {
+        "design_system": 10,
+        "contrast_1_4_3": 10,
+        "typography": 10,
+        "interaction": 10
+      },
+      "notes": [
+        "design_system 10/10: color-lint-report.json summary = literal_colors 0 / unresolved_vars_excl_promotion 0 / other_violations 0。3 画面すべて :root 80 変数を root-variables.css から丸ごと inline copy 済 (機械照合で 80/80 一致)。",
+        "contrast 10/10: 画面で実際に使用する 14 ペアを WCAG 相対輝度式で実測し全件合格。本文 19.56:1 / 補足 5.33:1 / ボタン文字 4.56:1 / CO2 数値 5.13:1 / カテゴリバッジ 5.39:1 / 難易度バッジ 4.56:1・7.65:1 / focus-ring 4.76:1。",
+        "contrast 補正 2 件 (Step 18 実測で検出 → tokens.json + design-brief.loop_correction_history に反映): (1) tinted 面のテキスト/アイコンに primary #117F87 を流用すると 4.11:1 で 1.4.3 未達 → 新規 semantic token on-primary-container #0E6B72 (5.39:1) に差し替え。(2) state_colors.error.text #D32F2F on #FFEBEE = 4.36:1 未達 → 既存 primitive red.900 #B71C1C (5.75:1) に差し替え。",
+        "typography 10/10: 全 font-size / font-family を tokens 経由 (--fs-* / --font-*) で参照。本文階層は 13/15/17/20/28/42px で隣接差 2px 以上を満たす。--fs-xs (12px) はボトムタブのラベル専用 (chrome 階層) で、本文階層とは別ティアのため隣接判定の対象外として扱った。",
+        "interaction 10/10: focus-visible リングを a/button/input/[tabindex] に定義し色は --color-focus-ring 参照。タッチターゲットは主要ボタン (btn-primary / card-cta) min-height 44px、戻るボタン 44×44px、タブ項目 min-height 44px でいずれも 2.5.8 合格。"
+      ]
+    },
+    "layer2": {
+      "score": 30,
+      "max": 30,
+      "breakdown": {
+        "state_visibility_feedback": 6,
+        "navigation_operability": 6,
+        "consistency_standards": 5,
+        "error_design": 5,
+        "cognitive_load": 4,
+        "platform_compliance": 4
+      },
+      "notes": [
+        "状態可視性 6/6: default HTML 上に状態遷移トリガー (はじめる / やった / 挑戦する) が明示配置され、仕様書 3 件すべてに empty / loading / error / 記録成功の振る舞いを記述済。sub-state HTML の網羅評価は Step 25c の責務。",
+        "ナビゲーション 6/6: 各画面の入口/出口を 00-screen-nav.json で機械導出し L5 defect 0 件。ウェルカム = entry point、詳細 = ヘッダー B で親へ戻れる。ボトムタブの dashboard / settings が遷移先を持たない点は本試行のスコープ由来の既知逸脱で、requirement-deviations.json に 要件矛盾 (medium) として記録済 — 合意済スコープに対する欠陥ではないため本軸では減点しない。",
+        "一貫性 5/5: chrome (ヘッダー 2 種 + タブバー) を _shared/components.html|css の正典から逐語ペーストし、機械照合で byte 一致を確認。カードは doing-card / suggest-card にクラス分離し各クラス内は全インスタンス同一構造。",
+        "エラー設計 5/5: 仕様書に自動リトライ (NFR-E-02: 最大 3 回・5 秒間隔) → エラーバナー + 再試行、平易な文面 (NFR-E-01)、オフライン時のローカル保存と自動同期 (NFR-A-05) を記述。",
+        "認知負荷 4/4: 1 画面 1 目的。実施中とおすすめを見出し + 件数で分離し、CO2 削減量・カテゴリ・難易度を各カードに揃えて提示。",
+        "Platform 4/4: 390×844 縦向き固定 (NFR-ENV-03/04)、iOS/Android 共通のボトムタブ + 戻るヘッダー、44px タッチターゲット、prefers-reduced-motion 対応。"
+      ]
+    },
+    "layer3": {
+      "score": 28,
+      "max": 30,
+      "breakdown": {
+        "aesthetic_quality": 6,
+        "layout_spacing": 7,
+        "brand_coherence": 6,
+        "kpi_fit": 6,
+        "churn_risk": 3
+      },
+      "notes": [
+        "審美的品質 6/7 (-1, 人間対応必要): design-brief A 案の方向性 (清潔感・ティールアクセント・絵文字なし・等幅数値) は 3 画面で満たしている。一方ウェルカム画面は視覚的な主役 (ヒーロービジュアル) を持たずテキストとアイコンのみで構成されており、第一印象の訴求力が弱い。グラフィック生成ブロック (21a-21g) の対象候補。",
+        "レイアウト・余白 7/7: 全 padding / margin / gap を --sp-* トークン参照。カード間 12〜16px、セクション間 16px、左右 16px の安全余白で design-brief の layout 方針と整合。",
+        "ブランドコヒーレンス 6/7 (-1, 人間対応必要): 3 画面でトーンは統一されているが、ロゴアセットが未提供のため角丸四角 + 頭文字「M」の仮マークで代替している (requirement-deviations に記録済)。正式ロゴの提供が必要。",
+        "KPI 適合性 6/6: ウェルカムはスクロールなしで CTA に到達、一覧は各カードに「やった」を置き記録までの操作を 1 タップに短縮、詳細は CTA を画面下部 sticky で常時可視。",
+        "離脱リスク 3/3: 主要動線に確認ダイアログ等の摩擦を置かず、詳細から一覧へ戻る導線を常設。"
+      ]
+    },
+    "total": 98,
+    "coverage_check": {
+      "evaluated_at": "2026-08-14T18:20:00+09:00",
+      "scope": "full_html",
+      "missing": { "l1": 2, "l2": 0, "l3": 0, "l4": 0 },
+      "overflow_deduction": 0,
+      "notes": [
+        "L1 の missing 2 件 (アクション一覧の実施中 0 件表示 / 詳細の記録直後フィードバック) は design_output_scope.state_pattern = default_only により Step 25b へ移管された sub-state。main 視点では default (Ideal) が 3 画面すべて存在し、各仕様書に全状態の振る舞いを記述済のため main 視点の減点は 0。Step 14 で user_accepted_gaps = true を記録済。",
+        "L2 / L3 / L4: アクション結果は同一画面内インライン表示で成立、マルチステップフローなし、コンテンツ差し替えで成立しない画面なし。"
+      ]
+    },
+    "connectivity_check": {
+      "evaluated_at": "2026-08-14T18:20:00+09:00",
+      "defects": {
+        "dangling_edge": 0,
+        "orphan_in_list": 0,
+        "unreachable": 0,
+        "dead_end": 0,
+        "back_target_missing": 0
+      },
+      "deductions_applied": 0,
+      "details": []
+    },
+    "nfr_coverage": {
+      "evaluated_at": "2026-08-14T18:20:00+09:00",
+      "source": "requirements/06-non-functional.md",
+      "summary": {
+        "total_nfrs": 39,
+        "automated_verified": 5,
+        "human_attested": 6,
+        "deferred": 28,
+        "unaddressed": 0
+      },
+      "deductions_applied": 0,
+      "details": [
+        { "nfr_id": "NFR-ACC-02", "status": "automated_verified", "note": "使用 14 ペアを実測し全件 4.5:1 以上 (UI 要素は 3:1 以上)" },
+        { "nfr_id": "NFR-ACC-05", "status": "automated_verified", "note": "主要ボタン・戻る・タブ項目すべて 44px 以上を CSS で確認" },
+        { "nfr_id": "NFR-ENV-03", "status": "automated_verified", "note": ".screen 390×844px 固定 (スマートフォン幅)" },
+        { "nfr_id": "NFR-ENV-04", "status": "automated_verified", "note": "縦向き固定のプレビュー構造。横向きレイアウトを持たない" },
+        { "nfr_id": "NFR-ENV-05", "status": "automated_verified", "note": "全 UI テキストが日本語" },
+        { "nfr_id": "NFR-ACC-01", "status": "human_attested", "note": "WCAG AA を目標に設計。Step 21 で目視確認" },
+        { "nfr_id": "NFR-ACC-03", "status": "human_attested", "note": "戻るボタンに aria-label、装飾アイコンに aria-hidden、現在タブに aria-current を付与" },
+        { "nfr_id": "NFR-ACC-06", "status": "human_attested", "note": "難易度・カテゴリは色に加えてラベル文字を併記" },
+        { "nfr_id": "NFR-E-01", "status": "human_attested", "note": "仕様書のエラー文面規約として記述。実文面は sub-state 生成時に確認" },
+        { "nfr_id": "NFR-E-02", "status": "human_attested", "note": "仕様書に自動リトライ (最大 3 回・5 秒間隔) を記述" },
+        { "nfr_id": "NFR-A-05", "status": "human_attested", "note": "詳細画面仕様にオフライン一時保存と復旧後同期を記述" },
+        { "nfr_id": "NFR-ACC-04", "status": "deferred", "note": "OS フォントサイズ追従 (最大 200%) は実装時の検証事項。静的 HTML モックでは検証手段がない" },
+        { "nfr_id": "NFR-P-01〜07 / NFR-S-01〜09 / NFR-A-01〜04 / NFR-E-03〜05 / NFR-ENV-01,02,06 / NFR-BK-01,02", "status": "deferred", "note": "性能・セキュリティ・可用性・ログ・実行環境・バックアップは実装フェーズの検証対象。画面デザインでは検証できないため deferred (計 27 件)" }
+      ]
+    },
+    "ai_improvable_deductions": 0,
+    "human_required_deductions": 2,
+    "tags": [
+      {
+        "item": "welcome_hero_visual",
+        "type": "人間対応必要",
+        "detail": "ウェルカム画面に視覚的な主役がなく第一印象の訴求力が弱い (Layer 3 審美的品質 -1)。グラフィック生成ブロック 21a-21g でヒーロービジュアルを追加する候補。トークン調整では解決しない性質のため AI ループの対象外とした。"
+      },
+      {
+        "item": "brand_logo_placeholder",
+        "type": "人間対応必要",
+        "detail": "ロゴアセット未提供のため角丸四角 + 頭文字「M」の仮マークで代替 (Layer 3 ブランドコヒーレンス -1)。正式ロゴの提供が必要。requirement-deviations.json に 想像デフォルト として記録済。"
+      },
+      {
+        "item": "state_color_info_contrast",
+        "type": "人間対応必要",
+        "detail": "情報バナーの想定配色 info-text #0277BD on info-bg #E1F5FE = 4.27:1 で 1.4.3 AA 未達。現行 3 画面では未使用のため減点していないが、Step 25b で情報バナーを生成する前に Phase 2 でより濃い青の primitive を追加する必要がある (既存 primitive に代替値がないため AI が値を発明せず人間判断に委ねる)。"
+      },
+      {
+        "item": "card_boundary_contrast",
+        "type": "人間対応必要",
+        "detail": "カード枠線 border-default #E8E8E8 on surface #FFFFFF = 1.23:1、かつカード背景 #FFFFFF とページ背景 #F8FAFA が 1.05:1 のため、カードの境界がごく薄い影と枠線だけに依存している。装飾枠線は 1.4.11 の必須対象外だが、おすすめカードは操作可能要素であり境界の知覚性は改善余地がある。ページ背景を濃くするか枠線を強めるかはデザイン判断のため人間ゲートに提示する。"
+      },
+      {
+        "item": "icon_color_variance_chart_bar",
+        "type": "人間対応必要",
+        "detail": "color-lint-report の icons_with_variance = 1。chart-bar アイコンがウェルカムでは on-primary-container、ボトムタブでは選択状態により primary / on-surface-secondary と色が変わる。タブの選択状態表現として正当な文脈変化と判断したが、統一するかは Step 21 で人間確認。"
+      },
+      {
+        "item": "requirement_deviations_screens",
+        "type": "人間対応必要",
+        "detail": "Step 18 Layer 0-REQ で 30 要素を全件マップし、要件にトレースできない / 要件と矛盾する項目 7 件を requirement-deviations.json に記録 (要件矛盾 3 / 想像デフォルト 3 / 根拠薄弱 1)。うち 1 件は要件書内部の不整合 — F-007 は期待CO2削減量を kg-CO2/月 と定義するが 5.2 アクションマスタは全件 kg/週 で、画面はマスタ側に合わせた。要件側の単位統一が必要。requirement-deviations-view.html で確認できる。"
+      }
+    ]
+  },
+  "history": [
+    {
+      "attempt": 1,
+      "evaluated_at": "2026-08-14T18:20:00+09:00",
+      "total": 98,
+      "ai_improvable_deductions": 0,
+      "summary": "Layer 1 40/40, Layer 2 30/30, Layer 3 28/30 (審美 -1 / ブランド -1 = いずれも人間対応必要)"
+    }
+  ]
+}

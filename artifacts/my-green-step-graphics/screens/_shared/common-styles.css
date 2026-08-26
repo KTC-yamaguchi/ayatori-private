@@ -1,0 +1,60 @@
+@charset "UTF-8";
+/* common-styles.css — 全画面共通スタイル（Step 17 Phase A で生成）。
+   各画面 HTML へは style ブロックへ逐語インラインする（外部 CSS 参照は禁止）。
+   色は var(--color-*) 参照のみ（zero-literal）。 */
+
+/* ---- reset ---- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ---- モバイルプレビュー足場（プレビュー専用の canonical 値） ---- */
+body {
+  background: #E8E4DF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  gap: 16px;
+  font-family: var(--font-base);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+.screen {
+  width: 390px;
+  min-height: 844px;
+  background: var(--color-surface);
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- フォーカスリング（WCAG 2.4.7） ---- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--bw-medium) solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* ---- 汎用テキストユーティリティ ---- */
+.num { font-family: var(--font-numeric); font-variant-numeric: var(--font-variant-numeric); }
+.muted { color: var(--color-on-surface-secondary); }
+
+/* ---- 空状態（表現的イラストの代替 = icons/ の単一アイコン拡大） ---- */
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: var(--sp-md); padding: var(--sp-xl) var(--sp-md); text-align: center; }
+.empty-state__icon { width: clamp(64px, 18vw, 96px); height: auto; color: var(--color-on-surface-secondary); }
+
+/* ---- モーション配慮（WCAG 2.3.3） ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

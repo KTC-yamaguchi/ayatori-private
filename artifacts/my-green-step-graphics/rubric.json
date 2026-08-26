@@ -1,0 +1,77 @@
+{
+  "app_name": "my-green-step",
+  "attempt_count": 1,
+  "criteria": [
+    {
+      "axis": "correctness",
+      "weight": 20,
+      "description": "05-features.md の F-004 アクション提案エンジンにおいて、ActionMaster.target_survey_keys とユーザーのアンケート回答（SurveyResponse）の照合条件が一義的に定義されているか。F-006 の週間ベースライン算出において、アンケート回答（住居形態・移動手段・食生活等）から週間CO2排出量を推定する計算式または算出ロジックの根拠が 07-data-definition.md または 05-features.md に明示されているか。ActionMaster.co2_reduction_kg の仮置きデータに出典方針（環境省データ等）・単位（kg-CO2/回）・適用条件（何を基準に1回とカウントするか）が記載されているか"
+    },
+    {
+      "axis": "completeness",
+      "weight": 20,
+      "description": "04-use-cases.md の UC-001〜UC-006 すべてにアクター・事前条件・基本フロー・代替フロー・後条件が記載されているか。08-constraints.md の受入基準（AC-01〜AC-16）が F-001〜F-009 の全 Must 機能（F-001, F-002, F-003, F-004, F-005, F-006, F-009）をカバーしているか。F-006 の可視化3パターン（A: ホーム画面の累積型、B: 詳細画面の週間ビフォー・アフター型、C: アクション記録時の即時フィードバック型）それぞれの入力・処理・出力が 05-features.md に個別に記載されているか。03-user-flow.md にアクション記録直後のCO2削減量フィードバック表示のフローが含まれているか"
+    },
+    {
+      "axis": "unambiguity",
+      "weight": 20,
+      "description": "05-features.md の F-004 において「適用可能なアクションを抽出する」の条件が具体的か（どのアンケート回答がどのアクションにマッチするかの対応表またはルールが示されているか）。07-data-definition.md の ActionMaster.target_survey_keys の JSON 構造（キー名・値の形式・AND/OR条件）が明示されているか。05-features.md・07-data-definition.md 内の「一般的な平均値」「参考値」「環境省データ等」といった曖昧表現に、MVPでの具体的な数値例または出典の特定方針が示されているか。F-006 の「ベースライン」の定義（初回アンケート時点の推定値を固定するか、アンケート再回答で更新するか）が明確か"
+    },
+    {
+      "axis": "consistency",
+      "weight": 20,
+      "description": "02-scope.md の S-001〜S-008 と 05-features.md の F-001〜F-009 の対応関係に漏れや矛盾がないか。03-user-flow.md の各ステップに記載された関連機能ID（F-xxx）が 05-features.md の機能IDと一致しているか。04-use-cases.md の関連機能IDと 05-features.md の機能IDが整合しているか。06-non-functional.md の対応環境（iOS 15+/Android 10+）と 08-constraints.md の CON-01（クロスプラットフォーム開発）が技術的に矛盾していないか。F-006 の可視化仕様（週間ビフォー・アフター）が 00-raw-input.md の確定方針と一致しているか"
+    },
+    {
+      "axis": "feasibility",
+      "weight": 20,
+      "description": "08-constraints.md で開発期間・予算が未定（CON-03, CON-04）である状態で、Must 機能7件（F-001〜F-006, F-009）の実装ボリュームが現実的なMVPに収まるか評価されているか。クロスプラットフォームフレームワーク（Flutter/React Native/KMP）が未選定のまま 06-non-functional.md の性能要件（NFR-P-01〜P-07）を満たせるかの検証観点があるか。07-data-definition.md の ActionMaster.co2_reduction_kg を静的な仮置き値から権威あるデータソースに差し替える際の移行パス（データ構造の拡張性・APIの後方互換性）が設計上考慮されているか。メール送信サービス（EXT-01: SendGrid等）の外部依存がMVP開発をブロックしないか確認されているか"
+    }
+  ],
+  "scores": {
+    "correctness": 19,
+    "completeness": 19,
+    "unambiguity": 17,
+    "consistency": 18,
+    "feasibility": 19
+  },
+  "total": 92,
+  "deficiencies": [
+    {
+      "axis": "correctness",
+      "doc": "05-features.md",
+      "issue": "ACT-007（窓に断熱シート）・ACT-008（地産地消）・ACT-009（環境配慮企業の製品選択）のCO2削減量が「推計値」のみで、算出根拠の詳細（参照元データ・計算過程）が他のアクションと比べて弱い",
+      "severity": "low"
+    },
+    {
+      "axis": "completeness",
+      "doc": "04-use-cases.md",
+      "issue": "UC-002（初回アンケート回答）の基本フローに記載されている設問リスト（住居形態・移動手段・食生活等の6問）が、07-data-definitionに追加した新設問（showerhead_replaced, beef_frequency, ac_filter_cleaning, online_shopping, commute_distance）を反映していない",
+      "severity": "medium"
+    },
+    {
+      "axis": "unambiguity",
+      "doc": "05-features.md",
+      "issue": "ACT-007〜009の3件は「推計値」のままで、MVPリリース時にアプリ内でどのように表記するか（例: 数値横に「参考値」ラベルを付けるか）が未定義",
+      "severity": "low"
+    },
+    {
+      "axis": "unambiguity",
+      "doc": "05-features.md",
+      "issue": "F-003の入力欄に記載されているアンケート設問（住居形態・居住人数・移動手段・通勤距離・食生活・電力契約・関心度の7問）が、07-data-definitionおよびF-004のマッチングルールで使用する11問と不一致",
+      "severity": "medium"
+    },
+    {
+      "axis": "consistency",
+      "doc": "05-features.md",
+      "issue": "F-003のアンケート設問リスト（7問）と07-data-definition.mdのSurveyResponse質問キー（11問）の間に不一致がある。showerhead_replaced, beef_frequency, ac_filter_cleaning, online_shopping, commute_distanceの5問がF-003に未記載",
+      "severity": "medium"
+    },
+    {
+      "axis": "feasibility",
+      "doc": "08-constraints.md",
+      "issue": "CON-03/CON-04に参考見積もりが追加されたが、正式な期間・予算はステークホルダーとの合意待ちであり、確定までスコープ変更のリスクが残る",
+      "severity": "low"
+    }
+  ]
+}

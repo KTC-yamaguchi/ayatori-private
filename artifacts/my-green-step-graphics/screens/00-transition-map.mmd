@@ -1,0 +1,24 @@
+%% h2: モバイル
+%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+flowchart TD
+    start([アプリ起動])
+
+    subgraph onboarding [導入]
+      scrWelcome[ウェルカム]
+    end
+    style onboarding fill:#EDE9FE
+
+    subgraph action [アクション]
+      scrActionList[アクション一覧]
+      scrActionDetail[アクション詳細]
+    end
+    style action fill:#FFEDD5
+
+    start --> scrWelcome
+    scrWelcome -->|はじめる| scrActionList
+    scrActionList <-->|"くわしく見る / 戻る"| scrActionDetail
+
+    style start fill:#D1FAE5,stroke:#10B981
+    style scrWelcome fill:#FFFFFF,stroke:#E5E7EB
+    style scrActionList fill:#FFFFFF,stroke:#E5E7EB
+    style scrActionDetail fill:#FFFFFF,stroke:#E5E7EB

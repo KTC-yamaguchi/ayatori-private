@@ -1,0 +1,39 @@
+{
+  "app_name": "my-green-step-graphics",
+  "updated_at": "2026-08-18T17:49:49+09:00",
+  "model": "gpt-image-2",
+  "size_px": "1024x1024",
+  "level1_words": [
+    "写実的（フォト）"
+  ],
+  "subject": "A single set of footprints crossing a dew-covered green meadow in soft early morning light, with a distant city skyline dissolving into pale haze on the horizon, conveying the idea that one small daily step can change the planet. Wide background composition for a phone screen, subject kept to the upper two thirds, the lower third left calm, airy and almost empty so that overlaid text stays readable.",
+  "variants": [
+    {
+      "id": "A",
+      "label": "フォトA (自然光ドキュメンタリー)",
+      "style_block": "Realistic documentary photograph taken on a full-frame camera with a 35mm lens at f/5.6, soft diffused early-morning natural light with gentle warm backlight catching the dew, natural unretouched textures of grass blades and damp soil, moderate detail density with the horizon left hazy and low contrast, colours harmonized with #117F87 deep teal and #E0F2F1 pale celadon over a bright #F8FAFA off-white sky, on a light background, calm and hopeful, absolutely no illustration, no painterly brushwork, no 3D render look",
+      "prompt": "Realistic documentary photograph taken on a full-frame camera with a 35mm lens at f/5.6, soft diffused early-morning natural light with gentle warm backlight catching the dew, natural unretouched textures of grass blades and damp soil, moderate detail density with the horizon left hazy and low contrast, colours harmonized with #117F87 deep teal and #E0F2F1 pale celadon over a bright #F8FAFA off-white sky, on a light background, calm and hopeful, absolutely no illustration, no painterly brushwork, no 3D render look. A single set of footprints crossing a dew-covered green meadow in soft early morning light, with a distant city skyline dissolving into pale haze on the horizon, conveying the idea that one small daily step can change the planet. Wide background composition for a phone screen, subject kept to the upper two thirds, the lower third left calm, airy and almost empty so that overlaid text stays readable. No embedded text, no readable letters, no real brand likeness. Square 1:1, resolution 1024x1024 pixels.",
+      "digest": "a0773d8fd17dd7530b2f015415f73129d193b1c82d07340fd3883c1b98de177d",
+      "file": "graphics/samples/taste-a.png",
+      "generated_at": "2026-08-18T17:49:07+09:00"
+    },
+    {
+      "id": "B",
+      "label": "フォトB (ミニマル高キー・余白多め)",
+      "style_block": "Clean minimal editorial photograph, high-key exposure with abundant soft white space, shot on a 50mm lens at f/8 with even overcast daylight and almost no hard shadows, very low detail density and a simplified restrained composition, desaturated cool palette harmonized with #E0F2F1 pale celadon and a single #117F87 deep teal accent over #F8FAFA near-white ground, on a light background, crisp clinical and airy, absolutely no illustration, no painterly brushwork, no heavy vignetting",
+      "prompt": "Clean minimal editorial photograph, high-key exposure with abundant soft white space, shot on a 50mm lens at f/8 with even overcast daylight and almost no hard shadows, very low detail density and a simplified restrained composition, desaturated cool palette harmonized with #E0F2F1 pale celadon and a single #117F87 deep teal accent over #F8FAFA near-white ground, on a light background, crisp clinical and airy, absolutely no illustration, no painterly brushwork, no heavy vignetting. A single set of footprints crossing a dew-covered green meadow in soft early morning light, with a distant city skyline dissolving into pale haze on the horizon, conveying the idea that one small daily step can change the planet. Wide background composition for a phone screen, subject kept to the upper two thirds, the lower third left calm, airy and almost empty so that overlaid text stays readable. No embedded text, no readable letters, no real brand likeness. Square 1:1, resolution 1024x1024 pixels.",
+      "digest": "279e050b9ee83f229d6d3a2a88824d614a4ad9a4390316232156db708efa8d77",
+      "file": "graphics/samples/taste-b.png",
+      "generated_at": "2026-08-18T17:49:27+09:00"
+    },
+    {
+      "id": "C",
+      "label": "フォトC (シネマティック浅い被写界深度)",
+      "style_block": "Cinematic photograph shot on a 85mm lens at f/1.8 with a very shallow depth of field, the footprints in sharp focus and the city skyline melting into creamy bokeh, low-angle perspective close to the ground, subtle anamorphic flare and fine film grain, muted teal-leaning colour grade harmonized with #117F87 deep teal and #E0F2F1 pale celadon lifted over #F8FAFA pale sky, on a light background, quiet and cinematic, absolutely no illustration, no painterly brushwork, no crushed dark shadows",
+      "prompt": "Cinematic photograph shot on a 85mm lens at f/1.8 with a very shallow depth of field, the footprints in sharp focus and the city skyline melting into creamy bokeh, low-angle perspective close to the ground, subtle anamorphic flare and fine film grain, muted teal-leaning colour grade harmonized with #117F87 deep teal and #E0F2F1 pale celadon lifted over #F8FAFA pale sky, on a light background, quiet and cinematic, absolutely no illustration, no painterly brushwork, no crushed dark shadows. A single set of footprints crossing a dew-covered green meadow in soft early morning light, with a distant city skyline dissolving into pale haze on the horizon, conveying the idea that one small daily step can change the planet. Wide background composition for a phone screen, subject kept to the upper two thirds, the lower third left calm, airy and almost empty so that overlaid text stays readable. No embedded text, no readable letters, no real brand likeness. Square 1:1, resolution 1024x1024 pixels.",
+      "digest": "e6eb6c35b194c51b01b959a3c70a7f69e47e16d030bf808542128abffcedfced",
+      "file": "graphics/samples/taste-c.png",
+      "generated_at": "2026-08-18T17:49:49+09:00"
+    }
+  ]
+}

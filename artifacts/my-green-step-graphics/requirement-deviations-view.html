@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>要件逸脱リスト — my-green-step-graphics</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 940px; color: #1a1a1a; line-height: 1.55; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.05rem; margin: 1.7rem 0 .6rem; border-bottom: 2px solid #eee; padding-bottom: .3rem; }
+  .count { color: #666; font-weight: 400; font-size: .9rem; }
+  .summary { background: #f5f5f5; border-left: 4px solid #888; padding: .75rem 1rem; margin: 1rem 0; }
+  .summary .big { font-size: 1.5rem; font-weight: 700; }
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f0a500; padding: .5rem 1rem; margin: 1rem 0; font-size: .9rem; }
+  .focus-review { background: #fdecea; border-left: 4px solid #b00020; padding: .6rem 1rem; margin: .3rem 0 .8rem; font-size: .9rem; }
+  .cards { display: flex; flex-direction: column; gap: .7rem; }
+  .card { border: 1px solid #e2e2e2; border-left-width: 5px; border-radius: 6px; padding: .7rem .95rem; background: #fff; }
+  .card.sev-high { border-left-color: #b00020; background: #fdecea; }
+  .card.sev-medium { border-left-color: #f0a500; }
+  .card.sev-low { border-left-color: #bbb; }
+  .card-head { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-bottom: .5rem; }
+  .card-head .no { font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #eef1f4; border-radius: 4px; padding: .05rem .4rem; }
+  .card-head .sev { font-weight: 700; }
+  .card-head .loc { color: #666; font-size: .82rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .status { margin-left: auto; font-size: .82rem; padding: .12rem .55rem; border-radius: 999px; white-space: nowrap; }
+  .status.resolved { background: #e6f4ea; color: #137333; }
+  .status.open { background: #fff3e0; color: #9a6700; }
+  .field { display: grid; grid-template-columns: 15rem 1fr; gap: .6rem; padding: .18rem 0; font-size: .9rem; align-items: start; }
+  .field .k { color: #555; font-weight: 600; }
+  .field .k small { color: #888; font-weight: 400; }
+  .meta { color: #999; font-size: .78rem; margin-top: .45rem; }
+  .action { margin-top: .5rem; font-size: .85rem; background: #f1f7ff; border: 1px dashed #b3d1ff; border-radius: 4px; padding: .4rem .6rem; }
+  .empty { color: #666; }
+  @media (max-width: 640px) {
+    body { margin: 1rem; }
+    .field { grid-template-columns: 1fr; gap: .05rem; }
+  }
+</style>
+</head>
+<body>
+<h1>要件逸脱リスト <small>(my-green-step-graphics)</small></h1>
+<p style="color:#555;margin:.2rem 0 0">要件に無いのに生成物へ入った要素 (要件外追加 / 根拠薄弱 / 想像デフォルト)、および画面手編集と要件文書の食い違い (要件矛盾 / 要件削除) の監査リスト。種別は各カードの「種別」欄を参照。</p>
+
+<div class="summary">
+  <span class="big">未resolved: 0 件</span> / flag 全 7 件 / spec-level 突合: 30 要素
+</div>
+
+<div class="disclaimer">
+  ⚠️ <strong>このリストは「監査がカバーした範囲」だけ</strong>です。floor (最低ここは見る) であって ceiling (ここだけ見ればいい) ではありません。
+  <ul style="margin:.4rem 0">
+    <li>監査は <strong>spec-level の構造化リスト</strong> (requirements の load-bearing specifics / 画面仕様 component / design-brief token) を上流の確定情報に突合した結果です (今回 30 要素を突合)。</li>
+    <li><strong>自動チェック対象外 (＝あなたの目視が必須)</strong>: ① component 内のサブ詳細 (文言・軸ラベル・数値等) ② 仕様書に載っていない要素。</li>
+    <li>検出は LLM の semantic 判断で確率的。<strong>本リストが空でも「逸脱ゼロ」とは限りません</strong> (best-effort 安全網)。</li>
+  </ul>
+</div>
+
+  <h2>画面 (Phase 3 / Step 18) <span class="count">(7 件)</span></h2>
+    <div class="cards">
+      <div class="card sev-medium">
+        <div class="card-head">
+          <span class="no">#3</span>
+          <span class="sev">🟡 medium</span>
+          <span class="loc">screens/mobile/scr-01-welcome.html</span>
+          <span class="status resolved">✅ 容認 (一括)</span>
+        </div>
+        <div class="field"><span class="k">AI が補完した具体</span><span class="v">CTA「はじめる」の遷移先（アクション一覧へ直結）</span></div>
+        <div class="field"><span class="k">種別</span><span class="v">要件矛盾</span></div>
+        <div class="field"><span class="k">元の確定情報との関係<br><small>（なぜこのリストに載ったか）</small></span><span class="v">requirements/03-user-flow.md</span></div>
+        <div class="field"><span class="k">補足</span><span class="v">03-user-flow / 画面一覧では SCR-01 → SCR-02 アカウント登録 → SCR-04 アンケート → タブ画面という順序。本試行では登録・ログイン・アンケートをスコープ外にしたため、ウェルカムからアクション一覧へ直結させている。製品仕様としては誤りであり、試行スコープ由来の意図的な短絡。</span></div>
+        <div class="meta">検出: 18-design-review ・ 2026-08-14T17:55:00+09:00</div>
+      </div>
+      <div class="card sev-medium">
+        <div class="card-head">
+          <span class="no">#4</span>
+          <span class="sev">🟡 medium</span>
+          <span class="loc">screens/mobile/scr-06-action-list.html</span>
+          <span class="status resolved">✅ 容認 (一括)</span>
+        </div>
+        <div class="field"><span class="k">AI が補完した具体</span><span class="v">ボトムタブの dashboard / settings（遷移先を持たない非活性タブ）</span></div>
+        <div class="field"><span class="k">種別</span><span class="v">要件矛盾</span></div>
+        <div class="field"><span class="k">元の確定情報との関係<br><small>（なぜこのリストに載ったか）</small></span><span class="v">screens/00-screen-list.md</span></div>
+        <div class="field"><span class="k">補足</span><span class="v">タブバーは製品どおり 3 タブを表示するが、本試行ではダッシュボード（SCR-05）と設定（SCR-08）を生成しないため押しても遷移しない。実装時は必ず遷移先が必要。</span></div>
+        <div class="meta">検出: 18-design-review ・ 2026-08-14T17:55:00+09:00</div>
+      </div>
+      <div class="card sev-medium">
+        <div class="card-head">
+          <span class="no">#6</span>
+          <span class="sev">🟡 medium</span>
+          <span class="loc">screens/mobile/scr-07-action-detail.html</span>
+          <span class="status resolved">✅ 容認 (一括)</span>
+        </div>
+        <div class="field"><span class="k">AI が補完した具体</span><span class="v">期待CO2削減量の単位（-2.0 kg/週 と表示）</span></div>
+        <div class="field"><span class="k">種別</span><span class="v">要件矛盾</span></div>
+        <div class="field"><span class="k">元の確定情報との関係<br><small>（なぜこのリストに載ったか）</small></span><span class="v">requirements/05-features.md</span></div>
+        <div class="field"><span class="k">補足</span><span class="v">要件書内で単位が食い違っている。F-007 の出力定義は「当該ユーザーの期待CO2削減量（kg-CO2/月）」だが、5.2 アクションマスタデータは全件 kg/週 で定義されている。画面はマスタデータ側（kg/週）に合わせたため F-007 の記述と不一致。要件側の統一が必要。</span></div>
+        <div class="meta">検出: 18-design-review ・ 2026-08-14T17:55:00+09:00</div>
+      </div>
+      <div class="card sev-low">
+        <div class="card-head">
+          <span class="no">#1</span>
+          <span class="sev">⚪ low</span>
+          <span class="loc">screens/mobile/scr-01-welcome.html</span>
+          <span class="status resolved">✅ 容認 (一括)</span>
+        </div>
+        <div class="field"><span class="k">AI が補完した具体</span><span class="v">ブランドマーク（角丸四角 + 文字「M」）</span></div>
+        <div class="field"><span class="k">種別</span><span class="v">想像デフォルト</span></div>
+        <div class="field"><span class="k">元の確定情報との関係<br><small>（なぜこのリストに載ったか）</small></span><span class="v"><em>(要件に対応なし ＝ 要件外)</em></span></div>
+        <div class="field"><span class="k">補足</span><span class="v">ロゴアセットが未提供のため、プライマリ色の角丸四角に頭文字「M」を置いた代替マークを生成した。要件・design-brief にロゴ仕様の記述はない。</span></div>
+        <div class="meta">検出: 18-design-review ・ 2026-08-14T17:55:00+09:00</div>
+      </div>
+      <div class="card sev-low">
+        <div class="card-head">
+          <span class="no">#2</span>
+          <span class="sev">⚪ low</span>
+          <span class="loc">screens/mobile/scr-01-welcome.html</span>
+          <span class="status resolved">✅ 容認 (一括)</span>
+        </div>
+        <div class="field"><span class="k">AI が補完した具体</span><span class="v">価値3ポイントの見出し・説明文（かんたんに始められる / 削減量が目に見える / 毎日つづけやすい）</span></div>
+        <div class="field"><span class="k">種別</span><span class="v">想像デフォルト</span></div>
+        <div class="field"><span class="k">元の確定情報との関係<br><small>（なぜこのリストに載ったか）</small></span><span class="v">requirements/01-overview.md</span></div>
+        <div class="field"><span class="k">補足</span><span class="v">画面一覧に「アプリの価値を伝える3ポイント（アイコン＋短文）」の枠は定義されているが、個々の文言は要件に無く AI が起案した。01-overview の価値提案（エコアクション提案・CO2削減量の可視化・実感の提供）から発想したがそのままの引用ではない。</span></div>
+        <div class="meta">検出: 18-design-review ・ 2026-08-14T17:55:00+09:00</div>
+      </div>
+      <div class="card sev-low">
+        <div class="card-head">
+          <span class="no">#5</span>
+          <span class="sev">⚪ low</span>
+          <span class="loc">screens/mobile/scr-06-action-list.html</span>
+          <span class="status resolved">✅ 容認 (一括)</span>
+        </div>
+        <div class="field"><span class="k">AI が補完した具体</span><span class="v">セクション見出し横の件数表示（2件 / 3件）</span></div>
+        <div class="field"><span class="k">種別</span><span class="v">根拠薄弱</span></div>
+        <div class="field"><span class="k">元の確定情報との関係<br><small>（なぜこのリストに載ったか）</small></span><span class="v">requirements/05-features.md</span></div>
+        <div class="field"><span class="k">補足</span><span class="v">件数バッジは要件に記述がない UI 補助要素。F-004 は提案リスト上位 10 件を返す仕様であり、表示件数の上限・ページングの扱いは未定義。</span></div>
+        <div class="meta">検出: 18-design-review ・ 2026-08-14T17:55:00+09:00</div>
+      </div>
+      <div class="card sev-low">
+        <div class="card-head">
+          <span class="no">#7</span>
+          <span class="sev">⚪ low</span>
+          <span class="loc">screens/mobile/scr-01-welcome.html, screens/mobile/scr-07-action-detail.html</span>
+          <span class="status resolved">✅ 容認 (一括)</span>
+        </div>
+        <div class="field"><span class="k">AI が補完した具体</span><span class="v">CTA 直下の補足テキスト（「はじめると、アクション一覧が表示されます。」/「挑戦すると『実施中のアクション』に追加されます。」）</span></div>
+        <div class="field"><span class="k">種別</span><span class="v">想像デフォルト</span></div>
+        <div class="field"><span class="k">元の確定情報との関係<br><small>（なぜこのリストに載ったか）</small></span><span class="v">requirements/05-features.md</span></div>
+        <div class="field"><span class="k">補足</span><span class="v">押した結果を予告するマイクロコピー。振る舞い自体は F-005 / 画面一覧に沿うが、文言は要件に無く AI が起案した。</span></div>
+        <div class="meta">検出: 18-design-review ・ 2026-08-14T17:55:00+09:00</div>
+      </div>
+    </div>
+
+<p style="color:#888;font-size:.8rem">Generated by scripts/render-deviations-view.mjs from requirement-deviations.json (SoT)。手編集しないこと。</p>
+</body>
+</html>

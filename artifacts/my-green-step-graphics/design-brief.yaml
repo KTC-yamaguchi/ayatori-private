@@ -1,0 +1,188 @@
+schema: "design-brief:final:v1"
+app_name: my-green-step-graphics
+generated_at: "2026-08-14"
+attempt_count: 0
+revision_mode: null
+selected_sample_id: "A"
+selected_label: "ダッシュボード型"
+approved_at: "2026-04-30"
+
+differentiation_summary: >-
+  3 案はいずれも ChargeMinder 2.0 Design System のパレット・書体を共有し、差は情報アーキテクチャに置いた。
+  A 案 = 累積成果 (CO2 削減量) を画面上部に据えるダッシュボード型、B 案 = 次にやるアクションを最上位に置く
+  行動起点型、C 案 = 装飾を削り数値と余白だけで構成するミニマル型。A 案を採択。
+
+common:
+  base_design_system: "ChargeMinder 2.0 Design System"
+  concept: >-
+    「自分の一歩が地球を変える」を静かに、でも確かに実感できる UI。環境アプリにありがちな
+    “エコっぽさの押し売り” ではなく、日常のツールとして溶け込む清潔感のあるデザイン。
+  brand_direction: ["清潔感", "信頼感", "使いやすさ"]
+  tone_and_mood: "落ち着いたティール系、白背景ベース"
+  reference_app: "ChargeMinder 2.0"
+  avoid: ["絵文字の多用", "子供っぽいデザイン"]
+  ui_constraints:
+    emoji: "使用不可（線画アイコン / SVG で代替）"
+    numerals: "等幅フォント (tabular-nums) で統一 — CO2 削減量の視認性確保"
+    icons: "線画 SVG スタイル"
+    illustration_policy: pictogram
+    icon_stroke_width: 1.5
+  provenance: >-
+    本ファイルは Phase 2 当時の design-brief.md (2026-04-16 確定) と tokens.json を現行 schema
+    (design-brief:final:v1) へ形式変換したもの。色値・書体・制約はすべて当該 2 ファイル由来で、
+    新規の色決定は行っていない。domain_surfaces は design-brief.md 「WCAG 改善点」3 項および
+    追加コンポーネント「ビフォーアフター棒グラフ」の記述から導出。
+
+cases:
+  - id: "A"
+    label: "ダッシュボード型"
+    archetype: "clean-dashboard"
+    concept: >-
+      ホーム最上部に累積 CO2 削減量カード (大きな数値 + 杉の木換算) を据え、その下に週間ビフォーアフター
+      グラフ、取り組み中アクションのサマリーを積む。成果の可視化を主役にする構成。
+    differentiation: "成果 (累積値) を最上位に置く。B 案の行動起点、C 案の数値のみ構成と対比。"
+    narrative: >-
+      起動直後に「自分がどれだけ積み上げたか」が目に入ることで、継続の動機付けを行う。数値は等幅で
+      桁揺れを起こさず、右上に Day N を控えめに添えて通算日数を示す。
+    layout:
+      grid: "モバイル 1 カラム、左右 16px の安全余白"
+      spacing: "カード間 12px、セクション間 24px"
+      corner_radius: "カード 12px"
+    typography:
+      heading: "Poppins SemiBold 28px"
+      body: "SF Pro Regular 17px"
+      emphasis: "SF Pro Semibold 17px"
+      caption: "SF Pro Regular 15px"
+      numeric: "SF Pro Mono / tabular-nums（CO2 数値）"
+    depth: "シャドウは rgba(0,0,0,0.04)〜0.05 の極薄 1 段のみ。多段エレベーションは使わない。"
+    dials:
+      density: "medium"
+      ornament: "low"
+      contrast: "high"
+    signature_animation: >-
+      アクション記録時に「-○○g CO2」トーストをフェード + 4px 上方向スライドで提示 (180ms, ease-out)。
+      prefers-reduced-motion 時はフェードのみ。
+    donts:
+      - "絵文字をアイコン代わりに使う"
+      - "ティール #117F87 を小さい本文テキスト色に使う（ボタン背景・アイコン・見出しに限定）"
+      - "グラフの系列を色だけで区別する（ラベル / パターンを併用）"
+    agent_prompt_guide: >-
+      白背景 + ティールアクセントの清潔なダッシュボード。カードは薄いシャドウと 12px 角丸。
+      数値は等幅で大きく、補足は #6B6B6B。アイコンは線画のみ。
+    palette:
+      tokens:
+        - { name: "bg", hex: "#FFFFFF" }
+        - { name: "surface", hex: "#FFFFFF" }
+        - { name: "surface-variant", hex: "#F8FAFA" }
+        - { name: "on-surface", hex: "#0C0C0C" }
+        - { name: "on-surface-variant", hex: "#6B6B6B" }
+        - { name: "primary", hex: "#117F87" }
+        - { name: "on-primary", hex: "#FAFAFA" }
+        - { name: "primary-container", hex: "#CFE5E7" }
+        - { name: "border", hex: "#E8E8E8" }
+        - { name: "border-brand", hex: "#A0CCCF" }
+        - { name: "focus-ring", hex: "#117F87" }
+        - { name: "on-primary-container", hex: "#0E6B72" }
+      oklch_derivation_note: >-
+        Phase 2 では ChargeMinder 2.0 の既存 HEX をそのまま継承したため OKLCH 再導出は行っていない。
+        唯一の補正は補足テキスト #919191 → #6B6B6B (コントラスト 3.0:1 → 4.6:1、WCAG AA 適合)。
+      loop_correction_history:
+        - { attempt: 1, token: "on-surface-variant", from: "#919191", to: "#6B6B6B", reason: "WCAG 1.4.3 AA 未達 (3.0:1)" }
+        - { attempt: 2, token: "on-primary-container (新規追加)", from: "primary #117F87 を tinted 面のテキストに流用", to: "#0E6B72 (teal.800)", reason: "Step 18 実測で #117F87 on #E0F2F1 = 4.11:1 と 1.4.3 AA 未達。tinted 面専用のテキスト/アイコン色を追加し 5.39:1 に補正" }
+        - { attempt: 2, token: "state_colors.error.text", from: "#D32F2F", to: "#B71C1C (red.900)", reason: "Step 18 実測で #D32F2F on #FFEBEE = 4.36:1 と 1.4.3 AA 未達。既存 primitive の red.900 に差し替え 5.75:1 に補正" }
+      state_colors:
+        error:
+          bg: { hex: "#FFEBEE" }
+          text: { hex: "#B71C1C", contrast_label: "5.75:1 AA on #FFEBEE" }
+          border: { hex: "#D32F2F", contrast_label: "4.36:1 (1.4.11 UI 3:1 合格)" }
+        info:
+          bg: { hex: "#E1F5FE" }
+          text: { hex: "#0277BD", contrast_label: "4.5:1 AA on #FFFFFF" }
+          border: { hex: "#0277BD" }
+        warning:
+          bg: { hex: "#FFF8E1" }
+          text: { hex: "#7A4100", contrast_label: "4.5:1+ AA on #FFF8E1" }
+          border: { hex: "#F57F17" }
+        success:
+          bg: { hex: "#E8F5E9" }
+          text: { hex: "#2E7D32", contrast_label: "4.5:1 AA on #FFFFFF" }
+          border: { hex: "#A5D6A7" }
+      domain_surfaces:
+        - name: "chart-baseline"
+          role: "週間ビフォーアフター棒グラフの「ビフォー（基準週）」系列面"
+          driver_tokens: ["on-surface-variant"]
+          contrast_pairs:
+            - { fg: "on-surface-variant", required_ratio: 3, criterion: "1.4.11" }
+          modes:
+            - { mode: "light", hex: "#E0E0E0", design_note: "色のみに依存しないようラベル併記が前提" }
+        - name: "chart-accent"
+          role: "週間ビフォーアフター棒グラフの「アフター（今週）」系列面 / 進捗リングの達成部分"
+          driver_tokens: ["on-surface"]
+          contrast_pairs:
+            - { fg: "on-surface", required_ratio: 3, criterion: "1.4.11" }
+          modes:
+            - { mode: "light", hex: "#4DB6AC", design_note: "削減成果を示すアクセント。数値ラベルを必ず併記" }
+      domain_surfaces_rationale: >-
+        グラフ系列 2 面のみ domain surface として切り出した。カード面・入力面は汎用 palette
+        (surface / surface-variant) で表現でき、独自面を必要としない。
+
+  - id: "B"
+    label: "アクション優先型"
+    archetype: "action-first"
+    concept: >-
+      ホーム最上部を「次にやるアクション」カードにし、累積 CO2 削減量は 1 行サマリーに圧縮する。
+      行動の起点を最短距離に置く構成。
+    differentiation: "成果表示より行動導線を優先。A 案と情報の上下が入れ替わる。"
+    palette:
+      tokens:
+        - { name: "bg", hex: "#FFFFFF" }
+        - { name: "surface", hex: "#FFFFFF" }
+        - { name: "surface-variant", hex: "#F5F5F5" }
+        - { name: "on-surface", hex: "#0C0C0C" }
+        - { name: "on-surface-variant", hex: "#6B6B6B" }
+        - { name: "primary", hex: "#117F87" }
+        - { name: "on-primary", hex: "#FAFAFA" }
+        - { name: "primary-container", hex: "#CFE5E7" }
+        - { name: "border", hex: "#E8E8E8" }
+        - { name: "focus-ring", hex: "#117F87" }
+      state_colors:
+        error:
+          bg: { hex: "#FFEBEE" }
+          text: { hex: "#D32F2F" }
+          border: { hex: "#D32F2F" }
+        info:
+          bg: { hex: "#E1F5FE" }
+          text: { hex: "#0277BD" }
+          border: { hex: "#0277BD" }
+      domain_surfaces: []
+      domain_surfaces_rationale: "案非採択のため未導出（採択案 A 側で導出済み）。"
+
+  - id: "C"
+    label: "ミニマル型"
+    archetype: "editorial-minimal"
+    concept: >-
+      装飾・カード枠線を極限まで削り、数値と余白だけで構成する。区切りは罫線 1 本と余白のみ。
+    differentiation: "カード / シャドウを使わない。A・B 案よりも情報密度が低く静か。"
+    palette:
+      tokens:
+        - { name: "bg", hex: "#FFFFFF" }
+        - { name: "surface", hex: "#FFFFFF" }
+        - { name: "surface-variant", hex: "#E8F0F0" }
+        - { name: "on-surface", hex: "#0C0C0C" }
+        - { name: "on-surface-variant", hex: "#6B6B6B" }
+        - { name: "primary", hex: "#117F87" }
+        - { name: "on-primary", hex: "#FAFAFA" }
+        - { name: "primary-container", hex: "#CFE5E7" }
+        - { name: "border", hex: "#E8E8E8" }
+        - { name: "focus-ring", hex: "#117F87" }
+      state_colors:
+        error:
+          bg: { hex: "#FFEBEE" }
+          text: { hex: "#D32F2F" }
+          border: { hex: "#D32F2F" }
+        info:
+          bg: { hex: "#E1F5FE" }
+          text: { hex: "#0277BD" }
+          border: { hex: "#0277BD" }
+      domain_surfaces: []
+      domain_surfaces_rationale: "案非採択のため未導出（採択案 A 側で導出済み）。"

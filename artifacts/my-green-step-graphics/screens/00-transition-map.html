@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>MyGreenStep（グラフィック試行） 画面遷移図</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- mermaid version pinned — bump intentionally; latest 無指定は破壊的変更で表示崩れの恐れあり -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.min.js"></script>
+  <style>
+    :root { --bg:#FAFAF9; --ink:#1F2937; --ink-muted:#6B7280; --hairline:#E5E7EB; }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--ink);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      margin: 0; padding: 56px 64px;
+    }
+    h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; }
+    .subtitle { color: var(--ink-muted); font-size: 14px; margin: 0 0 28px; max-width: 70ch; line-height: 1.6; }
+    .legend { display: flex; gap: 20px; font-size: 12px; color: var(--ink-muted); font-weight: 500; margin-bottom: 36px; flex-wrap: wrap; }
+    .legend span { display: inline-flex; align-items: center; gap: 8px; }
+    .legend i { width: 14px; height: 14px; display: inline-block; border-radius: 4px; }
+    .legend .lg-screen   { background:#FFFFFF; border: 1px solid #E5E7EB; }
+    .legend .lg-modal    { background:#FEF3C7; border: 1.5px solid #F59E0B; border-radius: 999px; }
+    .legend .lg-external { background:#FFFFFF; border: 1px dashed #9CA3AF; }
+    .legend .lg-entry    { background:#D1FAE5; border: 1.5px solid #10B981; border-radius: 999px; }
+    h2 {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--ink-muted); margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--hairline);
+    }
+    h2:first-of-type { margin-top: 16px; }
+    .mermaid { background: transparent; padding: 0; margin-bottom: 24px; }
+
+    /* B案 Tinted Zones + Pill Labels — Mermaid SVG overrides */
+    .mermaid .cluster .nodeLabel,
+    .mermaid .cluster text {
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 12px !important; font-weight: 600 !important; letter-spacing: 0.02em !important;
+      fill: #4B5563 !important;
+    }
+    .mermaid .cluster rect { rx:16 !important; ry:16 !important; stroke-width:0 !important; }
+
+    /* edge label as pill chip — overlap問題のデザイン的解決 */
+    .mermaid .edgeLabel {
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 11px !important; font-weight: 600 !important; color: #374151 !important;
+    }
+    .mermaid .edgeLabel rect,
+    .mermaid .edgeLabel foreignObject > div {
+      background:#F3F4F6 !important; fill:#F3F4F6 !important; border-radius: 999px !important;
+    }
+    .mermaid .edgeLabel foreignObject > div > span,
+    .mermaid .edgeLabel .label {
+      background:#F3F4F6 !important; padding: 4px 12px !important; border-radius: 999px !important;
+      border: 1px solid #E5E7EB !important; box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+    }
+
+    .mermaid .node .label,
+    .mermaid .node .nodeLabel {
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 13px !important; font-weight: 600 !important;
+    }
+    .mermaid .node rect, .mermaid .node polygon { filter: drop-shadow(0 4px 16px rgba(15,23,42,0.04)); }
+    .mermaid .flowchart-link { stroke: #9CA3AF !important; stroke-width: 1.5px !important; }
+    .mermaid .marker { fill:#9CA3AF !important; stroke:#9CA3AF !important; }
+  </style>
+</head>
+<body>
+  <h1>MyGreenStep（グラフィック試行） 画面遷移図</h1>
+  <p class="subtitle">グラフィック生成の試行として、ウェルカム / アクション一覧 / アクション詳細の 3 画面に絞った遷移図。登録・ログイン・ダッシュボード・設定は本試行のスコープ外のため、「はじめる」は直接アクション一覧へ接続している。</p>
+
+  <div class="legend">
+    <span><i class="lg-entry"></i>開始ノード</span>
+    <span><i class="lg-screen"></i>画面</span>
+    <span><i class="lg-modal"></i>モーダル / 確認</span>
+    <span><i class="lg-external"></i>外部遷移</span>
+  </div>
+
+  <h2>モバイル</h2>
+  <div class="mermaid">
+%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+flowchart TD
+    start([アプリ起動])
+
+    subgraph onboarding [導入]
+      scrWelcome[ウェルカム]
+    end
+    style onboarding fill:#EDE9FE
+
+    subgraph action [アクション]
+      scrActionList[アクション一覧]
+      scrActionDetail[アクション詳細]
+    end
+    style action fill:#FFEDD5
+
+    start --> scrWelcome
+    scrWelcome -->|はじめる| scrActionList
+    scrActionList <-->|"くわしく見る / 戻る"| scrActionDetail
+
+    style start fill:#D1FAE5,stroke:#10B981
+    style scrWelcome fill:#FFFFFF,stroke:#E5E7EB
+    style scrActionList fill:#FFFFFF,stroke:#E5E7EB
+    style scrActionDetail fill:#FFFFFF,stroke:#E5E7EB
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        fontFamily: '"Plus Jakarta Sans", sans-serif',
+        primaryColor: '#FFFFFF',
+        primaryBorderColor: '#E5E7EB',
+        primaryTextColor: '#1F2937',
+        lineColor: '#9CA3AF',
+        edgeLabelBackground: '#F3F4F6'
+      }
+    });
+  </script>
+</body>
+</html>

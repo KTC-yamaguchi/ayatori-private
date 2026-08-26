@@ -1,0 +1,60 @@
+{
+  "app_name": "my-green-step-graphics",
+  "generated_at": "2026-08-14T08:58:54.055Z",
+  "scanned": {
+    "files": 3,
+    "icons": 13,
+    "illustrations": 0
+  },
+  "violations": {
+    "literals": [],
+    "unresolved_vars": [],
+    "other": [],
+    "icon_source_violations": [],
+    "illustration_source_violations": []
+  },
+  "icon_color_variance": [
+    {
+      "icon": "chart-bar",
+      "kind": "icon",
+      "usages": [
+        {
+          "source": "class .welcome__point-icon{color:var(--color-on-primary-container)}",
+          "platform": "mobile",
+          "theme": "default",
+          "count": 1,
+          "screens": [
+            "scr-01-welcome.html"
+          ]
+        },
+        {
+          "source": "indeterminate(.mobile-bottom-nav__item{color:var(--color-on-surface-secondary)} | .mobile-bottom-nav__item{color:var(--color-primary)})",
+          "platform": "mobile",
+          "theme": "default",
+          "count": 1,
+          "screens": [
+            "scr-06-action-list.html"
+          ]
+        }
+      ]
+    }
+  ],
+  "unmatched_svgs": [],
+  "promotion_queue": [],
+  "boundary_violations": [],
+  "theme_asymmetry": [],
+  "extra_root_vars": [],
+  "summary": {
+    "literal_colors": 0,
+    "literal_occurrences": 0,
+    "unresolved_vars": 0,
+    "unresolved_vars_excl_promotion": 0,
+    "other_violations": 0,
+    "other_by_type": {},
+    "icons_with_variance": 1,
+    "unmatched_svgs": 0,
+    "promotion_queue": 0,
+    "boundary_violations": 0,
+    "extra_root_vars": 0
+  }
+}

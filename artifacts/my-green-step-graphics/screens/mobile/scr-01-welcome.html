@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyGreenStep — ウェルカム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* ---- color (semantic layer) ---- */
+  --color-primary: #117F87;
+  --color-primary-hover: #0E6B72;
+  --color-primary-active: #0A5A60;
+  --color-on-primary: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-surface-variant: #F8FAFA;
+  --color-on-surface: #0C0C0C;
+  --color-on-surface-secondary: #6B6B6B;
+  --color-border-default: #E8E8E8;
+  --color-border-brand: #A0CCCF;
+  --color-success: #2E7D32;
+  --color-success-bg: #E8F5E9;
+  --color-error: #D32F2F;
+  --color-error-bg: #FFEBEE;
+  --color-warning: #F57F17;
+  --color-warning-bg: #FFF8E1;
+  --color-warning-text: #7A4100;
+  --color-warning-toast-bg: #FFF3E0;
+  --color-info: #0277BD;
+  --color-info-bg: #E1F5FE;
+  --color-destructive: #D32F2F;
+  --color-destructive-hover: #B71C1C;
+  --color-secondary-active-bg: #E0F2F1;
+  --color-disabled: #BDBDBD;
+  --color-focus-ring: #117F87;
+  --color-chart-accent: #4DB6AC;
+  --color-baseline-gray: #E0E0E0;
+  --color-shadow-sm: rgba(0,0,0,0.04);
+  --color-shadow-md: rgba(0,0,0,0.12);
+  --color-error-text: #B71C1C;
+  --color-error-border: #D32F2F;
+  --color-info-text: #0277BD;
+  --color-info-border: #0277BD;
+  --color-warning-border: #F57F17;
+  --color-success-text: #2E7D32;
+  --color-success-border: #A5D6A7;
+  --color-on-primary-container: #0E6B72;
+  /* ---- font family ---- */
+  --font-display: Poppins, sans-serif;
+  --font-base: -apple-system, 'SF Pro', 'Helvetica Neue', sans-serif;
+  --font-numeric: 'SF Mono', 'DM Mono', 'JetBrains Mono', monospace;
+  --font-variant-numeric: tabular-nums;
+  /* ---- font size ---- */
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 15px;
+  --fs-md: 17px;
+  --fs-lg: 20px;
+  --fs-xl: 24px;
+  --fs-2xl: 28px;
+  --fs-3xl: 42px;
+  /* ---- line height ---- */
+  --lh-tight: 1.1;
+  --lh-base: 1.3;
+  --lh-relaxed: 1.5;
+  /* ---- font weight ---- */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-display: 590;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  /* ---- spacing ---- */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+  --sp-2xl: 40px;
+  --sp-touch: 44px;
+  /* ---- radius ---- */
+  --radius-xxs: 2px;
+  --radius-xs: 3px;
+  --radius-sm: 8px;
+  --radius-sm-plus: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 32px;
+  --radius-pill-sm: 100px;
+  --radius-pill: 500px;
+  --radius-circle: 50%;
+  /* ---- border width ---- */
+  --bw-thin: 1px;
+  --bw-medium: 2px;
+  /* ---- shadow (色は --color-shadow-* を参照) ---- */
+  --shadow-xs: 0 1px 2px var(--color-shadow-sm);
+  --shadow-sm: 0 1px 3px var(--color-shadow-sm);
+  --shadow-md: 0 4px 16px var(--color-shadow-md);
+}
+
+/* common-styles.css — 全画面共通スタイル（Step 17 Phase A で生成）。
+   各画面 HTML へは style ブロックへ逐語インラインする（外部 CSS 参照は禁止）。
+   色は var(--color-*) 参照のみ（zero-literal）。 */
+
+/* ---- reset ---- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ---- モバイルプレビュー足場（プレビュー専用の canonical 値） ---- */
+body {
+  background: #E8E4DF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  gap: 16px;
+  font-family: var(--font-base);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+.screen {
+  width: 390px;
+  min-height: 844px;
+  background: var(--color-surface);
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- フォーカスリング（WCAG 2.4.7） ---- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--bw-medium) solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* ---- 汎用テキストユーティリティ ---- */
+.num { font-family: var(--font-numeric); font-variant-numeric: var(--font-variant-numeric); }
+.muted { color: var(--color-on-surface-secondary); }
+
+/* ---- 空状態（表現的イラストの代替 = icons/ の単一アイコン拡大） ---- */
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: var(--sp-md); padding: var(--sp-xl) var(--sp-md); text-align: center; }
+.empty-state__icon { width: clamp(64px, 18vw, 96px); height: auto; color: var(--color-on-surface-secondary); }
+
+/* ---- モーション配慮（WCAG 2.3.3） ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* components.css — 共通部品 (chrome) CSS の正典。Step 17 Step 0b-1 で生成。
+   各画面 HTML の <style> へ逐語インラインする (@charset 行は含めない)。
+   色は var(--color-*) 参照のみ。 */
+
+/* ---- mobile header (A / B 共通) ---- */
+.mobile-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  height: 56px;
+  padding: 0 var(--sp-md);
+  background: var(--color-surface);
+  border-bottom: var(--bw-thin) solid var(--color-border-default);
+}
+.mobile-header h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-base);
+  color: var(--color-on-surface);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobile-header--sub h1 { font-size: var(--fs-md); }
+.mobile-header__back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-touch);
+  height: var(--sp-touch);
+  margin-left: calc(var(--sp-sm) * -1);
+  color: var(--color-on-surface);
+  border-radius: var(--radius-sm);
+}
+.mobile-header__back svg { width: 24px; height: 24px; }
+.mobile-header__action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: var(--sp-xs);
+  color: var(--color-primary);
+  font-size: var(--fs-sm);
+}
+
+/* ---- mobile bottom nav (タブバー) ---- */
+.mobile-bottom-nav {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--color-surface);
+  border-top: var(--bw-thin) solid var(--color-border-default);
+  padding-bottom: var(--sp-sm);
+}
+.mobile-bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-xs);
+  min-height: var(--sp-touch);
+  padding: var(--sp-sm) var(--sp-xs) var(--sp-xs);
+  text-decoration: none;
+  color: var(--color-on-surface-secondary);
+}
+.mobile-bottom-nav__item svg { width: 24px; height: 24px; }
+.mobile-bottom-nav__item span {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+}
+.mobile-bottom-nav__item[aria-current="page"] { color: var(--color-primary); }
+
+/* ---- 画面本文の共通スクロール領域 ---- */
+.screen__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+  background: var(--color-surface-variant);
+}
+
+/* ---- scr-01-welcome 固有スタイル ---- */
+.screen__bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+/* 生成グラフィックに水彩紙のふち (実測: 上11px / 左5px / 右3px @780x1688) が写り込むため、
+   3% 拡大して枠外へ追い出す。拡大率は実測値 + 余裕分 (必要最小 1.013) で最小限に留める。 */
+.screen__bg img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.03); }
+.screen__bg::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--color-surface) 10%, transparent) 0%,
+    color-mix(in srgb, var(--color-surface) 30%, transparent) 30%,
+    color-mix(in srgb, var(--color-surface) 55%, transparent) 60%,
+    color-mix(in srgb, var(--color-surface) 80%, transparent) 85%,
+    color-mix(in srgb, var(--color-surface) 90%, transparent) 100%); }
+.welcome { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; padding: var(--sp-xl) var(--sp-lg) var(--sp-lg); gap: var(--sp-lg); background: transparent; }
+.welcome__brand { display: flex; align-items: center; gap: var(--sp-sm); }
+.welcome__brand-mark { width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--color-primary); display: inline-flex; align-items: center; justify-content: center; color: var(--color-on-primary); font-family: var(--font-display); font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height: 1; }
+.welcome__brand-name { font-family: var(--font-display); font-size: var(--fs-md); font-weight: var(--fw-semibold); color: var(--color-on-surface); }
+.welcome__hero { display: flex; flex-direction: column; gap: var(--sp-md); }
+.welcome__catch { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: var(--fw-semibold); line-height: var(--lh-tight); color: var(--color-on-surface); }
+.welcome__lead { font-size: var(--fs-base); line-height: var(--lh-relaxed); color: var(--color-on-surface); }
+.welcome__points { display: flex; flex-direction: column; gap: var(--sp-md); margin-top: var(--sp-xs); }
+.welcome__point { display: flex; gap: var(--sp-md); align-items: flex-start; }
+.welcome__point-icon { flex: none; width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-on-primary-container); display: inline-flex; align-items: center; justify-content: center; }
+.welcome__point-icon svg { width: 22px; height: 22px; }
+.welcome__point-title { font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--color-on-surface); line-height: var(--lh-base); }
+.welcome__point-desc { font-size: var(--fs-sm); color: var(--color-on-surface); line-height: var(--lh-relaxed); margin-top: 2px; }
+.welcome__footer { margin-top: auto; display: flex; flex-direction: column; gap: var(--sp-md); }
+.btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: var(--sp-touch); padding: 14px 20px; border: none; border-radius: var(--radius-pill); background: var(--color-primary); color: var(--color-on-primary); font-family: var(--font-base); font-size: var(--fs-md); font-weight: var(--fw-semibold); text-decoration: none; cursor: pointer; }
+.welcome__note { font-size: var(--fs-sm); color: var(--color-on-surface); text-align: center; line-height: var(--lh-relaxed); }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+  <div class="screen">
+    <div class="screen__bg" data-graphic-slot="welcome-bg">
+<img src="../_shared/graphics/welcome-bg.png" alt="welcome-bg" width="390" height="844" style="object-fit:cover">
+</div>
+    <div class="welcome">
+      <div class="welcome__brand">
+        <span class="welcome__brand-mark" aria-hidden="true">M</span>
+        <span class="welcome__brand-name">MyGreenStep</span>
+      </div>
+
+      <div class="welcome__hero">
+        <h1 class="welcome__catch">自分の一歩が<br>地球を変える</h1>
+        <p class="welcome__lead">毎日のちょっとした選択が、CO2削減という確かな結果になります。あなたの暮らしに合ったアクションから始めましょう。</p>
+      </div>
+
+      <div class="welcome__points">
+        <div class="welcome__point">
+          <span class="welcome__point-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+    </svg></span>
+          <div>
+            <p class="welcome__point-title">かんたんに始められる</p>
+            <p class="welcome__point-desc">いくつかの質問に答えるだけで、あなた向けのアクションが並びます。</p>
+          </div>
+        </div>
+        <div class="welcome__point">
+          <span class="welcome__point-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/>
+    </svg></span>
+          <div>
+            <p class="welcome__point-title">削減量が目に見える</p>
+            <p class="welcome__point-desc">記録した分だけ、CO2削減量が数字と杉の木の本数で積み上がります。</p>
+          </div>
+        </div>
+        <div class="welcome__point">
+          <span class="welcome__point-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z"/>
+    </svg></span>
+          <div>
+            <p class="welcome__point-title">毎日つづけやすい</p>
+            <p class="welcome__point-desc">やったことをタップで記録するだけ。無理なく続く仕組みです。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="welcome__footer">
+        <a class="btn-primary" href="scr-06-action-list.html">はじめる</a>
+        <p class="welcome__note">はじめると、アクション一覧が表示されます。</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

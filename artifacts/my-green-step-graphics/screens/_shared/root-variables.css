@@ -1,0 +1,93 @@
+/* root-variables.css — tokens.json (SoT) から機械生成。手編集禁止。 */
+/* app: my-green-step-graphics */
+:root {
+  /* ---- color (semantic layer) ---- */
+  --color-primary: #117F87;
+  --color-primary-hover: #0E6B72;
+  --color-primary-active: #0A5A60;
+  --color-on-primary: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-surface-variant: #F8FAFA;
+  --color-on-surface: #0C0C0C;
+  --color-on-surface-secondary: #6B6B6B;
+  --color-border-default: #E8E8E8;
+  --color-border-brand: #A0CCCF;
+  --color-success: #2E7D32;
+  --color-success-bg: #E8F5E9;
+  --color-error: #D32F2F;
+  --color-error-bg: #FFEBEE;
+  --color-warning: #F57F17;
+  --color-warning-bg: #FFF8E1;
+  --color-warning-text: #7A4100;
+  --color-warning-toast-bg: #FFF3E0;
+  --color-info: #0277BD;
+  --color-info-bg: #E1F5FE;
+  --color-destructive: #D32F2F;
+  --color-destructive-hover: #B71C1C;
+  --color-secondary-active-bg: #E0F2F1;
+  --color-disabled: #BDBDBD;
+  --color-focus-ring: #117F87;
+  --color-chart-accent: #4DB6AC;
+  --color-baseline-gray: #E0E0E0;
+  --color-shadow-sm: rgba(0,0,0,0.04);
+  --color-shadow-md: rgba(0,0,0,0.12);
+  --color-error-text: #B71C1C;
+  --color-error-border: #D32F2F;
+  --color-info-text: #0277BD;
+  --color-info-border: #0277BD;
+  --color-warning-border: #F57F17;
+  --color-success-text: #2E7D32;
+  --color-success-border: #A5D6A7;
+  --color-on-primary-container: #0E6B72;
+  /* ---- font family ---- */
+  --font-display: Poppins, sans-serif;
+  --font-base: -apple-system, 'SF Pro', 'Helvetica Neue', sans-serif;
+  --font-numeric: 'SF Mono', 'DM Mono', 'JetBrains Mono', monospace;
+  --font-variant-numeric: tabular-nums;
+  /* ---- font size ---- */
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 15px;
+  --fs-md: 17px;
+  --fs-lg: 20px;
+  --fs-xl: 24px;
+  --fs-2xl: 28px;
+  --fs-3xl: 42px;
+  /* ---- line height ---- */
+  --lh-tight: 1.1;
+  --lh-base: 1.3;
+  --lh-relaxed: 1.5;
+  /* ---- font weight ---- */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-display: 590;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  /* ---- spacing ---- */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+  --sp-2xl: 40px;
+  --sp-touch: 44px;
+  /* ---- radius ---- */
+  --radius-xxs: 2px;
+  --radius-xs: 3px;
+  --radius-sm: 8px;
+  --radius-sm-plus: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 32px;
+  --radius-pill-sm: 100px;
+  --radius-pill: 500px;
+  --radius-circle: 50%;
+  /* ---- border width ---- */
+  --bw-thin: 1px;
+  --bw-medium: 2px;
+  /* ---- shadow (色は --color-shadow-* を参照) ---- */
+  --shadow-xs: 0 1px 2px var(--color-shadow-sm);
+  --shadow-sm: 0 1px 3px var(--color-shadow-sm);
+  --shadow-md: 0 4px 16px var(--color-shadow-md);
+}

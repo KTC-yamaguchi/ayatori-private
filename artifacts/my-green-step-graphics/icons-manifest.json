@@ -1,0 +1,116 @@
+{
+  "library": "heroicons",
+  "version_ref": "master",
+  "style_default": "outline (24px)",
+  "icons": [
+    {
+      "name": "arrow-left",
+      "style": "outline",
+      "used_in": [
+        "chrome:mobile-header-sub",
+        "scr-07-action-detail"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/arrow-left.svg"
+    },
+    {
+      "name": "chart-bar",
+      "style": "outline",
+      "used_in": [
+        "chrome:mobile-bottom-nav",
+        "scr-01-welcome"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/chart-bar.svg"
+    },
+    {
+      "name": "clipboard-document-check",
+      "style": "outline",
+      "used_in": [
+        "chrome:mobile-bottom-nav"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/clipboard-document-check.svg"
+    },
+    {
+      "name": "cog-6-tooth",
+      "style": "outline",
+      "used_in": [
+        "chrome:mobile-bottom-nav"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/cog-6-tooth.svg"
+    },
+    {
+      "name": "check-circle",
+      "style": "outline",
+      "used_in": [
+        "scr-01-welcome",
+        "scr-06-action-list",
+        "scr-07-action-detail"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/check-circle.svg"
+    },
+    {
+      "name": "calendar-days",
+      "style": "outline",
+      "used_in": [
+        "scr-01-welcome"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/calendar-days.svg"
+    },
+    {
+      "name": "shopping-bag",
+      "style": "outline",
+      "used_in": [
+        "scr-06-action-list"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/shopping-bag.svg"
+    },
+    {
+      "name": "bolt",
+      "style": "outline",
+      "used_in": [
+        "scr-06-action-list"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/bolt.svg"
+    },
+    {
+      "name": "sun",
+      "style": "outline",
+      "used_in": [
+        "scr-06-action-list"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/sun.svg"
+    },
+    {
+      "name": "chevron-right",
+      "style": "outline",
+      "used_in": [
+        "scr-06-action-list"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/chevron-right.svg"
+    },
+    {
+      "name": "truck",
+      "style": "outline",
+      "used_in": [
+        "scr-06-action-list"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/truck.svg"
+    },
+    {
+      "name": "shopping-cart",
+      "style": "outline",
+      "used_in": [
+        "scr-06-action-list",
+        "scr-07-action-detail"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/shopping-cart.svg"
+    },
+    {
+      "name": "map-pin",
+      "style": "outline",
+      "used_in": [
+        "scr-06-action-list"
+      ],
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/optimized/24/outline/map-pin.svg"
+    }
+  ]
+}

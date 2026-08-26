@@ -1,0 +1,116 @@
+{
+  "app_name": "my-green-step-graphics",
+  "entries": [
+    {
+      "phase": "screens",
+      "raised_by_step": "18-design-review",
+      "artifact": "screens/mobile/scr-01-welcome.html",
+      "element": "ブランドマーク（角丸四角 + 文字「M」）",
+      "deviation_kind": "想像デフォルト",
+      "description": "ロゴアセットが未提供のため、プライマリ色の角丸四角に頭文字「M」を置いた代替マークを生成した。要件・design-brief にロゴ仕様の記述はない。",
+      "requirement_ref": null,
+      "severity": "low",
+      "detected_at": "2026-08-14T17:55:00+09:00",
+      "resolved_at": "2026-08-15T09:05:00+09:00",
+      "resolution": "容認",
+      "resolution_mode": "bulk"
+    },
+    {
+      "phase": "screens",
+      "raised_by_step": "18-design-review",
+      "artifact": "screens/mobile/scr-01-welcome.html",
+      "element": "価値3ポイントの見出し・説明文（かんたんに始められる / 削減量が目に見える / 毎日つづけやすい）",
+      "deviation_kind": "想像デフォルト",
+      "description": "画面一覧に「アプリの価値を伝える3ポイント（アイコン＋短文）」の枠は定義されているが、個々の文言は要件に無く AI が起案した。01-overview の価値提案（エコアクション提案・CO2削減量の可視化・実感の提供）から発想したがそのままの引用ではない。",
+      "requirement_ref": "requirements/01-overview.md",
+      "severity": "low",
+      "detected_at": "2026-08-14T17:55:00+09:00",
+      "resolved_at": "2026-08-15T09:05:00+09:00",
+      "resolution": "容認",
+      "resolution_mode": "bulk"
+    },
+    {
+      "phase": "screens",
+      "raised_by_step": "18-design-review",
+      "artifact": "screens/mobile/scr-01-welcome.html",
+      "element": "CTA「はじめる」の遷移先（アクション一覧へ直結）",
+      "deviation_kind": "要件矛盾",
+      "description": "03-user-flow / 画面一覧では SCR-01 → SCR-02 アカウント登録 → SCR-04 アンケート → タブ画面という順序。本試行では登録・ログイン・アンケートをスコープ外にしたため、ウェルカムからアクション一覧へ直結させている。製品仕様としては誤りであり、試行スコープ由来の意図的な短絡。",
+      "requirement_ref": "requirements/03-user-flow.md",
+      "severity": "medium",
+      "detected_at": "2026-08-14T17:55:00+09:00",
+      "resolved_at": "2026-08-15T09:05:00+09:00",
+      "resolution": "容認",
+      "resolution_mode": "bulk"
+    },
+    {
+      "phase": "screens",
+      "raised_by_step": "18-design-review",
+      "artifact": "screens/mobile/scr-06-action-list.html",
+      "element": "ボトムタブの dashboard / settings（遷移先を持たない非活性タブ）",
+      "deviation_kind": "要件矛盾",
+      "description": "タブバーは製品どおり 3 タブを表示するが、本試行ではダッシュボード（SCR-05）と設定（SCR-08）を生成しないため押しても遷移しない。実装時は必ず遷移先が必要。",
+      "requirement_ref": "screens/00-screen-list.md",
+      "severity": "medium",
+      "detected_at": "2026-08-14T17:55:00+09:00",
+      "resolved_at": "2026-08-15T09:05:00+09:00",
+      "resolution": "容認",
+      "resolution_mode": "bulk"
+    },
+    {
+      "phase": "screens",
+      "raised_by_step": "18-design-review",
+      "artifact": "screens/mobile/scr-06-action-list.html",
+      "element": "セクション見出し横の件数表示（2件 / 3件）",
+      "deviation_kind": "根拠薄弱",
+      "description": "件数バッジは要件に記述がない UI 補助要素。F-004 は提案リスト上位 10 件を返す仕様であり、表示件数の上限・ページングの扱いは未定義。",
+      "requirement_ref": "requirements/05-features.md",
+      "severity": "low",
+      "detected_at": "2026-08-14T17:55:00+09:00",
+      "resolved_at": "2026-08-15T09:05:00+09:00",
+      "resolution": "容認",
+      "resolution_mode": "bulk"
+    },
+    {
+      "phase": "screens",
+      "raised_by_step": "18-design-review",
+      "artifact": "screens/mobile/scr-07-action-detail.html",
+      "element": "期待CO2削減量の単位（-2.0 kg/週 と表示）",
+      "deviation_kind": "要件矛盾",
+      "description": "要件書内で単位が食い違っている。F-007 の出力定義は「当該ユーザーの期待CO2削減量（kg-CO2/月）」だが、5.2 アクションマスタデータは全件 kg/週 で定義されている。画面はマスタデータ側（kg/週）に合わせたため F-007 の記述と不一致。要件側の統一が必要。",
+      "requirement_ref": "requirements/05-features.md",
+      "severity": "medium",
+      "detected_at": "2026-08-14T17:55:00+09:00",
+      "resolved_at": "2026-08-15T09:05:00+09:00",
+      "resolution": "容認",
+      "resolution_mode": "bulk"
+    },
+    {
+      "phase": "screens",
+      "raised_by_step": "18-design-review",
+      "artifact": "screens/mobile/scr-01-welcome.html, screens/mobile/scr-07-action-detail.html",
+      "element": "CTA 直下の補足テキスト（「はじめると、アクション一覧が表示されます。」/「挑戦すると『実施中のアクション』に追加されます。」）",
+      "deviation_kind": "想像デフォルト",
+      "description": "押した結果を予告するマイクロコピー。振る舞い自体は F-005 / 画面一覧に沿うが、文言は要件に無く AI が起案した。",
+      "requirement_ref": "requirements/05-features.md",
+      "severity": "low",
+      "detected_at": "2026-08-14T17:55:00+09:00",
+      "resolved_at": "2026-08-15T09:05:00+09:00",
+      "resolution": "容認",
+      "resolution_mode": "bulk"
+    }
+  ],
+  "coverage": [
+    {
+      "phase": "screens",
+      "raised_by_step": "18-design-review",
+      "enumerated_count": 30,
+      "enumerated_refs": [
+        "scr-01-welcome: ブランドマーク / アプリ名 / キャッチコピー / リード文 / 価値3ポイント / CTA「はじめる」 / CTA 遷移先 / 補足テキスト",
+        "scr-06-action-list: ヘッダーA / ボトムタブ3タブ / 非活性タブ2件 / 実施中セクション / 実施中カード2件(ACT-004,005) / 「やった」ボタン / おすすめセクション / おすすめカード3件(ACT-001,003,006) / カテゴリバッジ / 難易度バッジ / CO2削減量表示 / 件数表示",
+        "scr-07-action-detail: ヘッダーB(戻る) / カテゴリ・難易度バッジ / 期待CO2削減量ヒーロー / 年間換算表記 / なぜ効果的か本文 / 算出根拠テキスト / やり方3ステップ / CTA「挑戦する」 / 補足テキスト / メモ欄なしの決定"
+      ],
+      "checked_at": "2026-08-14T17:55:00+09:00"
+    }
+  ]
+}

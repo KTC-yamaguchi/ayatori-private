@@ -1,0 +1,90 @@
+@charset "UTF-8";
+/* components.css — 共通部品 (chrome) CSS の正典。Step 17 Step 0b-1 で生成。
+   各画面 HTML の <style> へ逐語インラインする (@charset 行は含めない)。
+   色は var(--color-*) 参照のみ。 */
+
+/* ---- mobile header (A / B 共通) ---- */
+.mobile-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  height: 56px;
+  padding: 0 var(--sp-md);
+  background: var(--color-surface);
+  border-bottom: var(--bw-thin) solid var(--color-border-default);
+}
+.mobile-header h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-base);
+  color: var(--color-on-surface);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobile-header--sub h1 { font-size: var(--fs-md); }
+.mobile-header__back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-touch);
+  height: var(--sp-touch);
+  margin-left: calc(var(--sp-sm) * -1);
+  color: var(--color-on-surface);
+  border-radius: var(--radius-sm);
+}
+.mobile-header__back svg { width: 24px; height: 24px; }
+.mobile-header__action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: var(--sp-xs);
+  color: var(--color-primary);
+  font-size: var(--fs-sm);
+}
+
+/* ---- mobile bottom nav (タブバー) ---- */
+.mobile-bottom-nav {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--color-surface);
+  border-top: var(--bw-thin) solid var(--color-border-default);
+  padding-bottom: var(--sp-sm);
+}
+.mobile-bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-xs);
+  min-height: var(--sp-touch);
+  padding: var(--sp-sm) var(--sp-xs) var(--sp-xs);
+  text-decoration: none;
+  color: var(--color-on-surface-secondary);
+}
+.mobile-bottom-nav__item svg { width: 24px; height: 24px; }
+.mobile-bottom-nav__item span {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+}
+.mobile-bottom-nav__item[aria-current="page"] { color: var(--color-primary); }
+
+/* ---- 画面本文の共通スクロール領域 ---- */
+.screen__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+  background: var(--color-surface-variant);
+}

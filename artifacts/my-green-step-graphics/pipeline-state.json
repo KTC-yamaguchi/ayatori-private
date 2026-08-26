@@ -1,0 +1,72 @@
+{
+  "app_name": "my-green-step-graphics",
+  "approvals": {
+    "step07_approved_at": "2026-04-30",
+    "step13_approved_at": "2026-04-30",
+    "step16_approved_at": "2026-08-14T17:30:00+09:00",
+    "screens_human_approved": true,
+    "step21_approved_at": "2026-08-15T09:05:00+09:00",
+    "graphics_human_approved": true,
+    "step21g_approved_at": "2026-08-19T13:07:03+09:00"
+  },
+  "confluence": {
+    "design": {
+      "save_status": "skipped",
+      "save_count": 2
+    }
+  },
+  "screens": {
+    "step17_completed_at": "2026-08-14T18:05:00+09:00",
+    "step18_completed_at": "2026-08-14T18:15:00+09:00",
+    "step19_score": 98,
+    "step20_completed_at": "2026-08-14T18:25:00+09:00",
+    "graphics": {
+      "step21a_completed_at": "2026-08-15T00:35:04+09:00",
+      "decision": "generate",
+      "taste_confirmed_at": "2026-08-19T09:03:56+09:00",
+      "prompts_confirmed_at": "2026-08-19T09:19:07+09:00",
+      "generated_files": [
+        {
+          "graphic_id": "welcome-bg",
+          "file": "screens/_shared/graphics/welcome-bg.png",
+          "generated_at": "2026-08-19T12:56:53+09:00",
+          "source_digest": "e362108024bfae0b31a97b853a31ee7d6a89334074a47dd7a14fe83a43909d9d"
+        },
+        {
+          "graphic_id": "action-energy",
+          "file": "screens/_shared/graphics/action-energy.png",
+          "generated_at": "2026-08-19T12:57:13+09:00",
+          "source_digest": "f7736c2ec57c4c85874b01269ea76641ae022a30a17fefd229894d9e4454c28a"
+        },
+        {
+          "graphic_id": "action-meat-free",
+          "file": "screens/_shared/graphics/action-meat-free.png",
+          "generated_at": "2026-08-19T12:57:34+09:00",
+          "source_digest": "bc2e8cd086eb50d8c030aee08c8f6607b7b2b8fcbde534383d9924154018a99d"
+        },
+        {
+          "graphic_id": "action-walk",
+          "file": "screens/_shared/graphics/action-walk.png",
+          "generated_at": "2026-08-19T12:57:58+09:00",
+          "source_digest": "385372e7a669f61c8f28e3dfaa4c9d48c83313ee43408f09c165f58a0484d726"
+        },
+        {
+          "graphic_id": "action-aircon-filter",
+          "file": "screens/_shared/graphics/action-aircon-filter.png",
+          "generated_at": "2026-08-19T12:58:17+09:00",
+          "source_digest": "aea937c54610e7aa8e0f0f6e76c0c7fd09276d1bd7cde96b1da504a2e9879d2e"
+        },
+        {
+          "graphic_id": "action-delivery",
+          "file": "screens/_shared/graphics/action-delivery.png",
+          "generated_at": "2026-08-19T12:58:33+09:00",
+          "source_digest": "f0288aa786133c9084a76ebd6e050a5070a574aad955e2e52214aa7ecc7f5165"
+        }
+      ],
+      "step21e_completed_at": "2026-08-19T12:58:33+09:00",
+      "step21f_completed_at": "2026-08-19T12:58:59+09:00"
+    },
+    "step22_figma_status": "skipped_stub_mode"
+  },
+  "schema_version": "2026-05-22"
+}

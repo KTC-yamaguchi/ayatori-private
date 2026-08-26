@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyGreenStep — アクション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* ---- color (semantic layer) ---- */
+  --color-primary: #117F87;
+  --color-primary-hover: #0E6B72;
+  --color-primary-active: #0A5A60;
+  --color-on-primary: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-surface-variant: #F8FAFA;
+  --color-on-surface: #0C0C0C;
+  --color-on-surface-secondary: #6B6B6B;
+  --color-border-default: #E8E8E8;
+  --color-border-brand: #A0CCCF;
+  --color-success: #2E7D32;
+  --color-success-bg: #E8F5E9;
+  --color-error: #D32F2F;
+  --color-error-bg: #FFEBEE;
+  --color-warning: #F57F17;
+  --color-warning-bg: #FFF8E1;
+  --color-warning-text: #7A4100;
+  --color-warning-toast-bg: #FFF3E0;
+  --color-info: #0277BD;
+  --color-info-bg: #E1F5FE;
+  --color-destructive: #D32F2F;
+  --color-destructive-hover: #B71C1C;
+  --color-secondary-active-bg: #E0F2F1;
+  --color-disabled: #BDBDBD;
+  --color-focus-ring: #117F87;
+  --color-chart-accent: #4DB6AC;
+  --color-baseline-gray: #E0E0E0;
+  --color-shadow-sm: rgba(0,0,0,0.04);
+  --color-shadow-md: rgba(0,0,0,0.12);
+  --color-error-text: #B71C1C;
+  --color-error-border: #D32F2F;
+  --color-info-text: #0277BD;
+  --color-info-border: #0277BD;
+  --color-warning-border: #F57F17;
+  --color-success-text: #2E7D32;
+  --color-success-border: #A5D6A7;
+  --color-on-primary-container: #0E6B72;
+  /* ---- font family ---- */
+  --font-display: Poppins, sans-serif;
+  --font-base: -apple-system, 'SF Pro', 'Helvetica Neue', sans-serif;
+  --font-numeric: 'SF Mono', 'DM Mono', 'JetBrains Mono', monospace;
+  --font-variant-numeric: tabular-nums;
+  /* ---- font size ---- */
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 15px;
+  --fs-md: 17px;
+  --fs-lg: 20px;
+  --fs-xl: 24px;
+  --fs-2xl: 28px;
+  --fs-3xl: 42px;
+  /* ---- line height ---- */
+  --lh-tight: 1.1;
+  --lh-base: 1.3;
+  --lh-relaxed: 1.5;
+  /* ---- font weight ---- */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-display: 590;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  /* ---- spacing ---- */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+  --sp-2xl: 40px;
+  --sp-touch: 44px;
+  /* ---- radius ---- */
+  --radius-xxs: 2px;
+  --radius-xs: 3px;
+  --radius-sm: 8px;
+  --radius-sm-plus: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 32px;
+  --radius-pill-sm: 100px;
+  --radius-pill: 500px;
+  --radius-circle: 50%;
+  /* ---- border width ---- */
+  --bw-thin: 1px;
+  --bw-medium: 2px;
+  /* ---- shadow (色は --color-shadow-* を参照) ---- */
+  --shadow-xs: 0 1px 2px var(--color-shadow-sm);
+  --shadow-sm: 0 1px 3px var(--color-shadow-sm);
+  --shadow-md: 0 4px 16px var(--color-shadow-md);
+}
+
+/* common-styles.css — 全画面共通スタイル（Step 17 Phase A で生成）。
+   各画面 HTML へは style ブロックへ逐語インラインする（外部 CSS 参照は禁止）。
+   色は var(--color-*) 参照のみ（zero-literal）。 */
+
+/* ---- reset ---- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ---- モバイルプレビュー足場（プレビュー専用の canonical 値） ---- */
+body {
+  background: #E8E4DF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  gap: 16px;
+  font-family: var(--font-base);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+.screen {
+  width: 390px;
+  min-height: 844px;
+  background: var(--color-surface);
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- フォーカスリング（WCAG 2.4.7） ---- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--bw-medium) solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* ---- 汎用テキストユーティリティ ---- */
+.num { font-family: var(--font-numeric); font-variant-numeric: var(--font-variant-numeric); }
+.muted { color: var(--color-on-surface-secondary); }
+
+/* ---- 空状態（表現的イラストの代替 = icons/ の単一アイコン拡大） ---- */
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: var(--sp-md); padding: var(--sp-xl) var(--sp-md); text-align: center; }
+.empty-state__icon { width: clamp(64px, 18vw, 96px); height: auto; color: var(--color-on-surface-secondary); }
+
+/* ---- モーション配慮（WCAG 2.3.3） ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* components.css — 共通部品 (chrome) CSS の正典。Step 17 Step 0b-1 で生成。
+   各画面 HTML の <style> へ逐語インラインする (@charset 行は含めない)。
+   色は var(--color-*) 参照のみ。 */
+
+/* ---- mobile header (A / B 共通) ---- */
+.mobile-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  height: 56px;
+  padding: 0 var(--sp-md);
+  background: var(--color-surface);
+  border-bottom: var(--bw-thin) solid var(--color-border-default);
+}
+.mobile-header h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-base);
+  color: var(--color-on-surface);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobile-header--sub h1 { font-size: var(--fs-md); }
+.mobile-header__back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-touch);
+  height: var(--sp-touch);
+  margin-left: calc(var(--sp-sm) * -1);
+  color: var(--color-on-surface);
+  border-radius: var(--radius-sm);
+}
+.mobile-header__back svg { width: 24px; height: 24px; }
+.mobile-header__action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: var(--sp-xs);
+  color: var(--color-primary);
+  font-size: var(--fs-sm);
+}
+
+/* ---- mobile bottom nav (タブバー) ---- */
+.mobile-bottom-nav {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--color-surface);
+  border-top: var(--bw-thin) solid var(--color-border-default);
+  padding-bottom: var(--sp-sm);
+}
+.mobile-bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-xs);
+  min-height: var(--sp-touch);
+  padding: var(--sp-sm) var(--sp-xs) var(--sp-xs);
+  text-decoration: none;
+  color: var(--color-on-surface-secondary);
+}
+.mobile-bottom-nav__item svg { width: 24px; height: 24px; }
+.mobile-bottom-nav__item span {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+}
+.mobile-bottom-nav__item[aria-current="page"] { color: var(--color-primary); }
+
+/* ---- 画面本文の共通スクロール領域 ---- */
+.screen__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+  background: var(--color-surface-variant);
+}
+
+/* ---- scr-06-action-list 固有スタイル ---- */
+.section { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.section__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-sm); }
+.section__title { font-family: var(--font-display); font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--color-on-surface); }
+.section__count { font-size: var(--fs-sm); color: var(--color-on-surface-secondary); }
+.doing-card, .suggest-card { position: relative; overflow: hidden; min-height: 104px; display: flex; align-items: center; gap: var(--sp-md); background: var(--color-surface); border: var(--bw-thin) solid var(--color-border-default); border-radius: var(--radius-lg); padding: var(--sp-md); box-shadow: var(--shadow-xs); }
+.suggest-card { text-decoration: none; }
+.card-icon { flex: none; align-self: stretch; width: 120px;
+  margin: calc(var(--sp-md) * -1) 0 calc(var(--sp-md) * -1) calc(var(--sp-md) * -1);
+  background: var(--color-secondary-active-bg); color: var(--color-on-primary-container);
+  display: inline-flex; align-items: center; justify-content: center; overflow: hidden; }
+.card-icon svg { width: 24px; height: 24px; }
+.card-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* 被写体が左寄りの 2 枚は crop 基準を左端へ (実測重心 energy 38.8% / walk 34.0% →
+   可視域 0-76.9% で枠内 50.5% / 44.2% = ほぼ中央。拡大しないため画質は落ちない) */
+.card-icon[data-graphic-slot="action-energy"] img,
+.card-icon[data-graphic-slot="action-walk"] img { object-position: 0% 50%; }
+.card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-xs); }
+.card-name { font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--color-on-surface); line-height: var(--lh-base); }
+.card-meta { display: flex; align-items: center; gap: var(--sp-sm); flex-wrap: wrap; }
+.card-co2 { font-family: var(--font-numeric); font-variant-numeric: var(--font-variant-numeric); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--color-success); }
+.badge { display: inline-flex; align-items: center; border-radius: var(--radius-pill); padding: var(--sp-xs) 10px; font-size: var(--fs-sm); font-weight: var(--fw-medium); }
+.badge--category { background: var(--color-secondary-active-bg); color: var(--color-on-primary-container); }
+.badge--easy { background: var(--color-success-bg); color: var(--color-success-text); }
+.badge--normal { background: var(--color-warning-bg); color: var(--color-warning-text); }
+.card-cta { flex: none; display: inline-flex; align-items: center; justify-content: center; min-height: var(--sp-touch); min-width: 64px; padding: 10px var(--sp-md); border: var(--bw-thin) solid var(--color-primary); border-radius: var(--radius-pill); background: var(--color-primary); color: var(--color-on-primary); font-family: var(--font-base); font-size: var(--fs-sm); font-weight: var(--fw-semibold); cursor: pointer; }
+.card-chevron { flex: none; display: inline-flex; align-items: center; justify-content: center; width: var(--sp-touch); height: var(--sp-touch); color: var(--color-on-surface-secondary); }
+.card-chevron svg { width: 20px; height: 20px; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+  <div class="screen">
+    <header class="mobile-header mobile-header--home">
+      <h1>アクション</h1>
+    </header>
+    <div class="screen__body">
+      <section class="section">
+        <div class="section__head">
+          <h2 class="section__title">実施中のアクション</h2>
+          <span class="section__count">2件</span>
+        </div>
+          <div class="doing-card">
+            <span class="card-icon" data-graphic-slot="action-aircon-filter">
+<img src="../_shared/graphics/action-aircon-filter.png" alt="action-aircon-filter" width="120" height="104" style="object-fit:cover">
+</span>
+            <div class="card-main">
+              <p class="card-name">エアコンフィルター月2回清掃</p>
+              <div class="card-meta">
+                <span class="card-co2">-0.6 kg/週</span>
+                <span class="badge badge--category">住まい</span>
+                <span class="badge badge--easy">簡単</span>
+              </div>
+            </div>
+            <button class="card-cta" type="button">やった</button>
+          </div>
+          <div class="doing-card">
+            <span class="card-icon" data-graphic-slot="action-delivery">
+<img src="../_shared/graphics/action-delivery.png" alt="action-delivery" width="120" height="104" style="object-fit:cover">
+</span>
+            <div class="card-main">
+              <p class="card-name">宅配便の置き配指定</p>
+              <div class="card-meta">
+                <span class="card-co2">-0.2 kg/週</span>
+                <span class="badge badge--category">買い物</span>
+                <span class="badge badge--easy">簡単</span>
+              </div>
+            </div>
+            <button class="card-cta" type="button">やった</button>
+          </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head">
+          <h2 class="section__title">あなたにおすすめ</h2>
+          <span class="section__count">3件</span>
+        </div>
+          <a class="suggest-card" href="#">
+            <span class="card-icon" data-graphic-slot="action-energy">
+<img src="../_shared/graphics/action-energy.png" alt="action-energy" width="120" height="104" style="object-fit:cover">
+</span>
+            <div class="card-main">
+              <p class="card-name">再エネ電力プランへの切替</p>
+              <div class="card-meta">
+                <span class="card-co2">-36.5 kg/週</span>
+                <span class="badge badge--category">エネルギー</span>
+                <span class="badge badge--easy">簡単</span>
+              </div>
+            </div>
+            <span class="card-chevron" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
+    </svg></span>
+          </a>
+          <a class="suggest-card" href="scr-07-action-detail.html">
+            <span class="card-icon" data-graphic-slot="action-meat-free">
+<img src="../_shared/graphics/action-meat-free.png" alt="action-meat-free" width="120" height="104" style="object-fit:cover">
+</span>
+            <div class="card-main">
+              <p class="card-name">週1回の牛肉→鶏肉/豚肉</p>
+              <div class="card-meta">
+                <span class="card-co2">-2.0 kg/週</span>
+                <span class="badge badge--category">食事</span>
+                <span class="badge badge--easy">簡単</span>
+              </div>
+            </div>
+            <span class="card-chevron" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
+    </svg></span>
+          </a>
+          <a class="suggest-card" href="#">
+            <span class="card-icon" data-graphic-slot="action-walk">
+<img src="../_shared/graphics/action-walk.png" alt="action-walk" width="120" height="104" style="object-fit:cover">
+</span>
+            <div class="card-main">
+              <p class="card-name">2km以内の移動を徒歩/自転車に</p>
+              <div class="card-meta">
+                <span class="card-co2">-1.8 kg/週</span>
+                <span class="badge badge--category">移動</span>
+                <span class="badge badge--normal">普通</span>
+              </div>
+            </div>
+            <span class="card-chevron" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
+    </svg></span>
+          </a>
+      </section>
+    </div>
+    <nav class="mobile-bottom-nav" aria-label="メインナビゲーション">
+      <a class="mobile-bottom-nav__item" data-tab="dashboard" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/>
+        </svg>
+        <span>ダッシュボード</span>
+      </a>
+      <a class="mobile-bottom-nav__item" data-tab="actions" href="#" aria-current="page">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75"/>
+        </svg>
+        <span>アクション</span>
+      </a>
+      <a class="mobile-bottom-nav__item" data-tab="settings" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+        </svg>
+        <span>設定</span>
+      </a>
+    </nav>
+  </div>
+</body>
+</html>

@@ -1,0 +1,67 @@
+{
+  "app_name": "my-green-step-graphics",
+  "tool": "gpt-image-2",
+  "confirmed_at": "2026-08-19T09:19:07+09:00",
+  "prompts": [
+    {
+      "graphic_id": "welcome-bg",
+      "prompt": "A single set of footprints crossing a wide dew-covered meadow toward a distant city skyline on the horizon, conveying that one small daily step can change the planet. Vertical phone-screen composition with the horizon in the upper third and the lower half left almost empty and pale so that headline and body text can sit over it. Shot as an ordinary candid snapshot of a real place rather than a polished advertising or stock-styled photograph: everyday imperfection is wanted — slightly off-centre and imperfect framing, uneven ambient light, ordinary well-used everyday objects with scuffs, dust and wear, a little untidy clutter left in frame, nothing arranged, styled, colour-corrected or retouched. Realistic documentary photography in the manner of a free stock-photo library, not illustration: full-frame camera with a 35mm lens at f/5.6, soft diffused natural daylight, natural unretouched surface texture and true-to-life material detail, moderate detail density with generous calm areas left uncluttered, loosely harmonized with #117F87 deep teal and #E0F2F1 pale celadon as a gentle undertone rather than a strict palette, natural variation in exposure, ambient colour and framing between images is welcome and expected, calm and hopeful and grounded in the everyday, absolutely no illustration, no painterly brushwork, no watercolour or hand-drawn line, no 3D render or CGI look, no high-key blown-out whiteness and no shallow-bokeh cinematic treatment",
+      "size_px": {
+        "width": 780,
+        "height": 1688
+      },
+      "transparent_background": false,
+      "notes": "mobile の .screen 実寸 390×844 の 2 倍 (Retina 相当)。object-fit: cover で全面に敷く。size_role=hero 起点、platform は mobile 単独のため縦画面比に具体化。テイストは 21c 案A (写実フォト・自然光ドキュメンタリー) で再確定 — 題材・寸法は前回確定値を維持 / user 指示 (21d 確定確認): 綺麗になりすぎず実在のシーンに見えるよう candid snapshot 句を slot 固有部に追記"
+    },
+    {
+      "graphic_id": "action-energy",
+      "prompt": "A wind turbine and a tilted solar panel standing close to the viewer on an open grassy hillside, representing switching a household to renewable electricity. Wide landscape composition: the turbine and panel sit in the near foreground and together fill about sixty percent of the frame height with clear, legible silhouettes, and the hills behind them are kept sparse and pale. Shot as an ordinary candid snapshot of a real place rather than a polished advertising or stock-styled photograph: everyday imperfection is wanted — slightly off-centre and imperfect framing, uneven ambient light, ordinary well-used everyday objects with scuffs, dust and wear, a little untidy clutter left in frame, nothing arranged, styled, colour-corrected or retouched. Realistic documentary photography in the manner of a free stock-photo library, not illustration: full-frame camera with a 35mm lens at f/5.6, soft diffused natural daylight, natural unretouched surface texture and true-to-life material detail, moderate detail density with generous calm areas left uncluttered, loosely harmonized with #117F87 deep teal and #E0F2F1 pale celadon as a gentle undertone rather than a strict palette, natural variation in exposure, ambient colour and framing between images is welcome and expected, calm and hopeful and grounded in the everyday, absolutely no illustration, no painterly brushwork, no watercolour or hand-drawn line, no 3D render or CGI look, no high-key blown-out whiteness and no shallow-bokeh cinematic treatment",
+      "size_px": {
+        "width": 600,
+        "height": 400
+      },
+      "transparent_background": false,
+      "notes": "題材・構図・寸法は前回確定値を維持 (21g 差し戻し 2 回で得た「被写体を近景へ大きく・輪郭を明確に」を保持)。絵柄のみ 21c 案A (写実フォト・自然光ドキュメンタリー) へ差し替え / user 指示 (21d 確定確認): 綺麗になりすぎず実在のシーンに見えるよう candid snapshot 句を slot 固有部に追記"
+    },
+    {
+      "graphic_id": "action-meat-free",
+      "prompt": "A round plate of grilled poultry and fresh green vegetables resting on a pale table by a window filled with soft morning light, representing replacing beef with chicken or pork once a week. Wide landscape composition, the plate centred in the near foreground with clear, legible silhouettes and generous calm space around it. Shot as an ordinary candid snapshot of a real place rather than a polished advertising or stock-styled photograph: everyday imperfection is wanted — slightly off-centre and imperfect framing, uneven ambient light, ordinary well-used everyday objects with scuffs, dust and wear, a little untidy clutter left in frame, nothing arranged, styled, colour-corrected or retouched. Realistic documentary photography in the manner of a free stock-photo library, not illustration: full-frame camera with a 35mm lens at f/5.6, soft diffused natural daylight, natural unretouched surface texture and true-to-life material detail, moderate detail density with generous calm areas left uncluttered, loosely harmonized with #117F87 deep teal and #E0F2F1 pale celadon as a gentle undertone rather than a strict palette, natural variation in exposure, ambient colour and framing between images is welcome and expected, calm and hopeful and grounded in the everyday, absolutely no illustration, no painterly brushwork, no watercolour or hand-drawn line, no 3D render or CGI look, no high-key blown-out whiteness and no shallow-bokeh cinematic treatment",
+      "size_px": {
+        "width": 600,
+        "height": 400
+      },
+      "transparent_background": false,
+      "notes": "共有 slot (scr-06 一覧カードと scr-07 詳細の帯) — 最大表示 = 詳細画面の帯 (390×260, 3:2) を基準に 600×400 で導出し、一覧カード列 (120×約104) は縮小表示で共有する。絵柄のみ 21c 案A (写実フォト・自然光ドキュメンタリー) へ差し替え / user 指示 (21d 確定確認): 綺麗になりすぎず実在のシーンに見えるよう candid snapshot 句を slot 固有部に追記"
+    },
+    {
+      "graphic_id": "action-walk",
+      "prompt": "An upright bicycle leaning beside a pair of walking shoes close to the viewer on a quiet paved path, representing choosing to walk or cycle for short trips. Wide landscape composition: the bicycle and shoes sit in the near foreground and together fill about sixty percent of the frame height with clear, legible silhouettes, and the far end of the path is kept sparse and pale. Shot as an ordinary candid snapshot of a real place rather than a polished advertising or stock-styled photograph: everyday imperfection is wanted — slightly off-centre and imperfect framing, uneven ambient light, ordinary well-used everyday objects with scuffs, dust and wear, a little untidy clutter left in frame, nothing arranged, styled, colour-corrected or retouched. Realistic documentary photography in the manner of a free stock-photo library, not illustration: full-frame camera with a 35mm lens at f/5.6, soft diffused natural daylight, natural unretouched surface texture and true-to-life material detail, moderate detail density with generous calm areas left uncluttered, loosely harmonized with #117F87 deep teal and #E0F2F1 pale celadon as a gentle undertone rather than a strict palette, natural variation in exposure, ambient colour and framing between images is welcome and expected, calm and hopeful and grounded in the everyday, absolutely no illustration, no painterly brushwork, no watercolour or hand-drawn line, no 3D render or CGI look, no high-key blown-out whiteness and no shallow-bokeh cinematic treatment",
+      "size_px": {
+        "width": 600,
+        "height": 400
+      },
+      "transparent_background": false,
+      "notes": "題材・構図・寸法は前回確定値を維持。絵柄のみ 21c 案A (写実フォト・自然光ドキュメンタリー) へ差し替え / user 指示 (21d 確定確認): 綺麗になりすぎず実在のシーンに見えるよう candid snapshot 句を slot 固有部に追記"
+    },
+    {
+      "graphic_id": "action-aircon-filter",
+      "prompt": "A wall-mounted air-conditioner unit close to the viewer with its filter panel lifted open and a soft curved airflow trail passing through it, representing cleaning the filter twice a month. Wide landscape composition: the unit sits in the near foreground and fills about sixty percent of the frame height with a clear, legible silhouette, and the room behind it is kept sparse and pale. Shot as an ordinary candid snapshot of a real place rather than a polished advertising or stock-styled photograph: everyday imperfection is wanted — slightly off-centre and imperfect framing, uneven ambient light, ordinary well-used everyday objects with scuffs, dust and wear, a little untidy clutter left in frame, nothing arranged, styled, colour-corrected or retouched. Realistic documentary photography in the manner of a free stock-photo library, not illustration: full-frame camera with a 35mm lens at f/5.6, soft diffused natural daylight, natural unretouched surface texture and true-to-life material detail, moderate detail density with generous calm areas left uncluttered, loosely harmonized with #117F87 deep teal and #E0F2F1 pale celadon as a gentle undertone rather than a strict palette, natural variation in exposure, ambient colour and framing between images is welcome and expected, calm and hopeful and grounded in the everyday, absolutely no illustration, no painterly brushwork, no watercolour or hand-drawn line, no 3D render or CGI look, no high-key blown-out whiteness and no shallow-bokeh cinematic treatment",
+      "size_px": {
+        "width": 600,
+        "height": 400
+      },
+      "transparent_background": false,
+      "notes": "題材・構図・寸法は前回確定値を維持。絵柄のみ 21c 案A (写実フォト・自然光ドキュメンタリー) へ差し替え / user 指示 (21d 確定確認): 綺麗になりすぎず実在のシーンに見えるよう candid snapshot 句を slot 固有部に追記"
+    },
+    {
+      "graphic_id": "action-delivery",
+      "prompt": "A closed cardboard parcel resting close to the viewer on a pale doorstep beside a quiet entrance, representing choosing unattended delivery so redelivery trips are avoided. Wide landscape composition: the parcel sits in the near foreground and fills about sixty percent of the frame height with a clear, legible silhouette, and the garden beyond the doorway is kept sparse and pale. Shot as an ordinary candid snapshot of a real place rather than a polished advertising or stock-styled photograph: everyday imperfection is wanted — slightly off-centre and imperfect framing, uneven ambient light, ordinary well-used everyday objects with scuffs, dust and wear, a little untidy clutter left in frame, nothing arranged, styled, colour-corrected or retouched. Realistic documentary photography in the manner of a free stock-photo library, not illustration: full-frame camera with a 35mm lens at f/5.6, soft diffused natural daylight, natural unretouched surface texture and true-to-life material detail, moderate detail density with generous calm areas left uncluttered, loosely harmonized with #117F87 deep teal and #E0F2F1 pale celadon as a gentle undertone rather than a strict palette, natural variation in exposure, ambient colour and framing between images is welcome and expected, calm and hopeful and grounded in the everyday, absolutely no illustration, no painterly brushwork, no watercolour or hand-drawn line, no 3D render or CGI look, no high-key blown-out whiteness and no shallow-bokeh cinematic treatment",
+      "size_px": {
+        "width": 600,
+        "height": 400
+      },
+      "transparent_background": false,
+      "notes": "題材・構図・寸法は前回確定値を維持。絵柄のみ 21c 案A (写実フォト・自然光ドキュメンタリー) へ差し替え / user 指示 (21d 確定確認): 綺麗になりすぎず実在のシーンに見えるよう candid snapshot 句を slot 固有部に追記"
+    }
+  ]
+}

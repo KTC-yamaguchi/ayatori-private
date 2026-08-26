@@ -1,0 +1,81 @@
+{
+  "app_name": "my-green-step-graphics",
+  "updated_at": "2026-08-19T12:58:33+09:00",
+  "entries": [
+    {
+      "graphic_id": "welcome-bg",
+      "file": "graphics/raw/welcome-bg.png",
+      "model": "gpt-image-2",
+      "transparent": false,
+      "requested_size": "780x1688",
+      "api_size": "720x1536",
+      "resized": true,
+      "attempts": 1,
+      "generated_at": "2026-08-19T12:56:53+09:00",
+      "source_digest": "e362108024bfae0b31a97b853a31ee7d6a89334074a47dd7a14fe83a43909d9d",
+      "warnings": [
+        "生成キャンバス 720x1536 が確定寸 780x1688 より小さい (長辺 cap) — crop 後に拡大する (画質低下の可能性)"
+      ]
+    },
+    {
+      "graphic_id": "action-energy",
+      "file": "graphics/raw/action-energy.png",
+      "model": "gpt-image-2",
+      "transparent": false,
+      "requested_size": "600x400",
+      "api_size": "1040x704",
+      "resized": true,
+      "attempts": 1,
+      "generated_at": "2026-08-19T12:57:13+09:00",
+      "source_digest": "f7736c2ec57c4c85874b01269ea76641ae022a30a17fefd229894d9e4454c28a"
+    },
+    {
+      "graphic_id": "action-meat-free",
+      "file": "graphics/raw/action-meat-free.png",
+      "model": "gpt-image-2",
+      "transparent": false,
+      "requested_size": "600x400",
+      "api_size": "1040x704",
+      "resized": true,
+      "attempts": 1,
+      "generated_at": "2026-08-19T12:57:34+09:00",
+      "source_digest": "bc2e8cd086eb50d8c030aee08c8f6607b7b2b8fcbde534383d9924154018a99d"
+    },
+    {
+      "graphic_id": "action-walk",
+      "file": "graphics/raw/action-walk.png",
+      "model": "gpt-image-2",
+      "transparent": false,
+      "requested_size": "600x400",
+      "api_size": "1040x704",
+      "resized": true,
+      "attempts": 1,
+      "generated_at": "2026-08-19T12:57:58+09:00",
+      "source_digest": "385372e7a669f61c8f28e3dfaa4c9d48c83313ee43408f09c165f58a0484d726"
+    },
+    {
+      "graphic_id": "action-aircon-filter",
+      "file": "graphics/raw/action-aircon-filter.png",
+      "model": "gpt-image-2",
+      "transparent": false,
+      "requested_size": "600x400",
+      "api_size": "1040x704",
+      "resized": true,
+      "attempts": 1,
+      "generated_at": "2026-08-19T12:58:17+09:00",
+      "source_digest": "aea937c54610e7aa8e0f0f6e76c0c7fd09276d1bd7cde96b1da504a2e9879d2e"
+    },
+    {
+      "graphic_id": "action-delivery",
+      "file": "graphics/raw/action-delivery.png",
+      "model": "gpt-image-2",
+      "transparent": false,
+      "requested_size": "600x400",
+      "api_size": "1040x704",
+      "resized": true,
+      "attempts": 1,
+      "generated_at": "2026-08-19T12:58:33+09:00",
+      "source_digest": "f0288aa786133c9084a76ebd6e050a5070a574aad955e2e52214aa7ecc7f5165"
+    }
+  ]
+}

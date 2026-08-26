@@ -1,0 +1,14 @@
+{
+  "app_name": "my-green-step-graphics",
+  "created_at": "2026-08-14",
+  "design_output_scope": {
+    "platform_combo": "mobile_only",
+    "screen_coverage": "must_only",
+    "state_pattern": "default_only",
+    "mobile_framework": "native",
+    "legacy_android_xml": false,
+    "dual_theme_mode": false,
+    "illustration_policy": "pictogram",
+    "graphic_generation": "ask"
+  }
+}

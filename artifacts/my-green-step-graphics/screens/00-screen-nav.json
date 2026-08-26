@@ -1,0 +1,71 @@
+{
+  "app_name": "my-green-step-graphics",
+  "derived_from": "screens/00-transition-map.mmd",
+  "generated_at": "2026-08-14T08:22:26.058Z",
+  "screens": {
+    "scrWelcome": {
+      "screen_ref": "01-scr-01-welcome（ウェルカム）",
+      "is_entry_point": true,
+      "is_terminal": false,
+      "chrome": "なし",
+      "entries": [
+        {
+          "from": "start",
+          "kind": "forward"
+        }
+      ],
+      "exits": [
+        {
+          "to": "scrActionList",
+          "via": "はじめる",
+          "kind": "forward"
+        }
+      ]
+    },
+    "scrActionList": {
+      "screen_ref": "02-scr-06-action-list（アクション一覧）",
+      "is_entry_point": false,
+      "is_terminal": false,
+      "chrome": "A",
+      "entries": [
+        {
+          "from": "scrWelcome",
+          "via": "はじめる",
+          "kind": "forward"
+        },
+        {
+          "from": "scrActionDetail",
+          "via": "戻る",
+          "kind": "back"
+        }
+      ],
+      "exits": [
+        {
+          "to": "scrActionDetail",
+          "via": "くわしく見る",
+          "kind": "forward"
+        }
+      ]
+    },
+    "scrActionDetail": {
+      "screen_ref": "03-scr-07-action-detail（アクション詳細）",
+      "is_entry_point": false,
+      "is_terminal": false,
+      "chrome": "B",
+      "entries": [
+        {
+          "from": "scrActionList",
+          "via": "くわしく見る",
+          "kind": "forward"
+        }
+      ],
+      "exits": [
+        {
+          "to": "scrActionList",
+          "via": "戻る",
+          "kind": "back"
+        }
+      ]
+    }
+  }
+}

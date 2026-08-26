@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>成果物インデックス — my-green-step-graphics</title>
+<style>
+  :root{
+    --bg:#FBFBFC; --surface:#FFFFFF; --line:#E8EAED; --ink:#15171C; --muted:#626873;
+    --accent:#3B5BDB; --accent-weak:#EEF1FD; --accent-ink:#2E49B0; --hover:#EEF0F3;
+    --sidebar-w:284px; --topbar-h:52px;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Roboto Mono",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{font-family:var(--sans);color:var(--ink);background:var(--surface);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+  /* Top app bar (full width) */
+  .topbar{flex:0 0 auto;height:var(--topbar-h);display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--surface);z-index:50;}
+  .burger{flex:0 0 auto;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer;padding:0;transition:background .12s,border-color .12s;}
+  .burger:hover{background:var(--hover);border-color:var(--muted);}
+  .burger:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .burger svg{width:17px;height:17px;}
+  .brand{flex:0 0 auto;display:flex;align-items:baseline;gap:6px;white-space:nowrap;}
+  .brand-mark{font-size:15px;}
+  .brand-name{font-weight:700;font-size:15px;letter-spacing:-.01em;}
+  .brand-tag{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.04em;}
+  .cur-title{flex:1 1 auto;min-width:0;font-size:14px;font-weight:500;color:var(--muted);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cur-title:not(:empty)::before{content:"›";color:#c2c6cc;margin-right:11px;font-weight:400;}
+  .cur-ext{flex:0 0 auto;font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none;padding:5px 10px;border-radius:7px;border:1px solid var(--accent-weak);background:var(--accent-weak);}
+  .cur-ext:hover{border-color:var(--accent);}
+  .cur-ext:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  /* Shell: sidebar + content */
+  .shell{flex:1 1 auto;display:flex;min-height:0;overflow:hidden;}
+  .sidebar{flex:0 0 var(--sidebar-w);width:var(--sidebar-w);background:var(--bg);border-right:1px solid var(--line);overflow-y:auto;overflow-x:hidden;transition:flex-basis .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1);}
+  [data-sidebar="closed"] .sidebar{flex-basis:0;width:0;}
+  .sidebar-inner{width:var(--sidebar-w);}
+  .sidebar-head{padding:16px 18px 4px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted);white-space:nowrap;}
+  .toc{padding:4px 12px 28px;}
+  .cat{margin-bottom:2px;}
+  .cat>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 8px 5px;white-space:nowrap;}
+  .cat>summary::-webkit-details-marker{display:none;}
+  .cat>summary::before{content:"";width:5px;height:5px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(-45deg);transition:transform .15s;flex:0 0 auto;}
+  .cat[open]>summary::before{transform:rotate(45deg);}
+  .cat-label{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  .cat>summary .n{font-family:var(--mono);font-size:10px;color:var(--muted);background:#EEF0F3;border-radius:999px;padding:1px 7px;}
+  .cat>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:5px;}
+  .cat ul{list-style:none;margin:2px 0 10px 11px;padding:0;border-left:1px solid var(--line);}
+  .cat li{display:flex;align-items:center;}
+  .nav-link{flex:1 1 auto;min-width:0;display:block;font-size:13px;color:#2b3038;text-decoration:none;padding:6px 10px;margin-left:-1px;border-left:3px solid transparent;border-radius:0 6px 6px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .nav-link:hover{background:var(--hover);}
+  .nav-link.active{background:var(--accent-weak);color:var(--accent-ink);border-left-color:var(--accent);font-weight:600;}
+  .nav-link:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+  .ext{flex:0 0 auto;color:var(--muted);text-decoration:none;font-size:12px;padding:4px 8px;border-radius:5px;opacity:0;transition:opacity .12s;}
+  .cat li:hover .ext{opacity:1;}
+  .ext:hover{color:var(--accent);}
+  .ext:focus-visible{opacity:1;outline:2px solid var(--accent);outline-offset:-2px;}
+
+  /* Scrim (mobile drawer) */
+  .scrim{position:fixed;inset:0;background:rgba(15,17,20,.42);z-index:30;opacity:0;visibility:hidden;transition:opacity .2s;}
+
+  .pane{flex:1 1 auto;min-width:0;position:relative;overflow:auto;background:var(--surface);}
+  #frame{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .welcome{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:32px;}
+  .welcome[hidden]{display:none;}
+  .welcome-inner{max-width:460px;text-align:center;}
+  .welcome-h{font-size:16px;font-weight:600;margin:0 0 8px;}
+  .welcome-p{font-size:13px;color:var(--muted);margin:0;line-height:1.65;}
+
+  /* Markdown pane */
+  .md-body{padding:30px 36px;max-width:880px;}
+  .rs-timeline{list-style:none;margin:0 0 10px;padding:0;}
+  .rs-timeline li{position:relative;padding:7px 0 7px 20px;font-size:13.5px;border-left:2px solid var(--line);margin-left:4px;}
+  .rs-timeline li:last-child{border-left-color:transparent;}
+  .rs-timeline li::before{content:"";position:absolute;left:-6px;top:12px;width:9px;height:9px;border-radius:50%;background:var(--accent);border:2px solid var(--surface);}
+  .rs-timeline .t{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:10px;}
+  .rs-dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:13.5px;margin:0 0 10px;}
+  .rs-dl dt{color:var(--muted);}
+  .rs-dl dd{margin:0;font-weight:500;}
+  .rs-count{font-weight:400;color:var(--muted);font-size:.85em;}
+  .rs-changes{list-style:none;margin:0;padding:0;}
+  .rs-changes li{padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .rs-changes li:last-child{border-bottom:0;}
+  .rs-changes li .d{font-family:var(--mono);font-size:11px;color:var(--muted);}
+  .rs-note{color:var(--muted);font-size:12.5px;margin-top:18px;}
+  .md-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:22px;}
+  .md-head>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .md-head .ext{opacity:1;color:var(--accent);flex:0 0 auto;padding:0;}
+  .md-body h1{font-size:24px;font-weight:700;letter-spacing:-.015em;margin:0 0 14px;}
+  .md-body h2{font-size:18px;font-weight:650;margin:28px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--line);}
+  .md-body h3{font-size:15px;font-weight:600;margin:22px 0 8px;}
+  .md-body h4{font-size:13.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;}
+  .md-body p{margin:0 0 12px;}
+  .md-body ul,.md-body ol{margin:0 0 14px;padding-left:22px;}
+  .md-body li{margin:4px 0;}
+  .md-body a{color:var(--accent);text-decoration:none;}
+  .md-body a:hover{text-decoration:underline;}
+  .md-body code{font-family:var(--mono);font-size:.85em;background:#F2F3F5;padding:1.5px 5px;border-radius:4px;}
+  .md-body pre{background:#0F1117;color:#E6E8EB;padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.5;}
+  .md-body pre code{background:none;color:inherit;padding:0;}
+  .md-body blockquote{margin:14px 0;padding:8px 14px;border-left:3px solid var(--accent);background:var(--accent-weak);border-radius:0 6px 6px 0;}
+  .md-body table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;}
+  .md-body th,.md-body td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top;}
+  .md-body th{background:#F5F6F8;font-weight:600;}
+  .md-body hr{border:0;border-top:1px solid var(--line);margin:24px 0;}
+  .err{color:#b00020;}
+
+  /* Mobile: off-canvas drawer */
+  @media (max-width:767px){
+    .sidebar{position:fixed;top:var(--topbar-h);left:0;height:calc(100vh - var(--topbar-h));z-index:40;flex-basis:auto;width:var(--sidebar-w);transform:translateX(-100%);transition:transform .22s cubic-bezier(.4,0,.2,1);}
+    [data-sidebar="open"] .sidebar{transform:translateX(0);}
+    [data-sidebar="closed"] .sidebar{width:var(--sidebar-w);}
+    .scrim{top:var(--topbar-h);}
+    [data-sidebar="open"] .scrim{opacity:1;visibility:visible;}
+    .md-body{padding:22px 18px;}
+    .topbar{padding:0 10px;gap:9px;}
+    .brand-tag{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .sidebar,.scrim,.burger,.cat>summary::before{transition:none;}
+  }</style>
+</head>
+<body data-sidebar="open">
+<header class="topbar">
+  <button class="burger" id="burger" type="button" aria-expanded="true" aria-controls="sidebar" aria-label="サイドバーの表示切り替え"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+  <div class="brand"><span class="brand-mark">📦</span><span class="brand-name">my-green-step-graphics</span><span class="brand-tag">index</span></div>
+  <h1 class="cur-title" id="cur-title"></h1>
+  <a class="cur-ext" id="cur-ext" href="#" target="_blank" rel="noopener" hidden>↗ 新しいタブ</a>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-head">25 件の成果物</div>
+      <nav class="toc" aria-label="成果物目次">
+        <details open class="cat"><summary><span class="cat-label">要件定義</span> <span class="n">9</span></summary><ul><li><a class="nav-link" href="#" data-kind="md" data-ref="item-0" data-label="① ブレスト回答（生入力）" data-open="requirements/00-raw-input.md">① ブレスト回答（生入力）</a><a class="ext" href="requirements/00-raw-input.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="① ブレスト回答（生入力） を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-1" data-label="01 プロジェクト概要" data-open="requirements/01-overview.md">01 プロジェクト概要</a><a class="ext" href="requirements/01-overview.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="01 プロジェクト概要 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-2" data-label="02 スコープ定義" data-open="requirements/02-scope.md">02 スコープ定義</a><a class="ext" href="requirements/02-scope.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="02 スコープ定義 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-3" data-label="03 ユーザーフロー" data-open="requirements/03-user-flow.md">03 ユーザーフロー</a><a class="ext" href="requirements/03-user-flow.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="03 ユーザーフロー を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-4" data-label="04 ユースケース定義" data-open="requirements/04-use-cases.md">04 ユースケース定義</a><a class="ext" href="requirements/04-use-cases.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="04 ユースケース定義 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-5" data-label="05 機能要件" data-open="requirements/05-features.md">05 機能要件</a><a class="ext" href="requirements/05-features.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="05 機能要件 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-6" data-label="06 非機能要件" data-open="requirements/06-non-functional.md">06 非機能要件</a><a class="ext" href="requirements/06-non-functional.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="06 非機能要件 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-7" data-label="07 データ定義" data-open="requirements/07-data-definition.md">07 データ定義</a><a class="ext" href="requirements/07-data-definition.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="07 データ定義 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-8" data-label="08 制約条件・受入基準" data-open="requirements/08-constraints.md">08 制約条件・受入基準</a><a class="ext" href="requirements/08-constraints.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="08 制約条件・受入基準 を新しいタブで開く">↗</a></li></ul></details><details open class="cat"><summary><span class="cat-label">デザイン</span> <span class="n">4</span></summary><ul><li><a class="nav-link" href="#" data-kind="md" data-ref="item-9" data-label="スタイルガイド (MD)" data-open="style-guide.md">スタイルガイド (MD)</a><a class="ext" href="style-guide.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="スタイルガイド (MD) を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="html" data-ref="screens/style-guide-view.html" data-label="パーツカタログ (HTML)" data-open="screens/style-guide-view.html">パーツカタログ (HTML)</a><a class="ext" href="screens/style-guide-view.html" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="パーツカタログ (HTML) を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-11" data-label="グラフィック必要性 推奨レポート" data-open="graphics/graphic-recommend.md">グラフィック必要性 推奨レポート</a><a class="ext" href="graphics/graphic-recommend.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="グラフィック必要性 推奨レポート を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="html" data-ref="graphics/graphic-recommend.html" data-label="グラフィック候補スロット 視覚レポート" data-open="graphics/graphic-recommend.html">グラフィック候補スロット 視覚レポート</a><a class="ext" href="graphics/graphic-recommend.html" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="グラフィック候補スロット 視覚レポート を新しいタブで開く">↗</a></li></ul></details><details open class="cat"><summary><span class="cat-label">画面</span> <span class="n">7</span></summary><ul><li><a class="nav-link" href="#" data-kind="md" data-ref="item-13" data-label="画面一覧" data-open="screens/00-screen-list.md">画面一覧</a><a class="ext" href="screens/00-screen-list.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="画面一覧 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-14" data-label="仕様: scr-01-welcome 画面仕様" data-open="screens/scr-01-welcome.md">仕様: scr-01-welcome 画面仕様</a><a class="ext" href="screens/scr-01-welcome.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="仕様: scr-01-welcome 画面仕様 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-15" data-label="仕様: scr-06-action-list 画面仕様" data-open="screens/scr-06-action-list.md">仕様: scr-06-action-list 画面仕様</a><a class="ext" href="screens/scr-06-action-list.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="仕様: scr-06-action-list 画面仕様 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-16" data-label="仕様: scr-07-action-detail 画面仕様" data-open="screens/scr-07-action-detail.md">仕様: scr-07-action-detail 画面仕様</a><a class="ext" href="screens/scr-07-action-detail.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="仕様: scr-07-action-detail 画面仕様 を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="html" data-ref="screens/mobile/scr-01-welcome.html" data-label="Mobile · scr-01-welcome" data-open="screens/mobile/scr-01-welcome.html">Mobile · scr-01-welcome</a><a class="ext" href="screens/mobile/scr-01-welcome.html" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="Mobile · scr-01-welcome を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="html" data-ref="screens/mobile/scr-06-action-list.html" data-label="Mobile · scr-06-action-list" data-open="screens/mobile/scr-06-action-list.html">Mobile · scr-06-action-list</a><a class="ext" href="screens/mobile/scr-06-action-list.html" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="Mobile · scr-06-action-list を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="html" data-ref="screens/mobile/scr-07-action-detail.html" data-label="Mobile · scr-07-action-detail" data-open="screens/mobile/scr-07-action-detail.html">Mobile · scr-07-action-detail</a><a class="ext" href="screens/mobile/scr-07-action-detail.html" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="Mobile · scr-07-action-detail を新しいタブで開く">↗</a></li></ul></details><details open class="cat"><summary><span class="cat-label">画面遷移</span> <span class="n">1</span></summary><ul><li><a class="nav-link" href="#" data-kind="html" data-ref="screens/00-transition-map.html" data-label="画面遷移図 ⚠ 要オンライン (Mermaid)" data-open="screens/00-transition-map.html">画面遷移図 ⚠ 要オンライン (Mermaid)</a><a class="ext" href="screens/00-transition-map.html" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="画面遷移図 ⚠ 要オンライン (Mermaid) を新しいタブで開く">↗</a></li></ul></details><details open class="cat"><summary><span class="cat-label">監査</span> <span class="n">2</span></summary><ul><li><a class="nav-link" href="#" data-kind="html" data-ref="requirement-deviations-view.html" data-label="要件外追加リスト" data-open="requirement-deviations-view.html">要件外追加リスト</a><a class="ext" href="requirement-deviations-view.html" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="要件外追加リスト を新しいタブで開く">↗</a></li><li><a class="nav-link" href="#" data-kind="html" data-ref="screens/color-lint-report.html" data-label="色 lint レポート" data-open="screens/color-lint-report.html">色 lint レポート</a><a class="ext" href="screens/color-lint-report.html" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="色 lint レポート を新しいタブで開く">↗</a></li></ul></details><details open class="cat"><summary><span class="cat-label">実行履歴</span> <span class="n">2</span></summary><ul><li><a class="nav-link" href="#" data-kind="md" data-ref="item-23" data-label="実行サマリー">実行サマリー</a></li><li><a class="nav-link" href="#" data-kind="md" data-ref="item-24" data-label="フィードバックログ" data-open="feedback-log.md">フィードバックログ</a><a class="ext" href="feedback-log.md" target="_blank" rel="noopener" title="新しいタブで開く" aria-label="フィードバックログ を新しいタブで開く">↗</a></li></ul></details>
+      </nav>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <main class="pane">
+    <div id="welcome" class="welcome"><div class="welcome-inner">
+      <p class="welcome-h">← 左のリストから成果物を選択</p>
+      <p class="welcome-p">HTML 成果物はそのまま埋め込み表示、Markdown は整形して表示します。埋め込みが空白のときは各項目やヘッダーの ↗ で直接開けます。</p>
+    </div></div>
+    <iframe id="frame" hidden title="成果物プレビュー"></iframe>
+    <div class="md-body" id="item-0" hidden><div class="md-head"><span>① ブレスト回答（生入力）</span><a class="ext" href="requirements/00-raw-input.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>① ブレスト回答（生入力）</h1>
+<p><strong>アプリ名:</strong> MyGreenStep <strong>記録日時:</strong> 2026-04-16</p>
+<hr/>
+<h2>ターゲットユーザー</h2>
+<p>何気なく日常生活を送っている一般の人。家事、買い物、通院、散歩など普通の生活をしている。環境問題のニュースを見て気になったり、子どもに聞かれて答えられなかったりして「何かしないと」と思っている。環境にいいことをしたい気持ちはあるが、具体的に何をすればいいかわかっていない。光熱費の高騰や気候変動への漠然とした不安がある。</p>
+<h2>解決したい課題</h2>
+<ul>
+<li>自分に何ができるかわかっていない</li>
+<li>自分一人が行動を変えても意味がないのではないかと思ってしまっている</li>
+<li>「エコ」が漠然としていて、具体的なアクションに落とし込めない</li>
+<p>→ その人の行動の影響を可視化し、「自分一人でも変化を起こせる」と実感してもらいたい</p>
+</ul>
+<h2>主要機能（MoSCoW）</h2>
+<h3>Must（必須）</h3>
+<ul>
+<li>初回アンケートで生活パターンを把握（住環境、移動手段、家族構成など）</li>
+<li>アンケート結果に基づいた、パーソナライズされた具体的アクションの提案</li>
+<li>アクションを実行したときの影響（CO2削減量など）の可視化・フィードバック</li>
+<li>アプリ使用前と後で、どれだけ環境に良い行動ができているかのビフォー・アフター表示</li>
+</ul>
+<h3>Should（重要）</h3>
+<ul>
+<li>科学的データに基づいた信頼性のある数値の提示</li>
+</ul>
+<h3>Could（あれば良い）</h3>
+<ul>
+<li>ゲーミフィケーション（今は不要、将来的に検討）</li>
+<li>コミュニティ機能（今は不要、将来的に検討）</li>
+</ul>
+<h2>競合・参考アプリ</h2>
+<p>特になし</p>
+<h2>制約条件</h2>
+<ul>
+<li>開発期間: 未定</li>
+<li>予算: 未定</li>
+<li>技術スタック: 未定</li>
+</ul>
+<h2>対応プラットフォーム</h2>
+<p>スマホアプリ（iOS / Android）</p>
+<h2>デザイン出力の範囲</h2>
+<p>MVP（最低限動くもの）に必要な画面のみ</p>
+<h2>仮決定事項（provisional_flags）</h2>
+<ul>
+<li>科学的データのソース・根拠は未定（MVPでは一般的な平均値を仮置き）</li>
+</ul>
+<h2>可視化の方針（確定済み）</h2>
+<p>3つの場面で使い分ける：</p>
+<ul>
+<li><strong>ホーム画面（累積型）</strong>: 「これまでに合計○○kgのCO2を削減しました」。貯金のように増えていく表示で達成感を出す。杉の木○本分など、わかりやすい換算も添える</li>
+<li><strong>詳細画面（ビフォー・アフター型）</strong>: 初回アンケートから推定した週間排出量（ベースライン）と、今週の推定排出量（ベースライン − 記録したアクションの削減量）を並べて比較。変化率（○%削減）を強調。週単位にすることで短いサイクルで変化を実感できる</li>
+<li><strong>アクション記録時（アクション単位型）</strong>: アクションを記録した瞬間に「このアクションで○○g削減」と即時フィードバック。その日の合計も表示</li>
+</ul>
+<h2>Confluence 保存先</h2>
+<ul>
+<li>親ページID: 3752296684</li>
+</ul></div><div class="md-body" id="item-1" hidden><div class="md-head"><span>01 プロジェクト概要</span><a class="ext" href="requirements/01-overview.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>01 プロジェクト概要</h1>
+<h2>1.1 目的</h2>
+<p>本プロジェクトは、個人の環境保護行動を支援するモバイルアプリケーション「MyGreenStep」を開発することを目的とする。ユーザーが日常生活で実践できるエコアクションを提案し、その効果をCO2削減量として可視化することで、「自分一人の行動でも環境に貢献できる」という実感を提供する。</p>
+<h2>1.2 背景</h2>
+<p>気候変動への関心が高まる一方で、多くの人が「自分一人が行動しても何も変わらない」という無力感を抱えている。環境問題に関する情報は溢れているが、個人レベルで「何をすればいいか」「その行動にどれだけの効果があるか」が分かりにくい状態にある。</p>
+<p>この課題を解決するため、以下のアプローチを採用する。</p>
+<ul>
+<li>ユーザーのライフスタイルに合わせたパーソナライズされたアクション提案により、「何をすればいいか」の迷いを解消する。</li>
+<li>CO2削減量のビフォー・アフター可視化により、個人の行動が持つ意味をデータで証明する。</li>
+</ul>
+<h2>1.3 ターゲットユーザー</h2>
+<table>
+<thead><tr><th>属性</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>ペルソナ</td><td>環境問題に関心はあるが、具体的な行動に踏み出せていない一般生活者</td></tr>
+<tr><td>年齢層</td><td>20代〜40代を主要ターゲットとする</td></tr>
+<tr><td>ITリテラシー</td><td>スマートフォンの基本操作（アプリのインストール・利用）が可能なレベル</td></tr>
+<tr><td>動機</td><td>「何かしたいが、何をすればいいかわからない」「自分の行動に意味があるのか知りたい」</td></tr>
+</tbody></table>
+<h2>1.4 解決する課題</h2>
+<table>
+<thead><tr><th>課題ID</th><th>課題</th><th>本アプリによる解決策</th></tr></thead>
+<tbody>
+<tr><td>P-001</td><td>何をすればいいかわからない</td><td>初回アンケートに基づくパーソナライズされたアクション提案</td></tr>
+<tr><td>P-002</td><td>自分一人の行動に意味がないと感じる</td><td>CO2削減量のビフォー・アフター可視化による効果の証明</td></tr>
+<tr><td>P-003</td><td>環境配慮行動が続かない</td><td>アクション記録と累積効果の可視化による継続動機の維持</td></tr>
+<tr><td>P-004</td><td>環境情報が専門的で取っつきにくい</td><td>平易な言葉での説明と、具体的な行動ステップの提示</td></tr>
+</tbody></table>
+<h2>1.5 アプリの位置づけ</h2>
+<ul>
+<li><strong>製品カテゴリ</strong>: 個人向け環境保護支援アプリ（モバイル）</li>
+<li><strong>対応プラットフォーム</strong>: iOS / Android（クロスプラットフォーム開発: Flutter / React Native / KMP のいずれか）</li>
+<li><strong>開発フェーズ</strong>: MVP（最小限の実用可能な製品）</li>
+<li><strong>データ方針</strong>: MVPでは一般的なCO2排出平均値を仮置きし、将来的に権威ある公的データソースに差し替える</li>
+<li><strong>認証方式</strong>: メールアドレスによるアカウント登録</li>
+</ul>
+<h2>1.6 仮置き事項（正式確定が必要な項目）</h2>
+<p>以下の項目はMVP開発を進めるために暫定値・暫定方針を設定しているが、リリース前に正式な情報に基づいて確定する必要がある。</p>
+<table>
+<thead><tr><th>ID</th><th>仮置き項目</th><th>現在の状態</th><th>確定に必要なこと</th><th>確定期限の目安</th></tr></thead>
+<tbody>
+<tr><td>TBD-001</td><td>CO2削減量データ（ACT-001〜006）</td><td>一般的な推計値を使用中</td><td>環境省「温室効果ガス排出量算定・報告マニュアル」等の公的データソースから正式な排出係数を取得し、数値を検証する</td><td>開発フェーズ中盤まで</td></tr>
+<tr><td>TBD-002</td><td>CO2削減量データ（ACT-007〜009）</td><td>概算の推計値のみ。算出根拠が他と比べて弱い</td><td>窓の断熱効果・フードマイレージ・サプライチェーン排出に関する信頼できるデータソースを特定し、数値を算出する</td><td>開発フェーズ中盤まで</td></tr>
+<tr><td>TBD-003</td><td>ベースライン算出の構成比</td><td>日本平均の概算値（電力50%、ガス15%、自動車20%等）を使用中</td><td>環境省「家庭部門のCO2排出実態統計調査」の最新版から正確な構成比を取得する</td><td>開発フェーズ中盤まで</td></tr>
+<tr><td>TBD-004</td><td>ベースライン補正係数</td><td>再エネプランで電力分を0に補正、節水シャワーで×0.8等の概算値</td><td>補正係数の妥当性を専門家またはデータで検証する</td><td>開発フェーズ中盤まで</td></tr>
+<tr><td>TBD-005</td><td>開発期間・予算</td><td>未定（参考見積もり: 4ヶ月/800万円）</td><td>ステークホルダーとの合意</td><td>要件定義完了後すぐ</td></tr>
+<tr><td>TBD-006</td><td>クロスプラットフォームフレームワーク</td><td>Flutter / React Native / KMP のいずれか未選定</td><td>技術選定フェーズでNFR-P-01（コールドスタート3秒以内）の実機検証を実施して決定</td><td>設計フェーズ開始時</td></tr>
+<tr><td>TBD-007</td><td>メール送信サービス</td><td>SendGrid等と記載。具体的なサービス・契約未確定</td><td>サービス選定・契約・API設定</td><td>開発フェーズ序盤まで</td></tr>
+</tbody></table>
+<h2>1.7 成功指標</h2>
+<table>
+<thead><tr><th>指標ID</th><th>指標</th><th>測定方法</th><th>目標値（MVP）</th></tr></thead>
+<tbody>
+<tr><td>KPI-001</td><td>アカウント登録完了率</td><td>登録開始数に対する登録完了数の割合</td><td>70%以上</td></tr>
+<tr><td>KPI-002</td><td>初回アンケート完了率</td><td>登録完了ユーザーのうちアンケートを完了した割合</td><td>80%以上</td></tr>
+<tr><td>KPI-003</td><td>週次アクティブユーザー率</td><td>登録ユーザーのうち週1回以上アクション記録を行った割合</td><td>30%以上</td></tr>
+<tr><td>KPI-004</td><td>アクション記録頻度</td><td>ユーザーあたりの月間アクション記録回数</td><td>月4回以上</td></tr>
+<tr><td>KPI-005</td><td>可視化画面閲覧率</td><td>アクション記録後に可視化画面を閲覧した割合</td><td>60%以上</td></tr>
+</tbody></table></div><div class="md-body" id="item-2" hidden><div class="md-head"><span>02 スコープ定義</span><a class="ext" href="requirements/02-scope.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>02 スコープ定義</h1>
+<h2>2.1 MVP（リリース対象）</h2>
+<p>MVPでは、ユーザーが「登録→アンケート回答→アクション提案の確認→実行記録→効果の可視化」という一連の体験を完了できることを最低限の要件とする。</p>
+<table>
+<thead><tr><th>スコープID</th><th>機能領域</th><th>含まれる内容</th></tr></thead>
+<tbody>
+<tr><td>S-001</td><td>アカウント管理</td><td>メールアドレスによる新規登録、ログイン、ログアウト、パスワードリセット</td></tr>
+<tr><td>S-002</td><td>ライフスタイルアンケート</td><td>初回登録後のアンケート（住環境、移動手段、家族構成、食生活等）、再回答機能</td></tr>
+<tr><td>S-003</td><td>アクション提案</td><td>アンケート結果に基づくパーソナライズされたエコアクション一覧の提示</td></tr>
+<tr><td>S-004</td><td>アクション詳細</td><td>各アクションの説明（何をするか、なぜ効果的か、期待されるCO2削減量）</td></tr>
+<tr><td>S-005</td><td>アクション記録</td><td>ユーザーが実行したアクションのチェックイン（実施日時の記録）</td></tr>
+<tr><td>S-006</td><td>CO2削減量可視化</td><td>アクション実行前後のCO2排出量比較（ビフォー・アフター）、累積削減量の表示</td></tr>
+<tr><td>S-007</td><td>プロフィール管理</td><td>ユーザー情報の表示・編集、アンケート再回答によるアクション提案の更新</td></tr>
+<tr><td>S-008</td><td>CO2データ</td><td>一般的なCO2排出平均値を仮データとして使用（権威あるデータへの差替を前提とした設計）</td></tr>
+</tbody></table>
+<h3>MVP対象エコアクション例</h3>
+<table>
+<thead><tr><th>アクションカテゴリ</th><th>具体例</th></tr></thead>
+<tbody>
+<tr><td>エネルギー</td><td>再生可能エネルギー電力プランへの切替、省エネ家電の選択</td></tr>
+<tr><td>食生活</td><td>週1回のノーミートデー（肉を食べない日）、地産地消の食材購入</td></tr>
+<tr><td>住環境</td><td>窓への断熱シート貼付</td></tr>
+<tr><td>移動</td><td>2km以内の移動を徒歩または自転車に変更</td></tr>
+<tr><td>消費</td><td>環境配慮企業の製品を優先的に選択</td></tr>
+</tbody></table>
+<h2>2.2 Phase 2以降（将来検討）</h2>
+<p>以下の機能は、MVPリリース後のユーザーフィードバックおよび事業判断に基づき、Phase 2以降で検討する。</p>
+<table>
+<thead><tr><th>将来ID</th><th>機能領域</th><th>概要</th><th>検討時期</th></tr></thead>
+<tbody>
+<tr><td>FUT-001</td><td>ゲーミフィケーション</td><td>バッジ、レベル、連続記録ストリークなどの達成報酬</td><td>Phase 2</td></tr>
+<tr><td>FUT-002</td><td>コミュニティ</td><td>ユーザー間の削減量ランキング、グループチャレンジ</td><td>Phase 2</td></tr>
+<tr><td>FUT-003</td><td>SNS共有</td><td>自分の削減成果をSNSでシェアする機能</td><td>Phase 2</td></tr>
+<tr><td>FUT-004</td><td>企業版</td><td>企業・組織単位でのCO2削減管理ダッシュボード</td><td>Phase 3</td></tr>
+<tr><td>FUT-005</td><td>権威データ連携</td><td>環境省・IPCCなど公的機関のCO2排出係数データとの連携</td><td>Phase 2</td></tr>
+<tr><td>FUT-006</td><td>多言語対応</td><td>日本語以外の言語サポート</td><td>Phase 3</td></tr>
+</tbody></table>
+<h2>2.3 スコープ外（やらないこと）</h2>
+<p>以下の機能・要素は、本プロジェクトのすべてのフェーズにおいてスコープ外とする。対応が必要になった場合は、別プロジェクトとして立ち上げる。</p>
+<table>
+<thead><tr><th>除外ID</th><th>項目</th><th>除外理由</th></tr></thead>
+<tbody>
+<tr><td>EXC-001</td><td>リアルタイム環境データ連携</td><td>気象データや大気質データのリアルタイム取得は、技術的複雑性とコストが高く、MVPの価値提供に必須ではない</td></tr>
+<tr><td>EXC-002</td><td>IoTデバイス連携</td><td>スマートメーターや家電との連携は、ハードウェア依存性が高く、ターゲットユーザーの導入障壁となる</td></tr>
+<tr><td>EXC-003</td><td>カーボンオフセット購入</td><td>金銭取引を伴う機能は、法的要件・決済基盤の整備が必要であり、MVPの範囲を超える</td></tr>
+<tr><td>EXC-004</td><td>位置情報トラッキング</td><td>常時位置情報取得はプライバシー懸念が大きく、ユーザー離脱の要因となりうる</td></tr>
+<tr><td>EXC-005</td><td>AI画像認識</td><td>レシートや食品の画像認識によるアクション自動記録は、精度担保が困難でMVPに適さない</td></tr>
+</tbody></table></div><div class="md-body" id="item-3" hidden><div class="md-head"><span>03 ユーザーフロー</span><a class="ext" href="requirements/03-user-flow.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>03 ユーザーフロー</h1>
+<p>本ドキュメントは ISO/IEC/IEEE 29148:2018 に準拠し、MyGreenStep アプリのユーザーフローを定義する。</p>
+<hr/>
+<h2>3.1 アクター一覧</h2>
+<table>
+<thead><tr><th>ID</th><th>アクター名</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>A-001</td><td>未登録ユーザー</td><td>アプリ未登録の状態。登録画面・紹介画面のみ利用可能</td></tr>
+<tr><td>A-002</td><td>登録済みユーザー</td><td>メールアドレスで登録済み。全機能を利用可能</td></tr>
+<tr><td>A-003</td><td>システム</td><td>バックエンド処理。アクション提案生成・CO2 削減量計算などを行う</td></tr>
+</tbody></table>
+<hr/>
+<h2>3.2 オンボーディングフロー（初回利用）</h2>
+<p><strong>前提条件:</strong> ユーザーがアプリを初めて起動した状態</p>
+<table>
+<thead><tr><th>ステップ</th><th>操作主体</th><th>内容</th><th>関連機能</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>ユーザー</td><td>アプリを起動する</td><td>—</td></tr>
+<tr><td>2</td><td>システム</td><td>ウェルカム画面（アプリ概要・価値説明）を表示する</td><td>—</td></tr>
+<tr><td>3</td><td>ユーザー</td><td>「はじめる」ボタンを押下する</td><td>—</td></tr>
+<tr><td>4</td><td>システム</td><td>アカウント登録画面を表示する</td><td>F-001</td></tr>
+<tr><td>5</td><td>ユーザー</td><td>メールアドレス・パスワードを入力し「登録」を押下する</td><td>F-001</td></tr>
+<tr><td>6</td><td>システム</td><td>入力値を検証し、アカウントを作成する</td><td>F-001</td></tr>
+<tr><td>7</td><td>システム</td><td>確認メールを送信する</td><td>F-001</td></tr>
+<tr><td>8</td><td>ユーザー</td><td>メール内のリンクを押下しメールアドレスを確認する</td><td>F-001</td></tr>
+<tr><td>9</td><td>システム</td><td>メール確認完了後、初回ライフスタイルアンケート画面を表示する</td><td>F-003</td></tr>
+<tr><td>10</td><td>ユーザー</td><td>住居形態・移動手段・食生活などの質問に回答する</td><td>F-003</td></tr>
+<tr><td>11</td><td>システム</td><td>回答内容をもとにパーソナライズされたエコアクション一覧を生成する</td><td>F-004</td></tr>
+<tr><td>12</td><td>システム</td><td>おすすめアクション一覧（ホーム画面）を表示する</td><td>F-004</td></tr>
+</tbody></table>
+<h3>エラー・例外ケース</h3>
+<table>
+<thead><tr><th>ID</th><th>条件</th><th>システムの応答</th></tr></thead>
+<tbody>
+<tr><td>E-ONB-01</td><td>メールアドレスが既に登録済み</td><td>「このメールアドレスは既に登録されています」と表示し、ログイン画面へ誘導する</td></tr>
+<tr><td>E-ONB-02</td><td>パスワードが要件を満たさない（8文字未満、英数字混在なし）</td><td>具体的な要件をエラーメッセージで表示する</td></tr>
+<tr><td>E-ONB-03</td><td>メール確認リンクの有効期限切れ（24時間）</td><td>「リンクの有効期限が切れました」と表示し、再送ボタンを提供する</td></tr>
+<tr><td>E-ONB-04</td><td>アンケートを途中離脱</td><td>次回ログイン時にアンケート途中から再開する</td></tr>
+<tr><td>E-ONB-05</td><td>ネットワーク接続なし</td><td>「インターネット接続を確認してください」と表示する</td></tr>
+</tbody></table>
+<hr/>
+<h2>3.3 日常利用フロー（アクション確認・記録）</h2>
+<p><strong>前提条件:</strong> ユーザーがログイン済みかつアンケート回答済み</p>
+<table>
+<thead><tr><th>ステップ</th><th>操作主体</th><th>内容</th><th>関連機能</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>ユーザー</td><td>アプリを起動する</td><td>F-002</td></tr>
+<tr><td>2</td><td>システム</td><td>ホーム画面（今日のおすすめアクション一覧）を表示する</td><td>F-004</td></tr>
+<tr><td>3</td><td>ユーザー</td><td>実行したいアクションを選択する</td><td>F-007</td></tr>
+<tr><td>4</td><td>システム</td><td>アクション詳細画面（やり方・期待される効果・CO2 削減目安）を表示する</td><td>F-007</td></tr>
+<tr><td>5</td><td>ユーザー</td><td>「実行した」ボタンを押下する</td><td>F-005</td></tr>
+<tr><td>6</td><td>システム</td><td>実行記録を保存し、即時フィードバックを表示する（「このアクションで○○g CO2を削減しました！」）</td><td>F-005, F-006</td></tr>
+<tr><td>7</td><td>システム</td><td>本日の合計削減量を計算し表示する（「今日の合計: ○○g削減」）</td><td>F-006</td></tr>
+<tr><td>8</td><td>システム</td><td>ホーム画面の累積削減量サマリーを更新する</td><td>F-006</td></tr>
+</tbody></table>
+<h3>代替フロー</h3>
+<table>
+<thead><tr><th>ID</th><th>条件</th><th>フロー</th></tr></thead>
+<tbody>
+<tr><td>ALT-DAY-01</td><td>アクション一覧に興味のあるものがない</td><td>ユーザーが「他のアクションを見る」を押下 → システムが別カテゴリのアクションを表示する</td></tr>
+<tr><td>ALT-DAY-02</td><td>過去の記録を確認したい</td><td>ユーザーが「記録」タブを押下 → システムがアクション履歴一覧を日付順に表示する</td></tr>
+</tbody></table>
+<h3>エラー・例外ケース</h3>
+<table>
+<thead><tr><th>ID</th><th>条件</th><th>システムの応答</th></tr></thead>
+<tbody>
+<tr><td>E-DAY-01</td><td>同一アクションを同日に重複記録</td><td>「本日すでに記録済みです。もう一度記録しますか？」と確認ダイアログを表示する</td></tr>
+<tr><td>E-DAY-02</td><td>セッション期限切れ</td><td>ログイン画面にリダイレクトし、ログイン後に元の画面に戻す</td></tr>
+<tr><td>E-DAY-03</td><td>サーバーへの記録保存失敗</td><td>ローカルに一時保存し、接続復旧後に自動同期する</td></tr>
+</tbody></table>
+<hr/>
+<h2>3.4 影響度確認フロー</h2>
+<p><strong>前提条件:</strong> ユーザーがログイン済みかつ 1 件以上のアクション記録がある</p>
+<table>
+<thead><tr><th>ステップ</th><th>操作主体</th><th>内容</th><th>関連機能</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>ユーザー</td><td>ナビゲーションの「レポート」タブを押下する</td><td>F-006</td></tr>
+<tr><td>2</td><td>システム</td><td>CO2 削減量のダッシュボード画面を表示する（週次・月次・累計）</td><td>F-006</td></tr>
+<tr><td>3</td><td>ユーザー</td><td>期間を切り替える（週 / 月 / 全期間）</td><td>F-006</td></tr>
+<tr><td>4</td><td>システム</td><td>選択期間に応じたグラフ・数値を表示する</td><td>F-006</td></tr>
+<tr><td>5</td><td>ユーザー</td><td>特定のアクションカテゴリを選択する</td><td>F-006</td></tr>
+<tr><td>6</td><td>システム</td><td>カテゴリ別の削減量内訳を表示する</td><td>F-006</td></tr>
+</tbody></table>
+<h3>エラー・例外ケース</h3>
+<table>
+<thead><tr><th>ID</th><th>条件</th><th>システムの応答</th></tr></thead>
+<tbody>
+<tr><td>E-IMP-01</td><td>アクション記録が 0 件</td><td>「まだ記録がありません。最初のアクションを記録してみましょう！」と表示し、ホーム画面への導線を提供する</td></tr>
+<tr><td>E-IMP-02</td><td>データ読み込みタイムアウト</td><td>「データの取得に時間がかかっています。再読み込みしてください」と表示する</td></tr>
+</tbody></table>
+<hr/>
+<h2>3.5 設定変更フロー</h2>
+<p><strong>前提条件:</strong> ユーザーがログイン済み</p>
+<table>
+<thead><tr><th>ステップ</th><th>操作主体</th><th>内容</th><th>関連機能</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>ユーザー</td><td>ナビゲーションの「設定」タブを押下する</td><td>—</td></tr>
+<tr><td>2</td><td>システム</td><td>設定画面（プロフィール・アンケート再回答・ログアウト）を表示する</td><td>—</td></tr>
+<tr><td>3a</td><td>ユーザー</td><td>「プロフィール編集」を押下する</td><td>F-008</td></tr>
+<tr><td>4a</td><td>システム</td><td>プロフィール編集画面（表示名・メールアドレス）を表示する</td><td>F-008</td></tr>
+<tr><td>5a</td><td>ユーザー</td><td>変更内容を入力し「保存」を押下する</td><td>F-008</td></tr>
+<tr><td>6a</td><td>システム</td><td>変更を保存し「保存しました」と表示する</td><td>F-008</td></tr>
+<tr><td>3b</td><td>ユーザー</td><td>「パスワード変更」を押下する</td><td>F-009</td></tr>
+<tr><td>4b</td><td>システム</td><td>パスワード変更画面（現在のパスワード・新しいパスワード）を表示する</td><td>F-009</td></tr>
+<tr><td>5b</td><td>ユーザー</td><td>現在と新しいパスワードを入力し「変更」を押下する</td><td>F-009</td></tr>
+<tr><td>6b</td><td>システム</td><td>パスワードを更新し「変更しました」と表示する</td><td>F-009</td></tr>
+<tr><td>3c</td><td>ユーザー</td><td>「アンケートをやり直す」を押下する</td><td>F-003</td></tr>
+<tr><td>4c</td><td>システム</td><td>確認ダイアログ「現在のおすすめが再生成されます。よろしいですか？」を表示する</td><td>F-003</td></tr>
+<tr><td>5c</td><td>ユーザー</td><td>「はい」を押下する</td><td>F-003</td></tr>
+<tr><td>6c</td><td>システム</td><td>アンケート画面を表示する（3.2 のステップ 9 へ遷移）</td><td>F-003, F-004</td></tr>
+<tr><td>3d</td><td>ユーザー</td><td>「ログアウト」を押下する</td><td>F-002</td></tr>
+<tr><td>4d</td><td>システム</td><td>セッションを破棄し、ログイン画面を表示する</td><td>F-002</td></tr>
+</tbody></table>
+<h3>エラー・例外ケース</h3>
+<table>
+<thead><tr><th>ID</th><th>条件</th><th>システムの応答</th></tr></thead>
+<tbody>
+<tr><td>E-SET-01</td><td>メールアドレス変更時に既存アドレスと重複</td><td>「このメールアドレスは使用できません」と表示する</td></tr>
+<tr><td>E-SET-02</td><td>現在のパスワードが不一致</td><td>「現在のパスワードが正しくありません」と表示する</td></tr>
+<tr><td>E-SET-03</td><td>新しいパスワードが要件を満たさない</td><td>具体的な要件をエラーメッセージで表示する</td></tr>
+</tbody></table>
+<hr/>
+<h2>3.6 エラーケース（共通）</h2>
+<table>
+<thead><tr><th>ID</th><th>条件</th><th>システムの応答</th><th>復帰方法</th></tr></thead>
+<tbody>
+<tr><td>E-GEN-01</td><td>ネットワーク接続切断</td><td>画面上部にオフラインバナーを表示する</td><td>接続復旧時に自動で非表示にし、データを同期する</td></tr>
+<tr><td>E-GEN-02</td><td>サーバーエラー（5xx）</td><td>「現在サービスに問題が発生しています。しばらくお待ちください」と表示する</td><td>自動リトライ（最大 3 回、5 秒間隔）</td></tr>
+<tr><td>E-GEN-03</td><td>認証トークン期限切れ</td><td>ログイン画面にリダイレクトする</td><td>再ログイン後に元の画面状態を復元する</td></tr>
+<tr><td>E-GEN-04</td><td>アプリバージョン非対応</td><td>「最新バージョンに更新してください」と表示し、ストアへ誘導する</td><td>アプリ更新後に利用再開</td></tr>
+<tr><td>E-GEN-05</td><td>予期しないエラー</td><td>「エラーが発生しました」と表示し、ホーム画面に戻るボタンを提供する</td><td>ホーム画面から再操作</td></tr>
+</tbody></table></div><div class="md-body" id="item-4" hidden><div class="md-head"><span>04 ユースケース定義</span><a class="ext" href="requirements/04-use-cases.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>04 ユースケース定義</h1>
+<h2>UC-001: 新規アカウント登録</h2>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>UC番号</td><td>UC-001</td></tr>
+<tr><td>アクター</td><td>未登録ユーザー</td></tr>
+<tr><td>事前条件</td><td>アプリがインストール済みであること。ユーザーがアカウントを持っていないこと</td></tr>
+<tr><td>基本フロー</td><td>1. ユーザーが「新規登録」ボタンをタップする 2. システムが登録画面を表示する 3. ユーザーがメールアドレスとパスワードを入力する 4. ユーザーが「登録」ボタンをタップする 5. システムが入力内容を検証する 6. システムがアカウントを作成し、確認メールを送信する 7. ユーザーがメール内の確認リンクをタップする 8. システムがアカウントを有効化し、ログイン状態にする 9. システムが初回アンケート画面（UC-002）に遷移する</td></tr>
+<tr><td>代替フロー</td><td>3a. メールアドレスが既に登録済みの場合: システムが「このメールアドレスは既に登録されています」と表示し、ログイン画面への導線を提示する。3b. パスワードが要件を満たさない場合: システムが「パスワードは8文字以上で英字と数字を含めてください」と表示する。7a. 確認リンクの有効期限（24時間）が切れている場合: システムが「リンクの有効期限が切れました。再送信しますか？」と表示する</td></tr>
+<tr><td>後条件</td><td>ユーザーアカウントが有効状態で作成されている。ユーザーがログイン状態である</td></tr>
+<tr><td>関連機能ID</td><td>F-001, F-002, F-009</td></tr>
+</tbody></table>
+<h2>UC-002: 初回アンケート回答</h2>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>UC番号</td><td>UC-002</td></tr>
+<tr><td>アクター</td><td>登録済みユーザー（アンケート未回答）</td></tr>
+<tr><td>事前条件</td><td>ユーザーがログイン済みであること。初回アンケートが未回答であること</td></tr>
+<tr><td>基本フロー</td><td>1. システムがアンケート画面を表示する（設問数と所要時間の目安を提示） 2. ユーザーが住居形態を選択する（戸建て／マンション／アパート） 3. ユーザーが居住人数を選択する（1人〜5人以上） 4. ユーザーが主な移動手段を選択する（自家用車／公共交通機関／自転車／徒歩） 5. ユーザーが通勤通学距離を選択する（2km未満／2-10km／10km以上） 6. ユーザーが食生活傾向を選択する（肉中心／バランス型／菜食寄り） 7. ユーザーが電力契約種別を選択する（一般／再エネプラン／不明） 8. ユーザーが環境配慮への関心度を選択する（低／中／高） 9. ユーザーが「回答を完了する」ボタンをタップする 10. システムが回答を保存し、アクション提案エンジンを実行する 11. システムが完了画面を表示し、おすすめアクション一覧への遷移ボタンを表示する</td></tr>
+<tr><td>代替フロー</td><td>9a. 必須項目に未回答がある場合: システムが未回答の設問をハイライトし、「すべての設問に回答してください」と表示する。2-8a. ユーザーがアンケートを途中離脱した場合: システムが回答済み内容を一時保存し、次回ログイン時にアンケート再開を促す</td></tr>
+<tr><td>後条件</td><td>アンケート回答がユーザープロフィールに保存されている。パーソナライズされたアクション提案リストが生成されている</td></tr>
+<tr><td>関連機能ID</td><td>F-003, F-004</td></tr>
+</tbody></table>
+<h2>UC-003: おすすめアクションを確認する</h2>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>UC番号</td><td>UC-003</td></tr>
+<tr><td>アクター</td><td>登録済みユーザー（アンケート回答済み）</td></tr>
+<tr><td>事前条件</td><td>ユーザーがログイン済みであること。初回アンケートが回答済みであること</td></tr>
+<tr><td>基本フロー</td><td>1. ユーザーがホーム画面またはメニューから「おすすめアクション」をタップする 2. システムがパーソナライズされたアクション提案リストを表示する（アクション名、概要、期待削減量、難易度） 3. ユーザーが特定のアクションをタップする 4. システムがアクション詳細画面を表示する（実施手順、効果の根拠、当該ユーザーの期待削減量） 5. ユーザーが内容を確認する</td></tr>
+<tr><td>代替フロー</td><td>2a. 提案可能なアクションが存在しない場合（すべて実行済みなど）: システムが「現在のライフスタイルに基づく提案はすべて確認済みです。アンケートを更新すると新しい提案が届くかもしれません」と表示する</td></tr>
+<tr><td>後条件</td><td>ユーザーがアクション内容を理解し、実行判断ができる状態になっている</td></tr>
+<tr><td>関連機能ID</td><td>F-004, F-007</td></tr>
+</tbody></table>
+<h2>UC-004: アクションを実行記録する</h2>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>UC番号</td><td>UC-004</td></tr>
+<tr><td>アクター</td><td>登録済みユーザー（アンケート回答済み）</td></tr>
+<tr><td>事前条件</td><td>ユーザーがログイン済みであること。記録対象のアクションが提案リストに含まれていること</td></tr>
+<tr><td>基本フロー</td><td>1. ユーザーがアクション詳細画面またはアクション一覧画面で「記録する」ボタンをタップする 2. システムが記録画面を表示する（実施日: デフォルトで当日、メモ欄） 3. ユーザーが実施日を確認または変更する 4. ユーザーが任意でメモを入力する（最大200文字） 5. ユーザーが「記録を保存」ボタンをタップする 6. システムが実行記録を保存する 7. システムが「記録しました！ 今回の削減量: X.X kg-CO2」と表示する 8. システムが累積削減量サマリーを更新表示する</td></tr>
+<tr><td>代替フロー</td><td>6a. 同一アクション・同一日の記録が既に存在する場合: システムが「このアクションは本日すでに記録済みです」と表示する</td></tr>
+<tr><td>後条件</td><td>アクション実行記録がデータベースに保存されている。累積CO2削減量が再計算されている</td></tr>
+<tr><td>関連機能ID</td><td>F-005, F-007</td></tr>
+</tbody></table>
+<h2>UC-005: 自分の影響度を確認する</h2>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>UC番号</td><td>UC-005</td></tr>
+<tr><td>アクター</td><td>登録済みユーザー（アクション記録が1件以上存在する）</td></tr>
+<tr><td>事前条件</td><td>ユーザーがログイン済みであること。アクション実行記録が1件以上存在すること</td></tr>
+<tr><td>基本フロー</td><td>1. ユーザーがホーム画面またはメニューから「わたしの影響度」をタップする 2. システムがビフォー・アフター比較を表示する（アクション実行前の推定CO2排出量 vs 現在の推定CO2排出量） 3. システムが期間別CO2削減量推移グラフを表示する（デフォルト: 月次） 4. システムが累積削減量の数値を表示する 5. ユーザーが表示期間を切り替える（週次／月次／累積） 6. システムが選択された期間のデータに表示を更新する</td></tr>
+<tr><td>代替フロー</td><td>1a. アクション記録が存在しない場合: システムが「まだ記録がありません。アクションを実行して記録してみましょう！」と表示し、おすすめアクション一覧への導線を提示する</td></tr>
+<tr><td>後条件</td><td>ユーザーが自身のCO2削減効果を視覚的に把握できている</td></tr>
+<tr><td>関連機能ID</td><td>F-006</td></tr>
+</tbody></table>
+<h2>UC-006: アンケートを再回答してアクション提案を更新する</h2>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>UC番号</td><td>UC-006</td></tr>
+<tr><td>アクター</td><td>登録済みユーザー（アンケート回答済み）</td></tr>
+<tr><td>事前条件</td><td>ユーザーがログイン済みであること。初回アンケートが回答済みであること</td></tr>
+<tr><td>基本フロー</td><td>1. ユーザーがプロフィール画面から「ライフスタイルを更新する」をタップする 2. システムが現在の回答内容が入力済みの状態でアンケート画面を表示する 3. ユーザーが変更したい項目を修正する 4. ユーザーが「更新する」ボタンをタップする 5. システムが更新内容を検証する 6. システムがアンケート回答を上書き保存する 7. システムがアクション提案エンジンを再実行する 8. システムが「ライフスタイル情報を更新しました。新しいおすすめアクションを確認しましょう」と表示する 9. システムが更新されたアクション提案リスト画面に遷移する</td></tr>
+<tr><td>代替フロー</td><td>4a. 変更がない場合: システムが「変更はありませんでした」と表示し、プロフィール画面に戻る</td></tr>
+<tr><td>後条件</td><td>アンケート回答が最新のライフスタイルに更新されている。アクション提案リストが新しい回答に基づいて再生成されている</td></tr>
+<tr><td>関連機能ID</td><td>F-003, F-004, F-008</td></tr>
+</tbody></table>
+<h2>ユースケースサマリー</h2>
+<table>
+<thead><tr><th>UC番号</th><th>ユースケース名</th><th>アクター</th><th>関連機能ID</th></tr></thead>
+<tbody>
+<tr><td>UC-001</td><td>新規アカウント登録</td><td>未登録ユーザー</td><td>F-001, F-002, F-009</td></tr>
+<tr><td>UC-002</td><td>初回アンケート回答</td><td>登録済みユーザー</td><td>F-003, F-004</td></tr>
+<tr><td>UC-003</td><td>おすすめアクションを確認する</td><td>登録済みユーザー</td><td>F-004, F-007</td></tr>
+<tr><td>UC-004</td><td>アクションを実行記録する</td><td>登録済みユーザー</td><td>F-005, F-007</td></tr>
+<tr><td>UC-005</td><td>自分の影響度を確認する</td><td>登録済みユーザー</td><td>F-006</td></tr>
+<tr><td>UC-006</td><td>アンケートを再回答してアクション提案を更新する</td><td>登録済みユーザー</td><td>F-003, F-004, F-008</td></tr>
+</tbody></table></div><div class="md-body" id="item-5" hidden><div class="md-head"><span>05 機能要件</span><a class="ext" href="requirements/05-features.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>05 機能要件</h1>
+<h2>5.1 機能一覧</h2>
+<h3>F-001: メールアカウント登録</h3>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>機能ID</td><td>F-001</td></tr>
+<tr><td>機能名</td><td>メールアカウント登録</td></tr>
+<tr><td>説明</td><td>ユーザーがメールアドレスとパスワードを入力し、新規アカウントを作成する</td></tr>
+<tr><td>入力</td><td>メールアドレス（RFC 5322準拠）、パスワード（8文字以上、英数字混在）</td></tr>
+<tr><td>処理</td><td>1. メールアドレスの形式を検証する 2. パスワードの強度を検証する 3. メールアドレスの重複を確認する 4. アカウントレコードを作成する 5. 確認メールを送信する 6. ユーザーが確認リンクをクリックしたらアカウントを有効化する</td></tr>
+<tr><td>出力</td><td>登録成功画面（初回アンケートへの導線を含む）、またはエラーメッセージ（重複・形式不正・パスワード強度不足）</td></tr>
+<tr><td>MoSCoW</td><td>Must</td></tr>
+<tr><td>関連UC</td><td>UC-001</td></tr>
+</tbody></table>
+<h3>F-002: ログイン／ログアウト</h3>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>機能ID</td><td>F-002</td></tr>
+<tr><td>機能名</td><td>ログイン／ログアウト</td></tr>
+<tr><td>説明</td><td>登録済みユーザーがメールアドレスとパスワードで認証し、アプリにアクセスする。またはセッションを終了する</td></tr>
+<tr><td>入力</td><td>ログイン: メールアドレス、パスワード。ログアウト: ログアウトボタンのタップ</td></tr>
+<tr><td>処理</td><td>ログイン: 1. 入力されたメールアドレスとパスワードの組み合わせを検証する 2. 認証トークンを発行する 3. ホーム画面に遷移する。ログアウト: 1. 認証トークンを無効化する 2. ログイン画面に遷移する</td></tr>
+<tr><td>出力</td><td>ログイン成功: ホーム画面表示。ログイン失敗: エラーメッセージ（「メールアドレスまたはパスワードが正しくありません」）。ログアウト成功: ログイン画面表示</td></tr>
+<tr><td>MoSCoW</td><td>Must</td></tr>
+<tr><td>関連UC</td><td>UC-001</td></tr>
+</tbody></table>
+<h3>F-003: 初回ライフスタイルアンケート</h3>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>機能ID</td><td>F-003</td></tr>
+<tr><td>機能名</td><td>初回ライフスタイルアンケート</td></tr>
+<tr><td>説明</td><td>ユーザーの生活スタイルを把握するためのアンケートを実施し、パーソナライズの基礎データを収集する</td></tr>
+<tr><td>入力</td><td>以下の選択式回答: 住居形態（戸建て／マンション／アパート）、居住人数（1人〜5人以上）、主な移動手段（自家用車／公共交通機関／自転車／徒歩）、通勤通学距離（2km未満／2-10km／10km以上）、食生活傾向（肉中心／バランス型／菜食寄り）、電力契約種別（一般／再エネプラン／不明）、環境配慮への関心度（低／中／高）</td></tr>
+<tr><td>処理</td><td>1. 各設問の回答を順番に取得する 2. 未回答の必須項目がないか検証する 3. 回答内容をユーザープロフィールに紐づけて保存する 4. 回答データをアクション提案エンジン（F-004）に渡す</td></tr>
+<tr><td>出力</td><td>アンケート完了画面（「あなたに合ったアクションを提案します」メッセージ）、おすすめアクション一覧画面への遷移リンク</td></tr>
+<tr><td>MoSCoW</td><td>Must</td></tr>
+<tr><td>関連UC</td><td>UC-002</td></tr>
+</tbody></table>
+<h3>F-004: パーソナライズされたアクション提案エンジン</h3>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>機能ID</td><td>F-004</td></tr>
+<tr><td>機能名</td><td>パーソナライズされたアクション提案エンジン</td></tr>
+<tr><td>説明</td><td>アンケート回答に基づき、ユーザーに最適なエコアクションを優先順位付きで提案する</td></tr>
+<tr><td>入力</td><td>ユーザーのアンケート回答データ（F-003の出力）、エコアクションマスタデータ（アクション定義・適用条件・期待CO2削減量）、アクション適用ルール定義（アンケート回答条件→対象アクションの対応表）</td></tr>
+<tr><td>処理</td><td>1. アンケート回答からユーザープロファイルを生成する 2. アクション適用ルール表に基づきマッチングを実行する: (a) energy_provider ≠ 再エネプラン → 「再エネ電力プランへの切替」を提案 (b) showerhead_replaced = いいえ → 「節水シャワーヘッド導入」を提案 (c) beef_frequency ≥ 1回/週 → 「週1回の牛肉→鶏肉/豚肉」を提案 (d) online_shopping = はい → 「宅配便の置き配指定」を提案 (e) transport_mode = 自家用車 AND commute_distance &lt; 2km → 「2km以内は徒歩/自転車に変更」を提案 (f) housing_type = any AND ac_filter_cleaning &lt; 月2回 → 「エアコンフィルター月2回清掃」を提案 3. 適用可能アクションを期待CO2削減量の大きい順にソートする 4. 上位10件を提案リストとして生成する</td></tr>
+<tr><td>出力</td><td>パーソナライズされたアクション提案リスト（各アクションにつき: アクション名、概要説明、期待CO2削減量、難易度ラベル）</td></tr>
+<tr><td>MoSCoW</td><td>Must</td></tr>
+<tr><td>関連UC</td><td>UC-003</td></tr>
+</tbody></table>
+<h3>F-005: アクション実行記録（チェックイン）</h3>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>機能ID</td><td>F-005</td></tr>
+<tr><td>機能名</td><td>アクション実行記録（チェックイン）</td></tr>
+<tr><td>説明</td><td>ユーザーが実行したエコアクションを日単位で記録する</td></tr>
+<tr><td>入力</td><td>対象アクションID、実施日（デフォルト: 当日）</td></tr>
+<tr><td>処理</td><td>1. 対象アクションIDの存在を検証する 2. 同一アクション・同一日の重複記録がないか確認する 3. 実行記録レコードを作成する（アクションID、ユーザーID、実施日、記録日時） 4. 累積CO2削減量を再計算する</td></tr>
+<tr><td>出力</td><td>記録完了メッセージ（「記録しました！ 今回の削減量: X.X kg-CO2」）、更新された累積削減量サマリー</td></tr>
+<tr><td>MoSCoW</td><td>Must</td></tr>
+<tr><td>関連UC</td><td>UC-004</td></tr>
+</tbody></table>
+<h3>F-006: CO2削減量の影響度可視化</h3>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>機能ID</td><td>F-006</td></tr>
+<tr><td>機能名</td><td>CO2削減量の影響度可視化</td></tr>
+<tr><td>説明</td><td>ユーザーのアクション実行によるCO2削減効果を、3つの場面に応じた形式で表示する</td></tr>
+<tr><td>入力</td><td>ユーザーID、表示コンテキスト（ホーム画面／詳細画面／アクション記録直後）</td></tr>
+<tr><td>処理</td><td>1. ユーザーの全アクション実行記録を取得する 2. アンケート回答からアクション実行前のCO2排出量（ベースライン）を算出する。ベースライン算出ロジック: 日本の1世帯あたり平均CO2排出量（約2,740kg/年 ÷ 52週 ≒ 52.7kg/週）を基準とし、アンケート回答で補正する（例: energy_provider = 再エネプラン契約済みなら電力由来分（約50% ≒ 26kg/週）を除外、transport_mode = 公共交通機関なら自家用車由来分を除外） 3. アクション実行後の推定CO2排出量を算出する 4. 表示コンテキストに応じてデータを整形する: (A)ホーム画面用: 累積削減量＋わかりやすい換算（杉の木○本分）を算出 (B)詳細画面用: 週間排出量のビフォー・アフター比較＋変化率（○%削減）を算出。ベースライン＝初回アンケートから推定した週間排出量、今＝ベースラインからその週に記録したアクションの削減量を差し引いた値 (C)アクション記録直後: 当該アクションのCO2削減量＋その日の合計削減量を算出 5. アンケート再回答（F-008経由）時はベースラインも再算出する</td></tr>
+<tr><td>出力</td><td>(A)ホーム画面: 累積CO2削減量（kg単位）＋杉の木換算、今月の増分 (B)詳細画面: 週間排出量の棒グラフ比較（以前の推定 vs 今週の推定）＋削減率パーセント表示 (C)アクション記録時: 即時フィードバック（「このアクションで○○g削減」）＋本日の合計</td></tr>
+<tr><td>MoSCoW</td><td>Must</td></tr>
+<tr><td>関連UC</td><td>UC-005</td></tr>
+</tbody></table>
+<h3>F-007: アクション詳細表示</h3>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>機能ID</td><td>F-007</td></tr>
+<tr><td>機能名</td><td>アクション詳細表示</td></tr>
+<tr><td>説明</td><td>個別のエコアクションについて、実施方法・効果の根拠・期待削減量を詳しく表示する</td></tr>
+<tr><td>入力</td><td>アクションID</td></tr>
+<tr><td>処理</td><td>1. アクションIDに対応するマスタデータを取得する 2. ユーザーのアンケート回答に基づき、当該ユーザーにとっての期待削減量を個別計算する 3. 表示用データを整形する</td></tr>
+<tr><td>出力</td><td>アクション詳細画面: アクション名、カテゴリ、具体的な実施手順（ステップ形式）、なぜ効果的かの説明文、当該ユーザーの期待CO2削減量（kg-CO2/月）、難易度ラベル、チェックイン（記録）ボタン</td></tr>
+<tr><td>MoSCoW</td><td>Should</td></tr>
+<tr><td>関連UC</td><td>UC-003, UC-004</td></tr>
+</tbody></table>
+<h3>F-008: プロフィール編集</h3>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>機能ID</td><td>F-008</td></tr>
+<tr><td>機能名</td><td>プロフィール編集</td></tr>
+<tr><td>説明</td><td>ユーザーが自身のプロフィール情報を確認・編集する。アンケートの再回答によりアクション提案を更新できる</td></tr>
+<tr><td>入力</td><td>変更対象フィールド（表示名、メールアドレス）、またはアンケート再回答データ（F-003と同一形式）</td></tr>
+<tr><td>処理</td><td>1. 変更内容のバリデーションを実施する 2. メールアドレス変更の場合は再確認メールを送信する 3. プロフィール情報を更新する 4. アンケート再回答の場合は、回答データを上書き保存し、アクション提案エンジン（F-004）を再実行する</td></tr>
+<tr><td>出力</td><td>更新完了メッセージ、アンケート再回答の場合は更新されたアクション提案リスト</td></tr>
+<tr><td>MoSCoW</td><td>Should</td></tr>
+<tr><td>関連UC</td><td>UC-006</td></tr>
+</tbody></table>
+<h3>F-009: パスワードリセット</h3>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>機能ID</td><td>F-009</td></tr>
+<tr><td>機能名</td><td>パスワードリセット</td></tr>
+<tr><td>説明</td><td>パスワードを忘れたユーザーがメールアドレスを使用してパスワードを再設定する</td></tr>
+<tr><td>入力</td><td>リセット要求時: 登録済みメールアドレス。再設定時: リセットトークン（メール内リンクに含まれる）、新しいパスワード（8文字以上、英数字混在）</td></tr>
+<tr><td>処理</td><td>1. 入力されたメールアドレスの登録有無を確認する 2. 一意のリセットトークン（有効期限: 24時間）を生成する 3. リセットリンクを含むメールを送信する 4. ユーザーがリンクをクリック後、トークンの有効性を検証する 5. 新しいパスワードの強度を検証する 6. パスワードを更新し、既存の全セッションを無効化する</td></tr>
+<tr><td>出力</td><td>リセット要求時: 「パスワード再設定メールを送信しました」メッセージ（登録有無に関わらず同一メッセージ）。再設定完了時: 「パスワードを変更しました。ログインしてください」メッセージとログイン画面への遷移</td></tr>
+<tr><td>MoSCoW</td><td>Must</td></tr>
+<tr><td>関連UC</td><td>UC-001</td></tr>
+</tbody></table>
+<h2>5.2 アクションマスタデータ（MVP初期データ）</h2>
+<p>以下はMVPに投入するエコアクションの初期データ一覧。CO2削減量は日本の一般的なライフスタイルに基づく推計値であり、出典を明記する。将来的に環境省・IPCC等の権威あるデータに差し替える前提で設計する。</p>
+<table>
+<thead><tr><th>アクションID</th><th>アクション名</th><th>カテゴリ</th><th>CO2削減量</th><th>単位</th><th>難易度</th><th>算出根拠</th><th>適用条件（target_survey_keys）</th></tr></thead>
+<tbody>
+<tr><td>ACT-001</td><td>再エネ電力プランへの切替</td><td>エネルギー</td><td>36.5</td><td>kg/週（≒1,900kg/年）</td><td>1（簡単）</td><td>家庭CO2の約50%は電力由来。再エネプランに切替で電力由来CO2をほぼゼロにできる</td><td>energy_provider ≠ 再エネプラン</td></tr>
+<tr><td>ACT-002</td><td>節水シャワーヘッド導入</td><td>住まい</td><td>1.9</td><td>kg/週（≒100kg/年）</td><td>1（簡単）</td><td>4人家族でシャワー使用量20%削減時の給湯ガス・水道ポンプのエネルギー削減分</td><td>showerhead_replaced = いいえ</td></tr>
+<tr><td>ACT-003</td><td>週1回の牛肉→鶏肉/豚肉</td><td>食事</td><td>2.0</td><td>kg/週（≒104kg/年）</td><td>1（簡単）</td><td>牛肉100gの生産CO2は鶏肉の約10倍。週1回の置換で年間104kg削減</td><td>beef_frequency ≥ 1回/週</td></tr>
+<tr><td>ACT-004</td><td>エアコンフィルター月2回清掃</td><td>住まい</td><td>0.6</td><td>kg/週（≒30kg/年）</td><td>1（簡単）</td><td>フィルター清掃で冷房約4%・暖房約6%の消費電力削減</td><td>ac_filter_cleaning &lt; 月2回</td></tr>
+<tr><td>ACT-005</td><td>宅配便の置き配指定</td><td>買い物</td><td>0.2</td><td>kg/週（≒10kg/年）</td><td>1（簡単）</td><td>再配達1回あたり約0.5kg-CO2。月数回の利用で年間約10kg削減</td><td>online_shopping = はい</td></tr>
+<tr><td>ACT-006</td><td>2km以内の移動を徒歩/自転車に</td><td>移動</td><td>1.8</td><td>kg/週（≒95kg/年）</td><td>2（普通）</td><td>自家用車→自転車で約130g-CO2/km削減。週5日×片道2kmで計算</td><td>transport_mode = 自家用車 AND commute_distance &lt; 2km</td></tr>
+<tr><td>ACT-007</td><td>窓に断熱シートを貼る</td><td>住まい</td><td>1.0</td><td>kg/週（≒50kg/年）</td><td>2（普通）</td><td>窓からの熱損失を約30%低減し、冷暖房エネルギーを削減（推計値）</td><td>housing_type = any</td></tr>
+<tr><td>ACT-008</td><td>地産地消の食材を優先購入</td><td>食事</td><td>0.5</td><td>kg/週（≒25kg/年）</td><td>2（普通）</td><td>輸送距離の短縮によるフードマイレージ削減（推計値）</td><td>diet_type = any</td></tr>
+<tr><td>ACT-009</td><td>環境配慮企業の製品を選択</td><td>買い物</td><td>0.3</td><td>kg/週（≒15kg/年）</td><td>2（普通）</td><td>環境配慮型サプライチェーンによる間接的CO2削減（推計値）</td><td>online_shopping = any OR housing_type = any</td></tr>
+</tbody></table>
+<blockquote>
+<p><strong>注記</strong>: 「推計値」と記載のあるアクション（ACT-007〜009）はMVP時点では概算データを使用。Phase 2でデータソースを特定し精度を向上させる。</p>
+</blockquote>
+<h2>5.3 機能一覧サマリー</h2>
+<table>
+<thead><tr><th>機能ID</th><th>機能名</th><th>MoSCoW</th><th>関連UC</th></tr></thead>
+<tbody>
+<tr><td>F-001</td><td>メールアカウント登録</td><td>Must</td><td>UC-001</td></tr>
+<tr><td>F-002</td><td>ログイン／ログアウト</td><td>Must</td><td>UC-001</td></tr>
+<tr><td>F-003</td><td>初回ライフスタイルアンケート</td><td>Must</td><td>UC-002</td></tr>
+<tr><td>F-004</td><td>パーソナライズされたアクション提案エンジン</td><td>Must</td><td>UC-003</td></tr>
+<tr><td>F-005</td><td>アクション実行記録（チェックイン）</td><td>Must</td><td>UC-004</td></tr>
+<tr><td>F-006</td><td>CO2削減量の影響度可視化</td><td>Must</td><td>UC-005</td></tr>
+<tr><td>F-007</td><td>アクション詳細表示</td><td>Should</td><td>UC-003, UC-004</td></tr>
+<tr><td>F-008</td><td>プロフィール編集</td><td>Should</td><td>UC-006</td></tr>
+<tr><td>F-009</td><td>パスワードリセット</td><td>Must</td><td>UC-001</td></tr>
+</tbody></table></div><div class="md-body" id="item-6" hidden><div class="md-head"><span>06 非機能要件</span><a class="ext" href="requirements/06-non-functional.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>06 非機能要件</h1>
+<p>本ドキュメントは ISO/IEC/IEEE 29148:2018 に準拠し、MyGreenStep アプリの非機能要件を定義する。</p>
+<hr/>
+<h2>6.1 性能要件</h2>
+<table>
+<thead><tr><th>ID</th><th>要件</th><th>目標値</th><th>計測条件</th></tr></thead>
+<tbody>
+<tr><td>NFR-P-01</td><td>アプリ起動時間</td><td>3 秒以内（コールドスタート）</td><td>対応端末の中央値スペックにて計測</td></tr>
+<tr><td>NFR-P-02</td><td>API レスポンスタイム</td><td>2 秒以内（95 パーセンタイル）</td><td>通常負荷時</td></tr>
+<tr><td>NFR-P-03</td><td>画面遷移時間</td><td>1 秒以内</td><td>アプリ内画面間の遷移</td></tr>
+<tr><td>NFR-P-04</td><td>アクション記録の保存完了</td><td>1 秒以内</td><td>ボタン押下から完了表示まで</td></tr>
+<tr><td>NFR-P-05</td><td>ダッシュボードのグラフ描画</td><td>2 秒以内</td><td>1 年分のデータ保持時</td></tr>
+<tr><td>NFR-P-06</td><td>アプリサイズ</td><td>50 MB 以下</td><td>初回インストール時</td></tr>
+<tr><td>NFR-P-07</td><td>メモリ使用量</td><td>150 MB 以下</td><td>通常利用時のピーク値</td></tr>
+</tbody></table>
+<hr/>
+<h2>6.2 セキュリティ要件</h2>
+<table>
+<thead><tr><th>ID</th><th>要件</th><th>詳細</th></tr></thead>
+<tbody>
+<tr><td>NFR-S-01</td><td>通信の暗号化</td><td>すべての通信を HTTPS（TLS 1.2 以上）で暗号化する</td></tr>
+<tr><td>NFR-S-02</td><td>パスワードの保存</td><td>bcrypt（コストファクター 10 以上）でハッシュ化して保存する。平文での保存・ログ出力を禁止する</td></tr>
+<tr><td>NFR-S-03</td><td>認証方式</td><td>JWT（JSON Web Token）を使用する。アクセストークンの有効期限は 1 時間、リフレッシュトークンは 30 日とする</td></tr>
+<tr><td>NFR-S-04</td><td>個人データの暗号化</td><td>メールアドレス・アンケート回答などの個人データは、保存時に AES-256 で暗号化する</td></tr>
+<tr><td>NFR-S-05</td><td>パスワード要件</td><td>8 文字以上、英字・数字をそれぞれ 1 文字以上含むこと</td></tr>
+<tr><td>NFR-S-06</td><td>ログインの保護</td><td>連続 5 回のログイン失敗でアカウントを 15 分間ロックする</td></tr>
+<tr><td>NFR-S-07</td><td>セッション管理</td><td>ログアウト時にサーバー側でトークンを無効化する</td></tr>
+<tr><td>NFR-S-08</td><td>データ削除</td><td>ユーザーがアカウント削除を要求した場合、30 日以内に全データを物理削除する</td></tr>
+<tr><td>NFR-S-09</td><td>入力値の検証</td><td>すべてのユーザー入力に対し、サーバー側でバリデーションを実施する（SQL インジェクション・XSS 対策）</td></tr>
+</tbody></table>
+<hr/>
+<h2>6.3 可用性要件</h2>
+<table>
+<thead><tr><th>ID</th><th>要件</th><th>目標値</th></tr></thead>
+<tbody>
+<tr><td>NFR-A-01</td><td>サービス稼働率</td><td>99.5%（月間）</td></tr>
+<tr><td>NFR-A-02</td><td>計画メンテナンス</td><td>月 1 回、最大 2 時間。事前にアプリ内通知で告知する</td></tr>
+<tr><td>NFR-A-03</td><td>障害復旧時間（RTO）</td><td>4 時間以内</td></tr>
+<tr><td>NFR-A-04</td><td>データ復旧ポイント（RPO）</td><td>24 時間以内</td></tr>
+<tr><td>NFR-A-05</td><td>オフライン対応</td><td>アクション記録をローカルに一時保存し、接続復旧後に自動同期する</td></tr>
+</tbody></table>
+<hr/>
+<h2>6.4 エラーハンドリング方針</h2>
+<table>
+<thead><tr><th>ID</th><th>方針</th><th>詳細</th></tr></thead>
+<tbody>
+<tr><td>NFR-E-01</td><td>ユーザー向けメッセージ</td><td>技術的な用語を使わず、次に何をすればよいかを案内する</td></tr>
+<tr><td>NFR-E-02</td><td>自動リトライ</td><td>ネットワークエラー時は最大 3 回（5 秒間隔）自動リトライする</td></tr>
+<tr><td>NFR-E-03</td><td>エラーログ</td><td>すべてのエラーをサーバーに送信し、発生日時・エラー種別・画面名を記録する</td></tr>
+<tr><td>NFR-E-04</td><td>クラッシュレポート</td><td>アプリクラッシュ時にレポートを自動送信する（ユーザー同意後）</td></tr>
+<tr><td>NFR-E-05</td><td>グレースフルデグラデーション</td><td>外部サービス障害時もアプリの基本機能（記録の閲覧）は利用可能とする</td></tr>
+</tbody></table>
+<hr/>
+<h2>6.5 対応環境</h2>
+<table>
+<thead><tr><th>ID</th><th>項目</th><th>対応範囲</th></tr></thead>
+<tbody>
+<tr><td>NFR-ENV-01</td><td>iOS</td><td>iOS 15 以上</td></tr>
+<tr><td>NFR-ENV-02</td><td>Android</td><td>Android 10（API レベル 29）以上</td></tr>
+<tr><td>NFR-ENV-03</td><td>画面サイズ</td><td>4.7 インチ〜6.7 インチ（スマートフォンのみ。タブレットは MVP 対象外）</td></tr>
+<tr><td>NFR-ENV-04</td><td>画面向き</td><td>縦向きのみ対応</td></tr>
+<tr><td>NFR-ENV-05</td><td>言語</td><td>日本語のみ（MVP）</td></tr>
+<tr><td>NFR-ENV-06</td><td>クロスプラットフォーム</td><td>Flutter または React Native を採用し、iOS・Android を単一コードベースで開発する</td></tr>
+</tbody></table>
+<hr/>
+<h2>6.6 アクセシビリティ</h2>
+<table>
+<thead><tr><th>ID</th><th>要件</th><th>詳細</th></tr></thead>
+<tbody>
+<tr><td>NFR-ACC-01</td><td>準拠基準</td><td>WCAG 2.1 AA レベルを目標とする</td></tr>
+<tr><td>NFR-ACC-02</td><td>色のコントラスト比</td><td>テキストと背景のコントラスト比を 4.5:1 以上とする</td></tr>
+<tr><td>NFR-ACC-03</td><td>スクリーンリーダー対応</td><td>すべての操作可能な要素にアクセシビリティラベルを設定する</td></tr>
+<tr><td>NFR-ACC-04</td><td>フォントサイズ</td><td>OS のフォントサイズ設定に追従する（最大 200% まで対応）</td></tr>
+<tr><td>NFR-ACC-05</td><td>タッチターゲット</td><td>操作可能な要素のタッチ領域を 44×44 ポイント以上とする</td></tr>
+<tr><td>NFR-ACC-06</td><td>色のみに依存しない表現</td><td>情報の伝達を色のみに依存せず、アイコン・テキストを併用する</td></tr>
+</tbody></table>
+<hr/>
+<h2>6.7 データバックアップ</h2>
+<table>
+<thead><tr><th>ID</th><th>要件</th><th>詳細</th></tr></thead>
+<tbody>
+<tr><td>NFR-BK-01</td><td>バックアップ頻度</td><td>データベースの自動バックアップを 1 日 1 回実施する</td></tr>
+<tr><td>NFR-BK-02</td><td>バックアップ保持期間</td><td>30 日間保持する</td></tr>
+<tr><td>NFR-BK-03</td><td>リストア検証</td><td>月 1 回、バックアップからのリストアテストを実施する</td></tr>
+<tr><td>NFR-BK-04</td><td>バックアップ保管場所</td><td>本番環境とは異なるリージョンに保管する</td></tr>
+</tbody></table></div><div class="md-body" id="item-7" hidden><div class="md-head"><span>07 データ定義</span><a class="ext" href="requirements/07-data-definition.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>07 データ定義</h1>
+<p>本ドキュメントは ISO/IEC/IEEE 29148:2018 に準拠し、MyGreenStep アプリのデータ構造・API を定義する。</p>
+<hr/>
+<h2>7.1 エンティティ定義</h2>
+<h3>User（ユーザー）</h3>
+<table>
+<thead><tr><th>フィールド名</th><th>型</th><th>必須/任意</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>id</td><td>UUID</td><td>必須</td><td>ユーザーの一意識別子（自動生成）</td></tr>
+<tr><td>email</td><td>String(255)</td><td>必須</td><td>メールアドレス（一意制約）</td></tr>
+<tr><td>password_hash</td><td>String(255)</td><td>必須</td><td>bcrypt でハッシュ化されたパスワード</td></tr>
+<tr><td>display_name</td><td>String(50)</td><td>任意</td><td>表示名</td></tr>
+<tr><td>email_verified</td><td>Boolean</td><td>必須</td><td>メール確認済みフラグ（初期値: false）</td></tr>
+<tr><td>is_survey_completed</td><td>Boolean</td><td>必須</td><td>初回アンケート完了フラグ（初期値: false）</td></tr>
+<tr><td>created_at</td><td>Timestamp</td><td>必須</td><td>登録日時</td></tr>
+<tr><td>updated_at</td><td>Timestamp</td><td>必須</td><td>最終更新日時</td></tr>
+</tbody></table>
+<h3>SurveyResponse（アンケート回答）</h3>
+<table>
+<thead><tr><th>フィールド名</th><th>型</th><th>必須/任意</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>id</td><td>UUID</td><td>必須</td><td>回答の一意識別子</td></tr>
+<tr><td>user_id</td><td>UUID（FK: User.id）</td><td>必須</td><td>回答したユーザー</td></tr>
+<tr><td>question_key</td><td>String(50)</td><td>必須</td><td>質問の識別キー（例: housing_type, transport_mode）</td></tr>
+<tr><td>answer_value</td><td>String(255)</td><td>必須</td><td>回答内容</td></tr>
+<tr><td>created_at</td><td>Timestamp</td><td>必須</td><td>回答日時</td></tr>
+<tr><td>updated_at</td><td>Timestamp</td><td>必須</td><td>更新日時（再回答時）</td></tr>
+</tbody></table>
+<p><strong>質問キーの例:</strong></p>
+<table>
+<thead><tr><th>question_key</th><th>説明</th><th>選択肢例</th></tr></thead>
+<tbody>
+<tr><td>housing_type</td><td>住居形態</td><td>一戸建て / マンション / アパート</td></tr>
+<tr><td>household_size</td><td>世帯人数</td><td>1人 / 2人 / 3人 / 4人以上</td></tr>
+<tr><td>transport_mode</td><td>主な移動手段</td><td>自家用車 / 公共交通機関 / 自転車 / 徒歩</td></tr>
+<tr><td>diet_type</td><td>食生活</td><td>肉中心 / バランス型 / 菜食中心</td></tr>
+<tr><td>energy_provider</td><td>電力プラン</td><td>通常プラン / 再エネプラン / わからない</td></tr>
+<tr><td>showerhead_replaced</td><td>シャワーヘッド交換済みか</td><td>はい / いいえ</td></tr>
+<tr><td>beef_frequency</td><td>牛肉の消費頻度</td><td>0回/週 / 1回/週 / 2回以上/週</td></tr>
+<tr><td>ac_filter_cleaning</td><td>エアコンフィルター清掃頻度</td><td>月2回以上 / 月1回 / ほとんどしない</td></tr>
+<tr><td>online_shopping</td><td>ネット通販の利用頻度</td><td>よく利用する / たまに利用する / 利用しない</td></tr>
+<tr><td>commute_distance</td><td>通勤・通学距離</td><td>2km未満 / 2-10km / 10km以上</td></tr>
+</tbody></table>
+<h3>ActionMaster（アクションマスター）</h3>
+<table>
+<thead><tr><th>フィールド名</th><th>型</th><th>必須/任意</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>id</td><td>UUID</td><td>必須</td><td>アクションの一意識別子</td></tr>
+<tr><td>title</td><td>String(100)</td><td>必須</td><td>アクション名（例: 「週1回ノーミートデー」）</td></tr>
+<tr><td>description</td><td>Text</td><td>必須</td><td>アクションの詳細説明</td></tr>
+<tr><td>category</td><td>String(50)</td><td>必須</td><td>カテゴリ（食事 / 移動 / エネルギー / 買い物 / 住まい）</td></tr>
+<tr><td>co2_reduction_kg</td><td>Decimal(8,3)</td><td>必須</td><td>1 回あたりの CO2 削減量（kg）。MVP では一般的な平均値を使用</td></tr>
+<tr><td>difficulty</td><td>Integer</td><td>必須</td><td>難易度（1: 簡単 〜 3: 難しい）</td></tr>
+<tr><td>icon_url</td><td>String(500)</td><td>任意</td><td>アイコン画像の URL</td></tr>
+<tr><td>target_survey_keys</td><td>JSON</td><td>必須</td><td>対象とするアンケート回答条件（提案ロジック用）。スキーマは下記参照</td></tr>
+<tr><td>data_version</td><td>Integer</td><td>必須</td><td>CO2削減量データのバージョン番号（初期値: 1）。データ更新時にインクリメントする</td></tr>
+<tr><td>is_active</td><td>Boolean</td><td>必須</td><td>有効フラグ（初期値: true）</td></tr>
+<tr><td>created_at</td><td>Timestamp</td><td>必須</td><td>登録日時</td></tr>
+</tbody></table>
+<p><strong>target_survey_keys のJSONスキーマ:</strong></p>
+<pre><code>
+{
+  &quot;conditions&quot;: [
+    {
+      &quot;question_key&quot;: &quot;energy_provider&quot;,
+      &quot;operator&quot;: &quot;not_equals&quot;,
+      &quot;value&quot;: &quot;再エネプラン&quot;
+    }
+  ],
+  &quot;logic&quot;: &quot;AND&quot;
+}
+</code></pre>
+<table>
+<thead><tr><th>フィールド</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>conditions</td><td>マッチング条件の配列。1つ以上の条件を含む</td></tr>
+<tr><td>conditions[].question_key</td><td>SurveyResponse の question_key に対応する質問キー</td></tr>
+<tr><td>conditions[].operator</td><td>比較演算子: <code>equals</code>（一致）/ <code>not_equals</code>（不一致）/ <code>gte</code>（以上）/ <code>lte</code>（以下）/ <code>any</code>（条件なし）</td></tr>
+<tr><td>conditions[].value</td><td>比較対象の値。operator が <code>any</code> の場合は省略可</td></tr>
+<tr><td>logic</td><td>複数条件の結合方法: <code>AND</code>（全条件を満たす）/ <code>OR</code>（いずれかを満たす）</td></tr>
+</tbody></table>
+<p><strong>適用例:</strong></p>
+<table>
+<thead><tr><th>アクション</th><th>target_survey_keys</th></tr></thead>
+<tbody>
+<tr><td>再エネ電力プランへの切替</td><td><code>{&quot;conditions&quot;: [{&quot;question_key&quot;: &quot;energy_provider&quot;, &quot;operator&quot;: &quot;not_equals&quot;, &quot;value&quot;: &quot;再エネプラン&quot;}], &quot;logic&quot;: &quot;AND&quot;}</code></td></tr>
+<tr><td>2km以内は徒歩/自転車に</td><td><code>{&quot;conditions&quot;: [{&quot;question_key&quot;: &quot;transport_mode&quot;, &quot;operator&quot;: &quot;equals&quot;, &quot;value&quot;: &quot;自家用車&quot;}, {&quot;question_key&quot;: &quot;commute_distance&quot;, &quot;operator&quot;: &quot;equals&quot;, &quot;value&quot;: &quot;2km未満&quot;}], &quot;logic&quot;: &quot;AND&quot;}</code></td></tr>
+</tbody></table>
+<h3>ActionLog（アクション実行記録）</h3>
+<table>
+<thead><tr><th>フィールド名</th><th>型</th><th>必須/任意</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>id</td><td>UUID</td><td>必須</td><td>記録の一意識別子</td></tr>
+<tr><td>user_id</td><td>UUID（FK: User.id）</td><td>必須</td><td>実行したユーザー</td></tr>
+<tr><td>action_id</td><td>UUID（FK: ActionMaster.id）</td><td>必須</td><td>実行したアクション</td></tr>
+<tr><td>executed_at</td><td>Date</td><td>必須</td><td>実行日</td></tr>
+<tr><td>memo</td><td>String(500)</td><td>任意</td><td>ユーザーのメモ</td></tr>
+<tr><td>created_at</td><td>Timestamp</td><td>必須</td><td>記録日時</td></tr>
+</tbody></table>
+<h3>ImpactRecord（影響度レコード）</h3>
+<table>
+<thead><tr><th>フィールド名</th><th>型</th><th>必須/任意</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>id</td><td>UUID</td><td>必須</td><td>レコードの一意識別子</td></tr>
+<tr><td>user_id</td><td>UUID（FK: User.id）</td><td>必須</td><td>対象ユーザー</td></tr>
+<tr><td>period_type</td><td>String(10)</td><td>必須</td><td>集計期間種別（daily / weekly / monthly）</td></tr>
+<tr><td>period_start</td><td>Date</td><td>必須</td><td>集計期間の開始日</td></tr>
+<tr><td>total_co2_kg</td><td>Decimal(10,3)</td><td>必須</td><td>期間内の CO2 削減量合計（kg）</td></tr>
+<tr><td>action_count</td><td>Integer</td><td>必須</td><td>期間内のアクション実行回数</td></tr>
+<tr><td>calculated_at</td><td>Timestamp</td><td>必須</td><td>集計日時</td></tr>
+</tbody></table>
+<hr/>
+<h2>7.2 エンティティ関連図</h2>
+<pre><code>
+User (1) ──── (N) SurveyResponse
+  │
+  │ (1)
+  │
+  ├──── (N) ActionLog (N) ──── (1) ActionMaster
+  │
+  └──── (N) ImpactRecord
+</code></pre>
+<p><strong>関連の説明:</strong></p>
+<table>
+<thead><tr><th>関連</th><th>多重度</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>User → SurveyResponse</td><td>1 対 多</td><td>1 ユーザーは複数の質問への回答を持つ</td></tr>
+<tr><td>User → ActionLog</td><td>1 対 多</td><td>1 ユーザーは複数のアクション記録を持つ</td></tr>
+<tr><td>ActionMaster → ActionLog</td><td>1 対 多</td><td>1 つのアクション定義に対し複数の記録が紐づく</td></tr>
+<tr><td>User → ImpactRecord</td><td>1 対 多</td><td>1 ユーザーは複数の期間別集計を持つ</td></tr>
+</tbody></table>
+<hr/>
+<h2>7.3 外部連携一覧</h2>
+<table>
+<thead><tr><th>ID</th><th>連携先</th><th>用途</th><th>連携方式</th><th>MVP 対応</th></tr></thead>
+<tbody>
+<tr><td>EXT-01</td><td>メール送信サービス</td><td>メール確認・パスワードリセット</td><td>REST API（SendGrid 等）</td><td>対応</td></tr>
+<tr><td>EXT-02</td><td>CO2 排出係数データベース</td><td>アクションごとの CO2 削減量の参考値</td><td>初期データとして静的に投入</td><td>対応（固定値）</td></tr>
+<tr><td>EXT-03</td><td>プッシュ通知サービス</td><td>アクションリマインダー</td><td>FCM / APNs</td><td>MVP 対象外</td></tr>
+<tr><td>EXT-04</td><td>分析基盤</td><td>利用状況の分析</td><td>Firebase Analytics 等</td><td>MVP 対象外</td></tr>
+</tbody></table>
+<hr/>
+<h2>7.4 主要 API エンドポイント</h2>
+<h3>認証</h3>
+<table>
+<thead><tr><th>メソッド</th><th>パス</th><th>説明</th><th>認証</th></tr></thead>
+<tbody>
+<tr><td>POST</td><td>/api/v1/auth/register</td><td>アカウント登録</td><td>不要</td></tr>
+<tr><td>POST</td><td>/api/v1/auth/login</td><td>ログイン</td><td>不要</td></tr>
+<tr><td>POST</td><td>/api/v1/auth/logout</td><td>ログアウト</td><td>必要</td></tr>
+<tr><td>POST</td><td>/api/v1/auth/password-reset</td><td>パスワードリセット要求</td><td>不要</td></tr>
+<tr><td>PUT</td><td>/api/v1/auth/password-reset/{token}</td><td>パスワード更新</td><td>不要</td></tr>
+</tbody></table>
+<h4>POST /api/v1/auth/register</h4>
+<p><strong>リクエスト:</strong></p>
+<pre><code>
+{
+  &quot;email&quot;: &quot;user@example.com&quot;,
+  &quot;password&quot;: &quot;securePass1&quot;
+}
+</code></pre>
+<p><strong>レスポンス（201 Created）:</strong></p>
+<pre><code>
+{
+  &quot;id&quot;: &quot;uuid&quot;,
+  &quot;email&quot;: &quot;user@example.com&quot;,
+  &quot;email_verified&quot;: false,
+  &quot;created_at&quot;: &quot;2026-04-16T00:00:00Z&quot;
+}
+</code></pre>
+<h4>POST /api/v1/auth/login</h4>
+<p><strong>リクエスト:</strong></p>
+<pre><code>
+{
+  &quot;email&quot;: &quot;user@example.com&quot;,
+  &quot;password&quot;: &quot;securePass1&quot;
+}
+</code></pre>
+<p><strong>レスポンス（200 OK）:</strong></p>
+<pre><code>
+{
+  &quot;access_token&quot;: &quot;eyJhbG...&quot;,
+  &quot;refresh_token&quot;: &quot;eyJhbG...&quot;,
+  &quot;expires_in&quot;: 3600
+}
+</code></pre>
+<h3>アンケート</h3>
+<table>
+<thead><tr><th>メソッド</th><th>パス</th><th>説明</th><th>認証</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td>/api/v1/survey/questions</td><td>アンケート質問一覧取得</td><td>必要</td></tr>
+<tr><td>POST</td><td>/api/v1/survey/responses</td><td>アンケート回答送信</td><td>必要</td></tr>
+<tr><td>PUT</td><td>/api/v1/survey/responses</td><td>アンケート再回答</td><td>必要</td></tr>
+</tbody></table>
+<h4>POST /api/v1/survey/responses</h4>
+<p><strong>リクエスト:</strong></p>
+<pre><code>
+{
+  &quot;responses&quot;: [
+    { &quot;question_key&quot;: &quot;housing_type&quot;, &quot;answer_value&quot;: &quot;マンション&quot; },
+    { &quot;question_key&quot;: &quot;transport_mode&quot;, &quot;answer_value&quot;: &quot;公共交通機関&quot; },
+    { &quot;question_key&quot;: &quot;diet_type&quot;, &quot;answer_value&quot;: &quot;バランス型&quot; }
+  ]
+}
+</code></pre>
+<p><strong>レスポンス（201 Created）:</strong></p>
+<pre><code>
+{
+  &quot;message&quot;: &quot;回答を保存しました&quot;,
+  &quot;survey_completed&quot;: true
+}
+</code></pre>
+<h3>アクション</h3>
+<table>
+<thead><tr><th>メソッド</th><th>パス</th><th>説明</th><th>認証</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td>/api/v1/actions</td><td>おすすめアクション一覧取得</td><td>必要</td></tr>
+<tr><td>GET</td><td>/api/v1/actions/{id}</td><td>アクション詳細取得</td><td>必要</td></tr>
+<tr><td>POST</td><td>/api/v1/actions/{id}/log</td><td>アクション実行記録</td><td>必要</td></tr>
+<tr><td>GET</td><td>/api/v1/action-logs</td><td>アクション記録履歴取得</td><td>必要</td></tr>
+</tbody></table>
+<h4>POST /api/v1/actions/{id}/log</h4>
+<p><strong>リクエスト:</strong></p>
+<pre><code>
+{
+  &quot;executed_at&quot;: &quot;2026-04-16&quot;,
+  &quot;memo&quot;: &quot;今日はお昼を野菜中心にした&quot;
+}
+</code></pre>
+<p><strong>レスポンス（201 Created）:</strong></p>
+<pre><code>
+{
+  &quot;id&quot;: &quot;uuid&quot;,
+  &quot;action_id&quot;: &quot;uuid&quot;,
+  &quot;executed_at&quot;: &quot;2026-04-16&quot;,
+  &quot;co2_reduced_kg&quot;: 1.5,
+  &quot;total_co2_reduced_kg&quot;: 45.2
+}
+</code></pre>
+<h3>影響度</h3>
+<table>
+<thead><tr><th>メソッド</th><th>パス</th><th>説明</th><th>認証</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td>/api/v1/impact/summary</td><td>CO2 削減量サマリー取得</td><td>必要</td></tr>
+<tr><td>GET</td><td>/api/v1/impact/history?period={weekly\</td><td>monthly}</td><td>期間別推移取得</td><td>必要</td></tr>
+</tbody></table>
+<h4>GET /api/v1/impact/summary</h4>
+<p><strong>レスポンス（200 OK）:</strong></p>
+<pre><code>
+{
+  &quot;total_co2_kg&quot;: 45.2,
+  &quot;total_actions&quot;: 32,
+  &quot;this_week_co2_kg&quot;: 5.3,
+  &quot;this_month_co2_kg&quot;: 18.7,
+  &quot;by_category&quot;: [
+    { &quot;category&quot;: &quot;食事&quot;, &quot;co2_kg&quot;: 15.0 },
+    { &quot;category&quot;: &quot;移動&quot;, &quot;co2_kg&quot;: 12.5 },
+    { &quot;category&quot;: &quot;エネルギー&quot;, &quot;co2_kg&quot;: 10.2 },
+    { &quot;category&quot;: &quot;買い物&quot;, &quot;co2_kg&quot;: 4.5 },
+    { &quot;category&quot;: &quot;住まい&quot;, &quot;co2_kg&quot;: 3.0 }
+  ]
+}
+</code></pre>
+<h3>ユーザー</h3>
+<table>
+<thead><tr><th>メソッド</th><th>パス</th><th>説明</th><th>認証</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td>/api/v1/users/me</td><td>プロフィール取得</td><td>必要</td></tr>
+<tr><td>PUT</td><td>/api/v1/users/me</td><td>プロフィール更新</td><td>必要</td></tr>
+<tr><td>DELETE</td><td>/api/v1/users/me</td><td>アカウント削除</td><td>必要</td></tr>
+</tbody></table>
+<hr/>
+<h2>7.5 ベースライン算出ロジック</h2>
+<p>ユーザーの「アクション実行前の推定CO2排出量（週間）」を算出するロジック。F-006のビフォー・アフター比較に使用する。</p>
+<h3>基準値</h3>
+<p>日本の1世帯あたり平均CO2排出量: <strong>約2,740kg/年</strong>（環境省「家庭部門のCO2排出実態統計調査」参考値）</p>
+<p>→ 週間換算: 2,740 ÷ 52 ≒ <strong>52.7kg/週</strong></p>
+<h3>内訳と補正ロジック</h3>
+<table>
+<thead><tr><th>排出カテゴリ</th><th>年間排出量の構成比</th><th>週間ベースライン</th><th>アンケートによる補正条件</th></tr></thead>
+<tbody>
+<tr><td>電力</td><td>約50%（1,370kg/年）</td><td>26.3kg/週</td><td>energy_provider = 再エネプラン → 0kg/週に補正</td></tr>
+<tr><td>ガス・給湯</td><td>約15%（410kg/年）</td><td>7.9kg/週</td><td>showerhead_replaced = はい → 7.9 × 0.8 = 6.3kg/週に補正</td></tr>
+<tr><td>自動車</td><td>約20%（550kg/年）</td><td>10.6kg/週</td><td>transport_mode = 公共交通機関 or 自転車 or 徒歩 → 0kg/週に補正</td></tr>
+<tr><td>食事</td><td>約10%（275kg/年）</td><td>5.3kg/週</td><td>diet_type = 菜食中心 → 5.3 × 0.6 = 3.2kg/週に補正</td></tr>
+<tr><td>その他（消費・廃棄物等）</td><td>約5%（135kg/年）</td><td>2.6kg/週</td><td>補正なし</td></tr>
+</tbody></table>
+<h3>算出手順</h3>
+<ol>
+<li>基準値 52.7kg/週 からスタート</li>
+<li>アンケート回答に応じて各カテゴリの値を補正</li>
+<li>補正後の合計値がそのユーザーのベースライン（週間推定排出量）</li>
+<li>アンケート再回答（F-008経由）時はベースラインを再算出し、以降の比較に使用する</li>
+<li>再算出前のベースライン値は履歴として保持し、過去の比較データに遡及適用しない</li>
+</ol>
+<h3>算出例</h3>
+<p><strong>ユーザーA</strong>: 通常電力プラン、シャワーヘッド未交換、自家用車通勤、バランス型食事 → 26.3 + 7.9 + 10.6 + 5.3 + 2.6 = <strong>52.7kg/週</strong>（平均的な排出量）</p>
+<p><strong>ユーザーB</strong>: 再エネプラン契約済み、節水シャワーヘッド済み、公共交通、バランス型食事 → 0 + 6.3 + 0 + 5.3 + 2.6 = <strong>14.2kg/週</strong>（すでに削減済みのユーザー）</p>
+<hr/>
+<h2>7.6 CO2削減量データ方針</h2>
+<h3>MVP（Phase 1）</h3>
+<ul>
+<li>ActionMaster.co2_reduction_kg は<strong>静的な固定値</strong>としてアプリ内に保持する</li>
+<li>数値の根拠は 05-features.md セクション5.2「アクションマスタデータ」に記載の算出根拠に基づく</li>
+<li>「推計値」と記載のあるアクション（ACT-007〜009）はMVP時点では概算データを使用し、アプリ内で「参考値」と明示する</li>
+<li>データ更新時は data_version をインクリメントする</li>
+</ul>
+<h3>Phase 2 以降の移行計画</h3>
+<table>
+<thead><tr><th>移行項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>データソース</td><td>環境省「温室効果ガス排出量算定・報告マニュアル」、IPCC排出係数データベース等の公的データに段階的に差替</td></tr>
+<tr><td>後方互換性</td><td>ActionLog には記録時点の co2_reduction_kg 値を保持する。データ更新後も過去の記録は遡及変更しない</td></tr>
+<tr><td>バージョニング</td><td>ActionMaster.data_version で管理。ActionLog に action_data_version フィールドを追加し、どのバージョンのデータで記録されたかを追跡可能にする</td></tr>
+<tr><td>影響範囲</td><td>ベースライン算出ロジック（7.5節）の構成比・補正係数もデータ更新に合わせて見直す</td></tr>
+</tbody></table></div><div class="md-body" id="item-8" hidden><div class="md-head"><span>08 制約条件・受入基準</span><a class="ext" href="requirements/08-constraints.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>08 制約条件・受入基準</h1>
+<p>本ドキュメントは ISO/IEC/IEEE 29148:2018 に準拠し、MyGreenStep アプリの制約条件および受入基準を定義する。</p>
+<hr/>
+<h2>8.1 開発制約</h2>
+<table>
+<thead><tr><th>ID</th><th>制約</th><th>詳細</th></tr></thead>
+<tbody>
+<tr><td>CON-01</td><td>クロスプラットフォーム開発</td><td>iOS・Android を単一コードベースで開発する（Flutter または React Native）</td></tr>
+<tr><td>CON-02</td><td>MVP スコープ</td><td>初回リリースは F-001〜F-009 の機能範囲に限定する。スコープ追加は次フェーズとする</td></tr>
+<tr><td>CON-03</td><td>開発期間</td><td>未定。参考見積もり: デザイン1ヶ月→開発2.5ヶ月→テスト0.5ヶ月の計4ヶ月が余裕を持った目安（エンジニア2名＋デザイナー1名体制時）。確定後に本ドキュメントを更新する</td></tr>
+<tr><td>CON-04</td><td>開発予算</td><td>未定。参考見積もり: 上記体制で約800万円が余裕を持った目安。確定後に本ドキュメントを更新する</td></tr>
+<tr><td>CON-05</td><td>CO2 データ</td><td>MVP では一般的な平均値（環境省公開データ等）を静的に使用する。個別精度の高い計算は次フェーズとする</td></tr>
+<tr><td>CON-06</td><td>対応言語</td><td>日本語のみ（国際化対応は MVP 対象外）</td></tr>
+<tr><td>CON-07</td><td>対応デバイス</td><td>スマートフォンのみ（タブレット・Web は MVP 対象外）</td></tr>
+</tbody></table>
+<hr/>
+<h2>8.2 前提条件</h2>
+<table>
+<thead><tr><th>ID</th><th>前提</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>PRE-01</td><td>ユーザーはインターネット接続環境を持つ</td><td>オフライン時は記録のローカル保存のみ対応</td></tr>
+<tr><td>PRE-02</td><td>ユーザーはメールアドレスを持つ</td><td>ソーシャルログインは MVP 対象外</td></tr>
+<tr><td>PRE-03</td><td>CO2 削減量の平均値は公開データに基づく</td><td>数値の正確性は参考値レベルとする</td></tr>
+<tr><td>PRE-04</td><td>アプリストア（App Store / Google Play）での配信が可能</td><td>各ストアの審査基準に準拠する必要がある</td></tr>
+<tr><td>PRE-05</td><td>バックエンドはクラウド環境にデプロイする</td><td>AWS / GCP / Firebase 等（技術選定は設計フェーズで決定）</td></tr>
+</tbody></table>
+<hr/>
+<h2>8.3 受入基準（テスト可能な基準）</h2>
+<h3>認証機能（F-001, F-002, F-009）</h3>
+<table>
+<thead><tr><th>ID</th><th>基準</th><th>検証方法</th></tr></thead>
+<tbody>
+<tr><td>AC-01</td><td>有効なメールアドレスとパスワード（8文字以上・英数字混在）で登録が完了する</td><td>登録フォームに正しい値を入力し、確認メールが届くことを確認する</td></tr>
+<tr><td>AC-02</td><td>登録済みメールアドレスでの重複登録時にエラーメッセージが表示される</td><td>同一アドレスで 2 回登録を試行し、2 回目でエラーが表示されることを確認する</td></tr>
+<tr><td>AC-03</td><td>正しい認証情報でログインが成功し、ホーム画面に遷移する</td><td>登録済みアカウントでログインし、ホーム画面が表示されることを確認する</td></tr>
+<tr><td>AC-04</td><td>誤ったパスワードで 5 回連続ログイン失敗後、15 分間アカウントがロックされる</td><td>誤ったパスワードを 5 回入力し、6 回目でロックメッセージが表示されることを確認する</td></tr>
+<tr><td>AC-05</td><td>パスワードリセットメールのリンクから新しいパスワードを設定できる</td><td>リセット要求後、メール内リンクから新パスワードを設定し、ログインできることを確認する</td></tr>
+</tbody></table>
+<h3>アンケート（F-003）</h3>
+<table>
+<thead><tr><th>ID</th><th>基準</th><th>検証方法</th></tr></thead>
+<tbody>
+<tr><td>AC-06</td><td>初回ログイン後にアンケート画面が表示される</td><td>新規登録後の初回ログインでアンケート画面への遷移を確認する</td></tr>
+<tr><td>AC-07</td><td>すべての質問に回答するとアクション提案画面に遷移する</td><td>全質問に回答し、おすすめアクション一覧が表示されることを確認する</td></tr>
+<tr><td>AC-08</td><td>アンケート途中離脱後、再ログインで途中から再開できる</td><td>途中でアプリを終了し、再ログイン後に未回答の質問から表示されることを確認する</td></tr>
+</tbody></table>
+<h3>アクション提案・記録（F-004, F-005, F-007）</h3>
+<table>
+<thead><tr><th>ID</th><th>基準</th><th>検証方法</th></tr></thead>
+<tbody>
+<tr><td>AC-09</td><td>アンケート回答に基づいたアクションがホーム画面に表示される</td><td>異なるアンケート回答パターンで提案内容が変わることを確認する</td></tr>
+<tr><td>AC-10</td><td>アクション詳細画面に名称・説明・CO2 削減目安が表示される</td><td>任意のアクションを選択し、各項目の表示を確認する</td></tr>
+<tr><td>AC-11</td><td>「実行した」ボタン押下後、完了アニメーションが表示され記録が保存される</td><td>ボタン押下後にアニメーション表示と、記録一覧への反映を確認する</td></tr>
+<tr><td>AC-12</td><td>オフライン時に記録した内容が、接続復旧後にサーバーに同期される</td><td>機内モードで記録後、接続復旧でサーバーに反映されることを確認する</td></tr>
+</tbody></table>
+<h3>CO2 可視化（F-006）</h3>
+<table>
+<thead><tr><th>ID</th><th>基準</th><th>検証方法</th></tr></thead>
+<tbody>
+<tr><td>AC-13</td><td>レポート画面に累計・週次・月次の CO2 削減量が数値とグラフで表示される</td><td>複数のアクションを記録した後、レポート画面で各期間の数値を確認する</td></tr>
+<tr><td>AC-14</td><td>カテゴリ別の内訳が表示される</td><td>異なるカテゴリのアクションを記録し、内訳表示を確認する</td></tr>
+<tr><td>AC-15</td><td>記録 0 件の状態で適切な案内メッセージが表示される</td><td>記録のないアカウントでレポート画面を表示し、案内メッセージを確認する</td></tr>
+</tbody></table>
+<h3>プロフィール（F-008）</h3>
+<table>
+<thead><tr><th>ID</th><th>基準</th><th>検証方法</th></tr></thead>
+<tbody>
+<tr><td>AC-16</td><td>表示名を変更して保存すると、次回表示時に反映されている</td><td>表示名を変更・保存し、画面を再表示して反映を確認する</td></tr>
+</tbody></table>
+<hr/>
+<h2>8.4 リリース判定基準</h2>
+<table>
+<thead><tr><th>ID</th><th>基準</th><th>判定条件</th></tr></thead>
+<tbody>
+<tr><td>REL-01</td><td>受入基準の合格率</td><td>8.3 節の全受入基準のうち 100% が合格であること</td></tr>
+<tr><td>REL-02</td><td>重大バグ</td><td>致命的（アプリクラッシュ・データ損失）なバグが 0 件であること</td></tr>
+<tr><td>REL-03</td><td>性能要件</td><td>06-non-functional.md の 6.1 節の全項目を満たすこと</td></tr>
+<tr><td>REL-04</td><td>セキュリティ</td><td>パスワードが平文で保存・送信されていないことを確認済みであること</td></tr>
+<tr><td>REL-05</td><td>対応 OS での動作確認</td><td>iOS 15・Android 10 の実機で主要フローが正常動作すること</td></tr>
+<tr><td>REL-06</td><td>ストア審査</td><td>App Store・Google Play の審査ガイドラインに準拠していること</td></tr>
+</tbody></table>
+<hr/>
+<h2>8.5 既知のリスク</h2>
+<table>
+<thead><tr><th>ID</th><th>リスク</th><th>影響度</th><th>発生可能性</th><th>対策</th></tr></thead>
+<tbody>
+<tr><td>RISK-01</td><td>CO2 削減量の数値精度が低い</td><td>中</td><td>高</td><td>MVP では「参考値」と明示する。次フェーズで精度向上を図る</td></tr>
+<tr><td>RISK-02</td><td>iOS・Android 間の UI 表示差異</td><td>中</td><td>中</td><td>両 OS での実機テストを実施する。プラットフォーム固有の UI 調整を行う</td></tr>
+<tr><td>RISK-03</td><td>ユーザーのモチベーション維持が困難</td><td>高</td><td>中</td><td>MVP リリース後にユーザーフィードバックを収集し、ゲーミフィケーション要素を次フェーズで検討する</td></tr>
+<tr><td>RISK-04</td><td>開発期間・予算が未確定</td><td>高</td><td>高</td><td>早期にステークホルダーと合意する。スコープ調整の基準として、Must機能7件のうちF-004（提案エンジン）とF-006（可視化）を最優先とし、F-008（プロフィール編集）とF-009（パスワードリセット）は工数超過時に簡易実装に切り替え可能とする</td></tr>
+<tr><td>RISK-05</td><td>アプリストア審査でリジェクトされる</td><td>中</td><td>低</td><td>審査ガイドラインを事前に確認し、プライバシーポリシー・利用規約を整備する</td></tr>
+<tr><td>RISK-06</td><td>個人データの漏洩</td><td>高</td><td>低</td><td>暗号化・アクセス制御を徹底する。セキュリティレビューをリリース前に実施する</td></tr>
+<tr><td>RISK-07</td><td>クロスプラットフォームフレームワークの性能が非機能要件を満たさない</td><td>中</td><td>中</td><td>技術選定フェーズでFlutter・React Native・KMPの3候補について、NFR-P-01（コールドスタート3秒以内）の実機検証を実施する。検証結果に基づきフレームワークを確定する</td></tr>
+<tr><td>RISK-08</td><td>CO2削減量データの差替時に既存記録との整合性が崩れる</td><td>中</td><td>高</td><td>ActionMasterにdata_versionフィールドを追加し、データ更新時にバージョンを記録する。既存のActionLogはログ作成時点のco2_reduction_kg値を保持し、遡及変更しない設計とする</td></tr>
+</tbody></table></div><div class="md-body" id="item-9" hidden><div class="md-head"><span>スタイルガイド (MD)</span><a class="ext" href="style-guide.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>MyGreenStep デザインシステム スタイルガイド</h1>
+<table>
+<thead><tr><th>項目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>アプリ名</td><td>MyGreenStep</td></tr>
+<tr><td>作成日</td><td>2026-04-16</td></tr>
+<tr><td>デザイン方向性</td><td>ChargeMinder 2.0ベース ダッシュボード型</td></tr>
+</tbody></table>
+<hr/>
+<h2>1. カラーパレット</h2>
+<table>
+<thead><tr><th>トークン名</th><th>値</th><th>WCAGコントラスト比</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>--color-primary</code></td><td><code>#117F87</code></td><td>4.6:1（白背景）</td><td>CTA、選択状態、プログレスインジケーターのみ。本文背景には使用不可</td></tr>
+<tr><td><code>--color-text-primary</code></td><td><code>#0C0C0C</code></td><td>19.6:1（白背景）</td><td>見出し、本文テキスト</td></tr>
+<tr><td><code>--color-text-secondary</code></td><td><code>#6B6B6B</code></td><td>4.6:1（白背景）</td><td>補足テキスト、ラベル（ChargeMinder #919191から改善）</td></tr>
+<tr><td><code>--color-success</code></td><td><code>#2E7D32</code></td><td>—</td><td>CO2削減量表示、完了ステータスのみ</td></tr>
+<tr><td><code>--color-error</code></td><td><code>#D32F2F</code></td><td>—</td><td>エラー状態のみ</td></tr>
+<tr><td><code>--color-teal-200</code></td><td><code>#CFE5E7</code></td><td>—</td><td>アイコン背景、微細なハイライトのみ</td></tr>
+<tr><td><code>--color-surface</code></td><td><code>#FFFFFF</code></td><td>—</td><td>カード・ページ背景</td></tr>
+<tr><td><code>--color-surface-secondary</code></td><td><code>#F5F5F5</code></td><td>—</td><td>セクション背景、区切り</td></tr>
+<tr><td><code>--color-border</code></td><td><code>#E0E0E0</code></td><td>—</td><td>ボーダー、ディバイダー</td></tr>
+</tbody></table>
+<hr/>
+<h2>2. タイポグラフィ</h2>
+<table>
+<thead><tr><th>トークン</th><th>値</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>--font-display</code></td><td><code>Poppins SemiBold</code></td><td>画面タイトル、大見出し</td></tr>
+<tr><td><code>--font-base</code></td><td><code>SF Pro</code></td><td>本文、ラベル、ボタンテキスト</td></tr>
+<tr><td><code>--font-numeric</code></td><td><code>SF Mono</code> / <code>font-variant-numeric: tabular-nums</code></td><td>数値表示（CO2量、パーセント、金額）</td></tr>
+<tr><td><code>--text-xl</code></td><td><code>24px / 32px</code></td><td>画面タイトル</td></tr>
+<tr><td><code>--text-lg</code></td><td><code>20px / 28px</code></td><td>セクション見出し</td></tr>
+<tr><td><code>--text-md</code></td><td><code>16px / 24px</code></td><td>本文</td></tr>
+<tr><td><code>--text-sm</code></td><td><code>14px / 20px</code></td><td>補足テキスト、キャプション</td></tr>
+<tr><td><code>--text-xs</code></td><td><code>12px / 16px</code></td><td>バッジ、タグ</td></tr>
+</tbody></table>
+<hr/>
+<h2>3. スペーシング</h2>
+<table>
+<thead><tr><th>トークン</th><th>値</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>--space-xs</code></td><td><code>4px</code></td><td>アイコンとラベルの間など微細な間隔</td></tr>
+<tr><td><code>--space-sm</code></td><td><code>8px</code></td><td>コンパクトな要素間</td></tr>
+<tr><td><code>--space-md</code></td><td><code>16px</code></td><td>標準的な要素間、カード内パディング</td></tr>
+<tr><td><code>--space-lg</code></td><td><code>24px</code></td><td>セクション間</td></tr>
+<tr><td><code>--space-xl</code></td><td><code>32px</code></td><td>大きなセクション間</td></tr>
+<tr><td><code>--space-2xl</code></td><td><code>48px</code></td><td>ページ上下余白</td></tr>
+</tbody></table>
+<hr/>
+<h2>4. ボーダーラディウス</h2>
+<table>
+<thead><tr><th>トークン</th><th>値</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>--radius-sm</code></td><td><code>4px</code></td><td>バッジ、タグ</td></tr>
+<tr><td><code>--radius-md</code></td><td><code>8px</code></td><td>入力フィールド、小さなカード</td></tr>
+<tr><td><code>--radius-lg</code></td><td><code>12px</code></td><td>カード</td></tr>
+<tr><td><code>--radius-xl</code></td><td><code>16px</code></td><td>モーダル、大きなカード</td></tr>
+<tr><td><code>--radius-full</code></td><td><code>9999px</code></td><td>ピル型ボタン、アバター</td></tr>
+</tbody></table>
+<hr/>
+<h2>5. コンポーネント原則</h2>
+<h3>Button</h3>
+<ul>
+<li>プライマリ：背景 <code>#117F87</code>、テキスト白、角丸 <code>--radius-md</code></li>
+<li>無効状態：背景 <code>#E0E0E0</code>、テキスト <code>#6B6B6B</code></li>
+<li>ホバー：背景を10%暗く</li>
+<li>最小高さ44px（タッチターゲット確保）</li>
+</ul>
+<h3>Input</h3>
+<ul>
+<li>ボーダー <code>#E0E0E0</code>、角丸 <code>--radius-md</code></li>
+<li>フォーカス時：ボーダー <code>#117F87</code>、フォーカスリング表示</li>
+<li>エラー時：ボーダー <code>#D32F2F</code>、エラーメッセージ赤文字</li>
+</ul>
+<h3>Card</h3>
+<ul>
+<li>背景白、角丸 <code>--radius-lg</code>、影 <code>0 1px 3px rgba(0,0,0,0.1)</code></li>
+<li>パディング <code>--space-md</code></li>
+</ul>
+<h3>Badge</h3>
+<ul>
+<li>Success：背景 <code>#E8F5E9</code>、テキスト <code>#2E7D32</code></li>
+<li>Error：背景 <code>#FFEBEE</code>、テキスト <code>#D32F2F</code></li>
+<li>Warning：背景 <code>#FFF3E0</code>、テキスト <code>#E65100</code></li>
+<li>Info：背景 <code>#CFE5E7</code>、テキスト <code>#117F87</code></li>
+</ul>
+<h3>CO2 Card（CO2サマリーカード）</h3>
+<ul>
+<li>数値は <code>--font-numeric</code> で表示</li>
+<li>削減量には <code>--color-success</code> を使用</li>
+<li>アイコン背景に <code>--color-teal-200</code> を使用</li>
+</ul>
+<hr/>
+<h2>6. アクセントカラー使用制約</h2>
+<h3>Primary <code>#117F87</code></h3>
+<table>
+<thead><tr><th>DO（正しい使い方）</th><th>DON'T（やってはいけない使い方）</th></tr></thead>
+<tbody>
+<tr><td>CTAボタンの背景色</td><td>本文テキストの背景色</td></tr>
+<tr><td>選択中のタブ／ナビゲーション</td><td>大面積の背景塗りつぶし</td></tr>
+<tr><td>プログレスバーの進捗部分</td><td>本文テキストの文字色</td></tr>
+<tr><td>リンクテキスト</td><td>装飾目的の広範囲使用</td></tr>
+</tbody></table>
+<h3>Success <code>#2E7D32</code></h3>
+<table>
+<thead><tr><th>DO</th><th>DON'T</th></tr></thead>
+<tbody>
+<tr><td>CO2削減量の数値表示</td><td>一般的な強調表示</td></tr>
+<tr><td>完了ステータスのアイコン・バッジ</td><td>ボタン背景色</td></tr>
+</tbody></table>
+<h3>Error <code>#D32F2F</code></h3>
+<table>
+<thead><tr><th>DO</th><th>DON'T</th></tr></thead>
+<tbody>
+<tr><td>バリデーションエラーメッセージ</td><td>注意喚起全般</td></tr>
+<tr><td>エラー状態のボーダー</td><td>警告（Warning）表示</td></tr>
+</tbody></table>
+<h3>Teal 200 <code>#CFE5E7</code></h3>
+<table>
+<thead><tr><th>DO</th><th>DON'T</th></tr></thead>
+<tbody>
+<tr><td>アイコンの背景円</td><td>カード全体の背景</td></tr>
+<tr><td>微細なハイライト</td><td>テキストの背景色</td></tr>
+</tbody></table>
+<hr/>
+<h2>7. フォーカスリング仕様</h2>
+<pre><code>
+outline: 2px solid #117F87;
+outline-offset: 2px;
+</code></pre>
+<ul>
+<li>すべてのインタラクティブ要素に適用</li>
+<li><code>:focus-visible</code> で表示（マウスクリック時は非表示）</li>
+</ul>
+<hr/>
+<h2>8. タッチターゲットルール</h2>
+<ul>
+<li>最小サイズ：<strong>44 x 44px</strong></li>
+<li>ボタン、リンク、入力フィールドなどすべてのタップ可能要素に適用</li>
+<li>視覚的サイズが小さくても、タップ領域は44px確保する</li>
+</ul>
+<hr/>
+<h2>9. 数値フォントルール</h2>
+<ul>
+<li>CO2排出量、パーセンテージ、金額など数値データには必ず <code>SF Mono</code> または <code>tabular-nums</code> を使用</li>
+<li>数値が縦に並ぶ場合、桁が揃うようにする（等幅数字）</li>
+<li>単位（kg、%、円）は本文フォント <code>SF Pro</code> で表示、数値より小さいサイズにする</li>
+</ul></div><div class="md-body" id="item-11" hidden><div class="md-head"><span>グラフィック必要性 推奨レポート</span><a class="ext" href="graphics/graphic-recommend.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>グラフィック必要性 推奨レポート — my-green-step-graphics</h1>
+<blockquote>
+<p><strong>本レポート全体は (E) PROPOSED</strong> — AYATORI の提案であり、「グラフィックが必要か」の</p>
+<p>最終判断は Step 21b の人間ゲートでユーザーが行う。</p>
+</blockquote>
+<h2>1. 推奨（結論）</h2>
+<p><strong>グラフィック作成は「検討推奨」を推奨</strong>（生活者向けの行動変容アプリで、初回接点の情緒的な訴求が体験価値に直結する帯のため）。</p>
+<table>
+<thead><tr><th>判定</th><th>値</th></tr></thead>
+<tbody>
+<tr><td>推奨</td><td><strong>検討推奨</strong>（3 段階: 不要 / 検討推奨 / 強く推奨）</td></tr>
+<tr><td>確信度</td><td>高（カテゴリ判定の逐語引用が明確に取れ、<code>illustration_policy = pictogram</code> はアイコン様式の別軸であり本推奨と矛盾しない）</td></tr>
+<tr><td>任意オプション</td><td>ウェルカム画面のヒーロー領域は Step 19 採点でも「視覚的な主役がなく第一印象の訴求力が弱い」として審美的品質 −1 の指摘対象になっている（<code>scores.json</code> タグ <code>welcome_hero_visual</code>）</td></tr>
+</tbody></table>
+<h2>2. 分析根拠</h2>
+<h3>2-1. アプリ/コンテンツのカテゴリ判定 ※ 推測 (inferred)</h3>
+<p><strong>カテゴリ: B2C 生活系（健康・家計・旅行・EC）</strong></p>
+<p>根拠（<code>requirements/00-raw-input.md</code> / <code>requirements/01-overview.md</code> からの逐語引用）:</p>
+<ul>
+<li>「何気なく日常生活を送っている一般の人。家事、買い物、通院、散歩など普通の生活をしている。」（00-raw-input.md ターゲットユーザー — 業務利用者ではなく生活者が対象）</li>
+<li>「その人の行動の影響を可視化し、「自分一人でも変化を起こせる」と実感してもらいたい」（00-raw-input.md 解決したい課題 — 情緒的な実感の提供が目的）</li>
+<li>「ユーザーが日常生活で実践できるエコアクションを提案し、その効果をCO2削減量として可視化することで、「自分一人の行動でも環境に貢献できる」という実感を提供する。」（01-overview.md 1.1 — 家計簿・ヘルスケアと同型の生活記録 + 行動変容モデル）</li>
+</ul>
+<h3>2-2. カテゴリ → ユーザー期待レベル → 導出</h3>
+<table>
+<thead><tr><th>カテゴリ帯</th><th>グラフィック期待度</th><th>既定の推奨</th><th>例</th></tr></thead>
+<tbody>
+<tr><td>ゲーム / 子供向け・教育 / エンタメ</td><td>高 — キャラクター・イラストが期待される</td><td>強く推奨</td><td>ゲームアプリ、読み聞かせアプリ</td></tr>
+<tr><td><strong>B2C 生活系（健康・家計・旅行・EC）</strong></td><td><strong>中 — オンボーディング・空状態等の要所で期待</strong></td><td><strong>検討推奨</strong></td><td>家計簿アプリ、ヘルスケア ← <strong>my-green-step-graphics はここ</strong></td></tr>
+<tr><td>実用ツール / 業務効率 / ダッシュボード</td><td>低 — ピクトグラム中心で十分</td><td>不要</td><td>運転支援ツール、業務管理</td></tr>
+</tbody></table>
+<p>生活者の日常行動を記録し情緒的な実感を返すモデルであり、家計簿・ヘルスケアと同じ帯に入る → 期待度「中」→ 既定の推奨「検討推奨」（→ 導出 (C) DERIVED、導出元は上表）。要所（初回接点・オンボーディング説明）に限って効果が見込める帯であり、全画面へのグラフィック展開は帯の想定外。</p>
+<h3>2-3. 既存のユーザー選択との整合（(A) CONFIRMED の prior）</h3>
+<ul>
+<li><code>requirements.json → design_output_scope.illustration_policy = &quot;pictogram&quot;</code>（Phase 1a Q7-f でユーザー自身が選択済み）</li>
+<li>整合 — 本分析の結論はこの選択と整合する。<code>pictogram</code> は「アイコンをどう描くか」の様式選択であり、コンテンツグラフィック（イラスト・写真）の要否とは別軸のため、期待度「中」と矛盾しない。</li>
+<li><code>design-brief.yaml → common</code>（Phase 2 ヒアリングで確定済み）: <code>tone_and_mood = &quot;落ち着いたティール系、白背景ベース&quot;</code> / <code>brand_direction = [清潔感, 信頼感, 使いやすさ]</code> / <code>avoid = [絵文字の多用, 子供っぽいデザイン]</code> と本推奨の方向性は整合（グラフィックを入れる場合も「静かで清潔なトーン」に寄せる制約として働く。避けるスタイルの指定はテイスト選定 = Step 21c への制約であり、要否そのものを否定しない）。</li>
+</ul>
+<h2>3. 画面インベントリ（→ 決定的抽出、(C) DERIVED）</h2>
+<p>抽出スクリプト (<code>skills/21a-graphic-recommend/scripts/extract-inventory.mjs</code>) の実行結果より:</p>
+<table>
+<thead><tr><th>画面</th><th>アイコン（icons/ 正典と署名一致）</th><th>意味を持つ視覚要素</th><th>グラフィック候補スロット</th></tr></thead>
+<tbody>
+<tr><td>scr-01-welcome</td><td>check-circle, chart-bar, calendar-days（3 個）</td><td>なし</td><td>ヒーロー領域 / 価値 3 ポイントのアイコン列</td></tr>
+<tr><td>scr-06-action-list</td><td>sun, truck, bolt, shopping-cart, map-pin, chevron-right×3, chart-bar, clipboard-document-check, cog-6-tooth（9 種）</td><td>なし</td><td>アクションカードのアイコン列 ×5</td></tr>
+<tr><td>scr-07-action-detail</td><td>arrow-left（1 個）</td><td>なし</td><td>期待CO2削減量カード周辺</td></tr>
+</tbody></table>
+<ul>
+<li>ラスター画像: 0 / イラストプレースホルダ: 0 / 絵文字: なし（illustration_policy=pictogram と整合）</li>
+</ul>
+<h3>3-b. アイコン用途の分類（① 機能アイコン / ② グラフィック代替候補）</h3>
+<p><code>icon_contexts</code> (px / parent_class / siblings / nav / control) に基づく §8 の判定結果。</p>
+<table>
+<thead><tr><th>画面</th><th>箇所</th><th>特徴量</th><th>判定</th><th>根拠</th></tr></thead>
+<tbody>
+<tr><td>scr-01-welcome</td><td><code>welcome__point-icon</code> の check-circle / chart-bar / calendar-days</td><td>40px / ×3</td><td>② 代替候補</td><td>px ≥ 40 かつ nav でない（拡大表示 = コンテンツの代役）。同時に siblings ≥ 3 のグループ条件も満たす</td></tr>
+<tr><td>scr-06-action-list</td><td><code>card-icon</code> の sun / truck / bolt / shopping-cart / map-pin</td><td>44px / ×5 / control</td><td>② 代替候補（グループで 1 slot）</td><td>siblings ≥ 5 かつ nav でなく px ≥ 24 のサムネイル列。<code>in_control</code> はカード全体が <code>&lt;a&gt;</code> のため付くもので否決材料にしない</td></tr>
+<tr><td>scr-06-action-list</td><td><code>card-chevron</code> の chevron-right</td><td>20px / ×3 / control</td><td>① 機能</td><td>px ≤ 32 の操作グリフ</td></tr>
+<tr><td>scr-06-action-list</td><td><code>mobile-bottom-nav__item</code> の chart-bar / clipboard-document-check / cog-6-tooth</td><td>24px / nav / control</td><td>① 機能</td><td>in_nav（ナビゲーション UI 部品）</td></tr>
+<tr><td>scr-07-action-detail</td><td><code>mobile-header__back</code> の arrow-left</td><td>24px / control</td><td>① 機能</td><td>px ≤ 32 の単独操作グリフ</td></tr>
+</tbody></table>
+<h2>4. グラフィック候補スロット一覧（Step 21b 質問④への引き継ぎ材料）</h2>
+<table>
+<thead><tr><th>#</th><th>箇所</th><th>スロット種別</th><th>個別推奨</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>scr-01-welcome</code> キャッチコピー上部のヒーロー領域（現状は文字のみで視覚の主役がない）</td><td>hero_brand</td><td><strong>推奨</strong> — アプリの初回接点であり、「自分の一歩が地球を変える」という情緒的なメッセージを言葉だけで支えている箇所</td></tr>
+<tr><td>2</td><td><code>scr-01-welcome</code> 価値 3 ポイントのアイコン列（40px の拡大アイコン ×3）</td><td>onboarding_explainer</td><td><strong>推奨</strong> — 3 つの価値説明が汎用ピクトグラムのため、内容（かんたん / 見える / つづく）と絵の結びつきが弱い</td></tr>
+<tr><td>3</td><td><code>scr-06-action-list</code> アクションカードのアイコン列（44px ×5）</td><td>content_media</td><td><strong>任意</strong> — アクションごとの内容（再エネ電力・食事・移動等）を示すサムネイルで、絵にすると識別性が上がる。ただし 5 枚必要で生成コストが最も大きい</td></tr>
+<tr><td>4</td><td><code>scr-07-action-detail</code> 期待CO2削減量カード周辺</td><td>content_media</td><td><strong>任意</strong> — 当該アクションの内容を表す 1 枚。詳細画面の情報密度は既に高く、効果は限定的</td></tr>
+</tbody></table>
+<p>&lt;!-- ayatori:slot-anchors { &quot;slot_anchors&quot;: [ { &quot;n&quot;: 1, &quot;screen&quot;: &quot;scr-01-welcome&quot;, &quot;platform&quot;: &quot;mobile&quot;, &quot;anchor&quot;: &quot;text:自分の一歩が&quot; }, { &quot;n&quot;: 2, &quot;screen&quot;: &quot;scr-01-welcome&quot;, &quot;platform&quot;: &quot;mobile&quot;, &quot;anchor&quot;: &quot;class:welcome__point-icon&quot; }, { &quot;n&quot;: 3, &quot;screen&quot;: &quot;scr-06-action-list&quot;, &quot;platform&quot;: &quot;mobile&quot;, &quot;anchor&quot;: &quot;class:card-icon&quot; }, { &quot;n&quot;: 4, &quot;screen&quot;: &quot;scr-07-action-detail&quot;, &quot;platform&quot;: &quot;mobile&quot;, &quot;anchor&quot;: &quot;text:期待CO2削減量&quot; } ] } --&gt;</p>
+<p>※ 空状態・エラー状態はグラフィックの定番スロットだが、v1 は main (default) HTML のみ対象のため 対象画面が存在しない（sub-state を後日生成する場合の専用グラフィックは将来拡張 — 設計 §4）。</p>
+<h2>5. 分析対象外（ガードレール）</h2>
+<p>以下は<strong>データ駆動の可視化 = コア UI</strong> であり、グラフィック（イラスト・写真）への置き換え候補では<strong>ない</strong>:</p>
+<ul>
+<li>本プロジェクトに該当要素なし（<code>role=&quot;img&quot;</code> の意味視覚は 0 件。週間ビフォーアフターグラフ等のデータ駆動描画はダッシュボード画面にあり、本試行のスコープ外）</li>
+</ul>
+<p>以下は<strong>入力タスク画面</strong>（フォーム / 決済 / 認証）であり、大型グラフィックがタスク完遂を阻害するため 候補にしていない（§4 の負の規則）:</p>
+<ul>
+<li>本プロジェクトに該当画面なし（登録・ログイン・アンケートは本試行のスコープ外で生成していない）</li>
+</ul>
+<p>「オーナーの意向」は AYATORI では取得できないため本分析の判断軸に含めていない （判断軸は「アプリ/コンテンツのカテゴリから推定されるユーザーの期待」のみ）。</p></div><div class="md-body" id="item-13" hidden><div class="md-head"><span>画面一覧</span><a class="ext" href="screens/00-screen-list.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>画面一覧</h1>
+<p><strong>生成日</strong>: 2026-08-14 | <strong>対象アプリ</strong>: my-green-step-graphics</p>
+<p><strong>対象範囲</strong>: グラフィック生成の試行のため、MyGreenStep 全 9 画面のうち <strong>3 画面のみ</strong> を対象とする（ユーザー指定）。 出力プラットフォームは <strong>モバイルのみ</strong>（<code>platform_combo: mobile_only</code>）。</p>
+<table>
+<thead><tr><th>#</th><th>画面名</th><th>目的（ユーザーが達成すること）</th><th>対応Must機能ID</th><th>ヘッダー</th><th>ボトムメニュー</th><th>現在タブ</th><th>備考</th></tr></thead>
+<tbody>
+<tr><td>01</td><td>scr-01-welcome（ウェルカム）</td><td>アプリの価値を理解し、はじめる判断をする</td><td>—</td><td>なし</td><td>無</td><td>—</td><td>起動直後の初回画面。本試行では登録・ログイン（SCR-02/03）がスコープ外のため「はじめる」は直接アクション一覧へ接続する</td></tr>
+<tr><td>02</td><td>scr-06-action-list（アクション一覧）</td><td>実施中のアクションとおすすめアクションを一覧で確認し、挑戦するアクションを選ぶ</td><td>F-004, F-005</td><td>A</td><td>有</td><td>actions</td><td>アクションタブの着地画面</td></tr>
+<tr><td>03</td><td>scr-07-action-detail（アクション詳細）</td><td>アクションの内容・効果・やり方を理解し「挑戦する」「やった」を記録する</td><td>F-005, F-007</td><td>B</td><td>無</td><td>—</td><td>アクション一覧の子画面。「やった」押下後の CO2 フィードバックは同画面内インライン表示</td></tr>
+</tbody></table>
+<blockquote>
+<p><strong>本試行でスコープ外の画面</strong>: SCR-02 登録 / SCR-03 ログイン / SCR-04 アンケート / SCR-05 ダッシュボード / SCR-08 設定 / SCR-09 パスワードリセット。</p>
+<p>完成済みプロジェクト <code>my-green-step</code> に既存の成果物があり、本試行では複製・再生成しない。</p>
+</blockquote>
+<hr/>
+<h2>共通部品定義（chrome）</h2>
+<h3>ボトムメニュー（タブバー・1 種、mobile）</h3>
+<table>
+<thead><tr><th>タブ順</th><th>タブid</th><th>ラベル</th><th>アイコン名</th><th>遷移先画面</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>dashboard</td><td>ダッシュボード</td><td>chart-bar</td><td>scr-05-dashboard（本試行スコープ外・非活性表示）</td></tr>
+<tr><td>2</td><td>actions</td><td>アクション</td><td>clipboard-document-check</td><td>scr-06-action-list</td></tr>
+<tr><td>3</td><td>settings</td><td>設定</td><td>cog-6-tooth</td><td>scr-08-settings（本試行スコープ外・非活性表示）</td></tr>
+</tbody></table>
+<ul>
+<li>タブ数・ラベル・アイコン・順序は全画面で固定（製品の実構成である 3 タブを維持する）。画面ごとに変わるのは「どのタブが選択中か」だけ。</li>
+<li>本試行で生成しないタブ（dashboard / settings）はタブバー上に表示するが遷移先を持たない。押しても何も起きない見本として扱う。</li>
+</ul>
+<h3>ヘッダー（2 種）</h3>
+<ul>
+<li><strong>A（HOME 系）</strong>: トップ階層用。戻るボタン<strong>なし</strong>。可変はタイトル文字のみ。適用: scr-06-action-list（タイトル「アクション」）</li>
+<li><strong>B（下層）</strong>: 1 階層下用。戻るボタン<strong>あり</strong>。可変はタイトル文字 / 戻り先。適用: scr-07-action-detail（タイトル = アクション名、戻り先 = scr-06-action-list）</li>
+<li>chrome なし: scr-01-welcome（全画面のウェルカム表示のため header / tabbar を持たない）</li>
+</ul>
+<hr/>
+<h2>画面ごとの要素定義</h2>
+<h3>scr-01-welcome（ウェルカム）</h3>
+<ul>
+<li>アプリロゴ</li>
+<li>キャッチコピー「自分の一歩が地球を変える」</li>
+<li>アプリの価値を伝える 3 ポイント（アイコン＋短文）</li>
+<li>「はじめる」ボタン（→ scr-06-action-list）</li>
+</ul>
+<h3>scr-06-action-list（アクション一覧）</h3>
+<ul>
+<li><strong>実施中セクション（上部）</strong>: 「挑戦する」を選んだアクション一覧。各カードに「やった」ボタン</li>
+<li><strong>おすすめセクション（下部）</strong>: まだ挑戦していないアクション一覧。各カードに「くわしく見る」</li>
+<li>各カード: アイコン＋アクション名＋CO2 削減量＋難易度ラベル</li>
+<li>カードタップ → scr-07-action-detail</li>
+<li>ヘッダー A（タイトル「アクション」）+ タブバー（現在タブ: actions）</li>
+</ul>
+<h3>scr-07-action-detail（アクション詳細）</h3>
+<ul>
+<li>アクション名（大見出し）</li>
+<li>カテゴリバッジ＋難易度ラベル</li>
+<li>「なぜ効果的か」説明文</li>
+<li>期待 CO2 削減量（大きく表示）</li>
+<li>具体的な実施手順（ステップ形式）</li>
+<li>「挑戦する」ボタン（未挑戦時）／「やった」ボタン＋日付選択（実施中時）</li>
+<li>「やった」押下後: 同画面内に CO2 フィードバックをインライン表示</li>
+<li>ヘッダー B（戻る → scr-06-action-list）</li>
+</ul></div><div class="md-body" id="item-14" hidden><div class="md-head"><span>仕様: scr-01-welcome 画面仕様</span><a class="ext" href="screens/scr-01-welcome.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>scr-01-welcome 画面仕様</h1>
+<h2>目的</h2>
+<p>アプリの価値（毎日の小さな選択が CO2 削減という結果になること）を理解し、利用を始める判断をする。起動直後の初回画面。</p>
+<h2>レイアウト構成</h2>
+<ul>
+<li>ナビゲーション: なし（chrome なし。ヘッダー / ボトムメニューを持たない全画面表示）</li>
+<li>ヘッダー: なし</li>
+<li>メインコンテンツ: ブランド表示（マーク + アプリ名）／キャッチコピー「自分の一歩が地球を変える」／リード文／価値 3 ポイント（アイコン + 見出し + 説明）</li>
+<li>CTA: 「はじめる」（画面下部・主要ボタン、<code>btn-primary</code>）→ scr-06-action-list</li>
+<li>フッター: CTA 直下に補足テキスト 1 行</li>
+</ul>
+<h2>コンポーネント一覧</h2>
+<table>
+<thead><tr><th>コンポーネント</th><th>分類</th><th>トークン参照</th><th>WCAG要件</th></tr></thead>
+<tbody>
+<tr><td>プライマリCTA「はじめる」</td><td>主要ボタン</td><td>color.primary / color.on-primary / sp-touch(44px) / radius-pill</td><td>2.5.8: 44px以上 ✅</td></tr>
+<tr><td>キャッチコピー (h1)</td><td>—</td><td>font-display / fs-2xl / color.on-surface</td><td>1.4.3: 4.5:1以上 ✅</td></tr>
+<tr><td>リード文・ポイント説明</td><td>デエンファシス</td><td>color.on-surface-secondary / fs-base, fs-sm</td><td>1.4.3: 4.6:1 ✅（#6B6B6B on #FFFFFF）</td></tr>
+<tr><td>価値ポイントアイコン</td><td>装飾</td><td>color.primary / color.secondary-active-bg</td><td>1.1.1: aria-hidden + テキストで意味伝達 ✅</td></tr>
+<tr><td>補足テキスト</td><td>デエンファシス</td><td>color.on-surface-secondary / fs-xs(12px)</td><td>最小フォントサイズ 12px ✅</td></tr>
+</tbody></table>
+<h2>状態パターン (仕様書に記述する — HTML 生成は Step 25b)</h2>
+<ul>
+<li>default — ブランド + キャッチ + 3 ポイント + CTA の通常表示（本 step で HTML 化）</li>
+<li>loading — 本画面は API 呼び出しを持たないため loading なし</li>
+<li>error — 本画面は API 呼び出しを持たないためエラー状態なし</li>
+<li>empty — 静的コンテンツのみのため empty なし</li>
+</ul>
+<blockquote>
+<p>本画面は表示のみで通信を伴わないため、sub-state は生成対象外。</p>
+</blockquote>
+<h2>画面遷移</h2>
+<ul>
+<li>「はじめる」→ scr-06-action-list（アクション一覧）</li>
+</ul>
+<blockquote>
+<p>本試行では登録（SCR-02）／ログイン（SCR-03）がスコープ外のため、「はじめる」を直接アクション一覧へ接続している。製品の本来のフローでは SCR-02 / SCR-03 を経由する。</p>
+</blockquote>
+<p>&lt;!-- ayatori:graphics-used:start --&gt;</p>
+<h2>使用グラフィック</h2>
+<table>
+<thead><tr><th>graphic_id</th><th>配置</th><th>alt</th><th>由来</th></tr></thead>
+<tbody>
+<tr><td>welcome-bg</td><td>画面全面の背景レイヤー (.screen の最背面に敷く)。文字可読性のため白のグラデーションスクリムを重ねる前提。透過なし</td><td>welcome-bg</td><td>AI 生成 (POCTEAMA-179) — 21g 承認 2026-08-19T13:07:03+09:00</td></tr>
+</tbody></table>
+<p>&lt;!-- ayatori:graphics-used:end --&gt;</p></div><div class="md-body" id="item-15" hidden><div class="md-head"><span>仕様: scr-06-action-list 画面仕様</span><a class="ext" href="screens/scr-06-action-list.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>scr-06-action-list 画面仕様</h1>
+<h2>目的</h2>
+<p>実施中のアクションと、自分に合ったおすすめアクションを一覧で確認し、次に挑戦するアクションを選ぶ。アクションタブの着地画面（F-004 / F-005）。</p>
+<h2>レイアウト構成</h2>
+<ul>
+<li>ナビゲーション: BottomTab（3 タブ。現在タブ = actions）</li>
+<li>ヘッダー: A（HOME 系・戻るなし）、タイトル「アクション」</li>
+<li>メインコンテンツ: 「実施中のアクション」セクション（件数付き）／「あなたにおすすめ」セクション（件数付き）。各カードは左端に 120px のグラフィック列を持つ</li>
+<li>CTA: 実施中カードの「やった」ボタン（記録 = F-005）／おすすめカードのタップで詳細へ</li>
+<li>フッター: BottomTab</li>
+</ul>
+<h2>コンポーネント一覧</h2>
+<table>
+<thead><tr><th>コンポーネント</th><th>分類</th><th>トークン参照</th><th>WCAG要件</th></tr></thead>
+<tbody>
+<tr><td>「やった」ボタン (<code>card-cta</code>)</td><td>主要ボタン</td><td>color.primary / color.on-primary / sp-touch(44px) / radius-pill</td><td>2.5.8: 44px以上 ✅</td></tr>
+<tr><td>おすすめカード (<code>suggest-card</code>)</td><td>主要ボタン相当（行タップ）</td><td>color.surface / color.border-default / shadow-xs</td><td>2.5.8: 高さ 44px 以上（カード最小高 104px） ✅</td></tr>
+<tr><td>アクション名</td><td>—</td><td>fs-base / fw-semibold / color.on-surface</td><td>1.4.3: 4.5:1以上 ✅</td></tr>
+<tr><td>CO2 削減量</td><td>—</td><td>font-numeric / tabular-nums / color.success / fs-sm</td><td>1.4.3: 4.5:1 ✅（#2E7D32 on #FFFFFF）</td></tr>
+<tr><td>カテゴリバッジ</td><td>—</td><td>color.secondary-active-bg / color.primary / fs-sm</td><td>1.4.3: 4.5:1以上 ✅</td></tr>
+<tr><td>難易度バッジ（簡単 / 普通）</td><td>—</td><td>color.success-bg + color.success-text / color.warning-bg + color.warning-text</td><td>1.4.1: 色のみに依存せずラベル文字を併記 ✅</td></tr>
+<tr><td>セクション件数</td><td>デエンファシス</td><td>color.on-surface-secondary / fs-xs(12px)</td><td>最小フォントサイズ 12px ✅</td></tr>
+<tr><td>BottomTab（共通部品）</td><td>—</td><td>color.primary（現在タブ）/ color.on-surface-secondary</td><td>2.5.8: 44px以上 ✅ / 4.1.2: aria-current=&quot;page&quot; ✅</td></tr>
+</tbody></table>
+<blockquote>
+<p>構造統一: 実施中カード（<code>doing-card</code>）とおすすめカード（<code>suggest-card</code>）はクラスを分離し、各クラス内では全インスタンスが同一構造（グラフィック列 → 本文 → 末尾要素）。</p>
+<p>グラフィック列: カード左端の幅 120px・カード上下端まで届く列（<code>.card-icon</code>）。AI 生成グラフィック（600×400）を <code>object-fit: cover</code> で表示する。被写体が左寄りの 2 枚（<code>action-energy</code> / <code>action-walk</code>）は <code>object-position: 0% 50%</code> で crop 基準を左端に寄せ、枠内で中央に見えるよう調整している（実測重心 38.8% / 34.0%）。</p>
+</blockquote>
+<h2>掲載データの出典</h2>
+<p><code>requirements/05-features.md</code> §5.2 アクションマスタデータ（MVP初期データ）から引用。値の自前補完はしていない。</p>
+<table>
+<thead><tr><th>表示位置</th><th>アクションID</th><th>アクション名</th><th>カテゴリ</th><th>CO2削減量</th><th>難易度</th></tr></thead>
+<tbody>
+<tr><td>実施中</td><td>ACT-004</td><td>エアコンフィルター月2回清掃</td><td>住まい</td><td>0.6 kg/週</td><td>1（簡単）</td></tr>
+<tr><td>実施中</td><td>ACT-005</td><td>宅配便の置き配指定</td><td>買い物</td><td>0.2 kg/週</td><td>1（簡単）</td></tr>
+<tr><td>おすすめ</td><td>ACT-001</td><td>再エネ電力プランへの切替</td><td>エネルギー</td><td>36.5 kg/週</td><td>1（簡単）</td></tr>
+<tr><td>おすすめ</td><td>ACT-003</td><td>週1回の牛肉→鶏肉/豚肉</td><td>食事</td><td>2.0 kg/週</td><td>1（簡単）</td></tr>
+<tr><td>おすすめ</td><td>ACT-006</td><td>2km以内の移動を徒歩/自転車に</td><td>移動</td><td>1.8 kg/週</td><td>2（普通）</td></tr>
+</tbody></table>
+<h2>状態パターン (仕様書に記述する — HTML 生成は Step 25b)</h2>
+<ul>
+<li>default — 実施中 2 件 + おすすめ 3 件の通常表示（本 step で HTML 化）</li>
+<li>empty — 実施中が 0 件の場合。実施中セクションを出さず、おすすめセクションのみ表示する（<code>00-coverage-check.json</code> に記録済み。HTML は Step 25b）</li>
+<li>loading — 提案リスト取得中。カード形状のスケルトンを 3 件表示する（HTML は Step 25b）</li>
+<li>error — 提案リスト取得失敗。まず NFR-E-02 に従い最大 3 回（5 秒間隔）自動リトライし、それでも失敗した場合にエラーバナー（<code>color.error-bg</code> / <code>error-text</code> / <code>error-border</code>）+「再試行」ボタンを表示する。文面は技術用語を使わず次の操作を案内する（NFR-E-01）（HTML は Step 25b）</li>
+<li>記録成功 — 「やった」押下後、当該カードに記録済みの表示 + 即時フィードバック（「-○○g CO2」）を出す（F-006 (C)。HTML は Step 25b）</li>
+</ul>
+<h2>画面遷移</h2>
+<ul>
+<li>おすすめカードタップ → scr-07-action-detail（アクション詳細）</li>
+<li>実施中カードタップ → scr-07-action-detail（アクション詳細・実施中状態）</li>
+<li>「やった」→ 同画面内で記録完了を表示（画面遷移なし。F-005）</li>
+<li>BottomTab: ダッシュボード / 設定 → 本試行ではスコープ外（非活性表示）</li>
+</ul>
+<p>&lt;!-- ayatori:graphics-used:start --&gt;</p>
+<h2>使用グラフィック</h2>
+<table>
+<thead><tr><th>graphic_id</th><th>配置</th><th>alt</th><th>由来</th></tr></thead>
+<tbody>
+<tr><td>action-energy</td><td>おすすめカード ACT-001「再エネ電力プランへの切替」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要</td><td>action-energy</td><td>AI 生成 (POCTEAMA-179) — 21g 承認 2026-08-19T13:07:03+09:00</td></tr>
+<tr><td>action-meat-free</td><td>おすすめカード ACT-003「週1回の牛肉→鶏肉/豚肉」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要</td><td>action-meat-free</td><td>AI 生成 (POCTEAMA-179) — 21g 承認 2026-08-19T13:07:03+09:00</td></tr>
+<tr><td>action-walk</td><td>おすすめカード ACT-006「2km以内の移動を徒歩/自転車に」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要</td><td>action-walk</td><td>AI 生成 (POCTEAMA-179) — 21g 承認 2026-08-19T13:07:03+09:00</td></tr>
+<tr><td>action-aircon-filter</td><td>実施中カード ACT-004「エアコンフィルター月2回清掃」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要</td><td>action-aircon-filter</td><td>AI 生成 (POCTEAMA-179) — 21g 承認 2026-08-19T13:07:03+09:00</td></tr>
+<tr><td>action-delivery</td><td>実施中カード ACT-005「宅配便の置き配指定」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要</td><td>action-delivery</td><td>AI 生成 (POCTEAMA-179) — 21g 承認 2026-08-19T13:07:03+09:00</td></tr>
+</tbody></table>
+<p>&lt;!-- ayatori:graphics-used:end --&gt;</p></div><div class="md-body" id="item-16" hidden><div class="md-head"><span>仕様: scr-07-action-detail 画面仕様</span><a class="ext" href="screens/scr-07-action-detail.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>scr-07-action-detail 画面仕様</h1>
+<h2>目的</h2>
+<p>個別アクションの内容・効果の根拠・期待削減量・実施手順を理解し、「挑戦する」または「やった」を記録する（F-005 / F-007）。</p>
+<h2>レイアウト構成</h2>
+<ul>
+<li>ナビゲーション: なし（BottomTab は付けない。アクション一覧の子画面）</li>
+<li>ヘッダー: B（下層・戻るあり）、タイトル = アクション名、戻り先 = scr-06-action-list</li>
+<li>メインコンテンツ: 上部グラフィック帯（画面左右端まで届く高さ 260px の帯。一覧の ACT-003 と同一画像を <code>object-fit: cover</code> で表示）／カテゴリ・難易度バッジ／期待CO2削減量ヒーローカード／「なぜ効果的か」＋算出根拠／「やり方」ステップ</li>
+<li>CTA: 画面下部固定の「挑戦する」（主要ボタン）</li>
+<li>フッター: CTA + 補足テキスト 1 行（画面下部に sticky）</li>
+</ul>
+<h2>コンポーネント一覧</h2>
+<table>
+<thead><tr><th>コンポーネント</th><th>分類</th><th>トークン参照</th><th>WCAG要件</th></tr></thead>
+<tbody>
+<tr><td>プライマリCTA「挑戦する」</td><td>主要ボタン</td><td>color.primary / color.on-primary / sp-touch(44px) / radius-pill</td><td>2.5.8: 44px以上 ✅</td></tr>
+<tr><td>戻るボタン（共通部品ヘッダーB）</td><td>主要ボタン</td><td>color.on-surface / 44×44px</td><td>2.5.8: 44px以上 ✅ / 4.1.2: aria-label=&quot;戻る&quot; ✅</td></tr>
+<tr><td>CO2 ヒーローカード</td><td>—</td><td>color.primary（背景）/ color.on-primary（文字）/ font-display / fs-3xl / tabular-nums</td><td>1.4.3: 白文字 on #117F87 = 4.6:1 ✅</td></tr>
+<tr><td>カテゴリバッジ</td><td>—</td><td>color.secondary-active-bg / color.primary / fs-sm</td><td>1.4.3: 4.5:1以上 ✅</td></tr>
+<tr><td>難易度バッジ（簡単）</td><td>—</td><td>color.success-bg / color.success-text / fs-sm</td><td>1.4.1: 色のみに依存せずラベル文字を併記 ✅</td></tr>
+<tr><td>本文（なぜ効果的か / 手順）</td><td>—</td><td>fs-base / lh-relaxed / color.on-surface</td><td>1.4.3: 4.5:1以上 ✅</td></tr>
+<tr><td>算出根拠テキスト</td><td>デエンファシス</td><td>color.on-surface-secondary / fs-xs(12px)</td><td>最小フォントサイズ 12px ✅</td></tr>
+<tr><td>手順ステップ番号</td><td>—</td><td>color.secondary-active-bg / color.primary / font-numeric</td><td>1.3.1: ol による順序の構造化 ✅</td></tr>
+</tbody></table>
+<h2>掲載データの出典</h2>
+<p><code>requirements/05-features.md</code> §5.2 アクションマスタデータの ACT-003（週1回の牛肉→鶏肉/豚肉 / 食事 / 2.0 kg/週 ≒ 104 kg/年 / 難易度 1 簡単 / 算出根拠「牛肉100gの生産CO2は鶏肉の約10倍。週1回の置換で年間104kg削減」）から引用。実施手順の文面は完成済プロジェクト <code>my-green-step</code> で人間承認済みの内容を引き継いでいる。</p>
+<h2>状態パターン (仕様書に記述する — HTML 生成は Step 25b)</h2>
+<ul>
+<li>default（未挑戦） — バッジ・削減量・根拠・手順 + 「挑戦する」CTA（本 step で HTML 化）</li>
+<li>実施中 — CTA が「やった」+ 実施日選択（既定は当日）に変わる（HTML は Step 25b）</li>
+<li>記録成功 — 「やった」押下後、同画面内に CO2 フィードバックをインライン表示（「このアクションで ○○g CO2 を削減しました」＋本日の合計）。F-006 (C)（HTML は Step 25b）</li>
+<li>loading — 詳細データ取得中のスケルトン表示（HTML は Step 25b）</li>
+<li>error — 記録保存時の通信エラー。まず NFR-E-02 に従い最大 3 回（5 秒間隔）自動リトライし、それでも失敗した場合にエラーバナー（<code>color.error-bg</code> / <code>error-text</code> / <code>error-border</code>）+「再試行」を表示する。文面は技術用語を使わず次の操作を案内する（NFR-E-01）。オフライン時は NFR-A-05 に従いローカルに一時保存し、接続復旧後に自動同期する（HTML は Step 25b）</li>
+</ul>
+<blockquote>
+<p>メモ入力欄は設けない（完成済プロジェクトの人間ゲートで「表示する場所がないため不要」と決定済み）。</p>
+</blockquote>
+<h2>画面遷移</h2>
+<ul>
+<li>ヘッダー「戻る」→ scr-06-action-list（アクション一覧）</li>
+<li>「挑戦する」→ 実施中に追加し、アクション一覧へ戻る</li>
+<li>「やった」（実施中状態）→ 同画面内で記録完了を表示（画面遷移なし）</li>
+</ul>
+<p>&lt;!-- ayatori:graphics-used:start --&gt;</p>
+<h2>使用グラフィック</h2>
+<table>
+<thead><tr><th>graphic_id</th><th>配置</th><th>alt</th><th>由来</th></tr></thead>
+<tbody>
+<tr><td>action-meat-free</td><td>画面上部エリア (カテゴリ/難易度バッジの上) に、一覧で使う ACT-003 と同一画像を大きめに再掲する。一覧→詳細の親和性を出す目的</td><td>action-meat-free</td><td>AI 生成 (POCTEAMA-179) — 21g 承認 2026-08-19T13:07:03+09:00</td></tr>
+</tbody></table>
+<p>&lt;!-- ayatori:graphics-used:end --&gt;</p></div><div class="md-body" id="item-23" hidden><div class="md-head"><span>実行サマリー</span></div><h2>タイムライン</h2><ul class="rs-timeline"><li>要件承認 (Phase 1b)<span class="t">2026-04-30</span></li><li>デザイン承認 (Phase 2)<span class="t">2026-04-30</span></li><li>画面設計承認 (遷移図・画面一覧)<span class="t">2026-08-14 17:30</span></li></ul>
+<h2>結果</h2><dl class="rs-dl"><dt>デザイン採点</dt><dd>98 点 (1 attempts)</dd></dl>
+<p class="rs-note">詳細な修正・指摘イベント (Pattern A/B/C/D) は「フィードバックログ」を参照。</p></div><div class="md-body" id="item-24" hidden><div class="md-head"><span>フィードバックログ</span><a class="ext" href="feedback-log.md" target="_blank" rel="noopener">↗ 原文</a></div><h1>feedback-log — my-green-step-graphics</h1>
+<p>本プロジェクトは完成済み <code>my-green-step</code> を土台に、グラフィック生成ブロック (21a-21g) を 3 画面で試行するための複製プロジェクト。</p>
+<ul>
+<li><strong>[step-14] パイプライン設計/旧形式 artifact の受け入れ</strong>: 土台にした <code>my-green-step</code> は 2026-04 時点の旧形式で、進行状況が <code>requirements.json</code> に混在し <code>pipeline-state.json</code> / <code>design-brief.yaml</code> / <code>screens/{platform}/</code> / <code>00-transition-map.mmd</code> / <code>00-coverage-check.json</code> が存在しなかった → 現行 Phase 3 は <code>pipeline-state.json.approvals.step13_approved_at</code> を入口条件とするため起動不能 → 複製プロジェクト側で現行形式へ変換（design-brief.md → design-brief.yaml の形式変換、状態の分離）。<strong>改善案</strong>: 旧形式プロジェクトを現行パイプラインへ載せ替える手順（state の移設 + design-brief の yaml 化 + screens の platform 別再配置）が文書化されていない。<code>docs/</code> に移行手順を用意するか、<code>/ayatori-status</code> が旧形式を検出して案内すると再発を防げる。</li>
+<li><strong>[step-18] エージェントのミス/コントラスト未検証のトークン流用</strong>: tinted 面（<code>--color-secondary-active-bg</code> #E0F2F1）上のテキスト・アイコンに <code>--color-primary</code> #117F87 を流用して生成した → 実測 4.11:1 で WCAG 1.4.3 AA 未達 → Step 18 の実測で検出し、tinted 面専用の <code>--color-on-primary-container</code> #0E6B72（5.39:1）を tokens.json に追加して差し替え、3 画面を再生成。<strong>原因</strong>: 「primary は AA 合格」という白背景前提の記述（tokens.json の <code>$description</code> は on #FFFFFF での実測値）を、別の背景色の上でも成り立つと誤って一般化した。<strong>改善案</strong>: Step 17 の Pre-flight に「テキスト/アイコンを surface 以外の面に載せる場合は当該ペアを実測する」チェックを明記する。</li>
+<li><strong>[step-18] パイプライン設計/state_colors の未検証ペア</strong>: 継承した design-brief の <code>state_colors.error.text</code> #D32F2F on <code>error.bg</code> #FFEBEE = 4.36:1、<code>info.text</code> #0277BD on <code>info.bg</code> #E1F5FE = 4.27:1 でいずれも AA 未達 → error は既存 primitive <code>red.900</code> #B71C1C（5.75:1）へ差し替えて解消。info は既存 primitive にこれより濃い青が無く、値を発明しない方針のため未解決として Step 21 に提示（人間判断で容認）。<strong>原因</strong>: Phase 2 の WCAG ループは state_colors ペア（pairs 8-15）を warn-only 扱いにしており、未達のまま Phase 3 に引き継がれる。<strong>改善案</strong>: warn-only のまま引き継ぐ場合、Phase 3 の Step 17 が当該 state color を初めて使う直前（Step 25b）に再検証するゲートを置く。</li>
+<li><strong>[step-21] 人間ゲート/容認判断</strong>: 要件との食い違い 7 件（要件矛盾 3 / 想像デフォルト 3 / 根拠薄弱 1）と色の残り課題（アイコン色の揺れ 1 件・カード境界 1.23:1・情報バナーの青 4.27:1）を提示 → 試行スコープ由来のため全件容認で進行。要件書内部の矛盾（F-007「kg-CO2/月」↔ アクションマスタ「kg/週」）は記録として保持。</li>
+<li><strong>[21b] Pattern A (shadow-run)</strong>: レポート推奨「検討推奨」 vs ユーザー選択「必要」 → 一致 → retro で集計 (§8-1)</li>
+<li><strong>[21b] Pattern A (人間ゲート修正指示)</strong>: 初回 slot 計画 (候補 #1 ヒーロー + #2 価値3ポイント = 4 枚) に対し user が方針変更 → ①scr-01-welcome は #1/#2 を却下し「画面全面の背景グラフィック 1 枚」に変更 (文字可読性はスクリム前提)、②scr-06-action-list は候補 #3 を採用しカード 5 枚をグラフィック化、③scr-07-action-detail は新規生成せず ACT-003 の画像を再利用 (slot 分離 + graphic_id 共有) → <code>screens.graphics.decision</code> を手動リセットして計画を再 commit (旧計画は <code>_backup/graphics/</code> へ退避)。<strong>原因</strong>: 21a の候補列挙が「既存アイコン位置の置き換え」に寄っており、「背景に敷く」形の候補を出していなかった。<strong>改善案</strong>: 21a <code>refs/report-guide.md</code> の候補観点に「背景レイヤー (full-bleed background)」を追加する。</li>
+<li><strong>[21b] Pattern C (パイプライン設計の欠落 — 透過の要否を上流で決めていない)</strong>: グラフィックの背景を透過させるかどうかを 21b の箇所ヒアリング時点で user に確認しておらず、21d のプロンプト確定時に AI が placement 記述から推測して決めていた → 21g のレビューで user から「透過させる必要はない」と判明 → 5 枚の再生成が必要になった。<strong>原因</strong>: 透過は単なる見た目のオプションではなく <strong>生成モデルと利用可能寸法を分岐させる上流制約</strong> (透過 = 固定サイズ族 1024×1024 が上限 / 非透過 = 任意解像度)。21d で寸法を確定した後に透過を変えると、寸法の前提が崩れて全面再課金になる。<strong>改善案</strong>: <code>skills/21b-graphic-hearing/refs/hearing-guide.md</code> §5 の slot draft 項目に「透過の要否」を追加し、箇所選択と同じ人間ゲートで確定する (21d へ持ち越さない)。併せて 21b の提示文に「透過を選ぶと生成寸法が固定サイズ族に制限される」というコスト影響を明記する。</li>
+<li><strong>[21a] Pattern A (人間ゲート FB — 候補観点に「背景レイヤー」が無い)</strong>: 21a はウェルカム画面に候補 #1 (ヒーロー領域のブランド画像) / #2 (価値3ポイントの 40px アイコンをイラストへ置換) を提示したが、user は両方を却下し「これらの部分を画像にするのではなく、画面全面の背景に画像を敷く方が綺麗になる。『自分の一歩が地球を変える』に合う背景グラフィックを、文字が見やすい前提で全面に入れたい」と判断した。<strong>原因</strong>: <code>skills/21a-graphic-recommend/refs/report-guide.md</code> §4 の候補観点が「既存アイコン位置の置き換え」と「既存 placeholder の直取り」に寄っており、<strong>既存要素を持たない全面背景レイヤーという形の候補を構造的に出せない</strong>。<strong>改善案</strong>: 候補観点に <code>full_bleed_background</code> (画面全面の背景レイヤー) を追加し、slot 種別の固定語彙にも加える。anchor 規約 (§7) は既存要素に紐付かないため、画面全体プレビューへ fail-open する扱いで足りる。</li>
+<li><strong>[21g] Pattern A (人間ゲート修正指示 — 分類: プロンプト起因 + 配置起因)</strong>: 21g レビューで (a) 一覧カードのバランス崩れ (176px の絵が文字領域へ溢れ、回避のため敷いた白い面が composition を破綻させた)、(b) 詳細画面の絵のぼけ (出力寸 256px を 600px で拡大表示)、(c) 背景の透過は不要、の 3 点の指摘 → (a) は配置起因として CSS のみで修正 (専用列 120px・白い面撤去)、(b)(c) はプロンプト起因として <code>route-rework.mjs prompt</code> でカード絵 5 枚を差し戻し (透過なし・600×400 へ変更)。<code>welcome-bg</code> は対象外のため逐語保持で再課金なし。<strong>原因</strong>: (b) は透過指定により生成が固定サイズ族 (1024 上限) に制限され、確定寸 256px へ縮小保存されたため元データに拡大表示ぶんの情報が無かった (CSS では回復不能)。<strong>改善案</strong>: 21d の size_px 決定時に「同一 graphic_id を共有する slot の最大表示寸」を必ず基準にする規約 (prompts-guide §2 に既にあるが、共有 slot の表示寸が 21g の配置修正で後から変わるケースが抜けている) — 21g の配置修正で表示寸が size_px を超える場合に warning を出す機械チェックを追加する。</li>
+<li><strong>[21g] Pattern C (パイプライン設計 — plan の placement 記述が陳腐化する)</strong>: 21g 承認時に画面仕様書へ自動追記される「使用グラフィック」表の配置列は <code>graphic-plan.json.slots[].placement</code> (21b が single writer) をそのまま転記する。しかし今回のように 21d/21g で透過の有無・寸法・配置構造が変わっても placement は 21b 所有のため更新経路が無く、<strong>承認済み成果物に古い記述 (「44px アイコン枠」「透過が必要」) が残る</strong>。<strong>原因</strong>: placement は「21b 時点の意図」と「最終的な実装」の 2 つの役割を兼ねているが、更新できるのは前者だけ。<strong>改善案</strong>: (a) 21g の commit-approval が embed 時の実 attrs (width/height/object-fit/anchor) を表に併記する、または (b) placement を意図の記録と割り切り、表に「実装の正は仕様書のレイアウト構成節」と注記を機械挿入する。今回は手動で注記と実装記述を追記して整合させた。</li>
+</ul>
+<ul>
+<li><strong>[Step 21g] Pattern A</strong>: 承認済み (2026-08-17T12:34:52+09:00) の後にユーザーがグラフィックのテイストからのやり直しを希望 → 21g 承認後の再入経路は v1 非対応 (設計 §5「手動リセット運用」/ §11 で 21c 差し戻しを v1 非対応と確定) → 設計 §5 の手動リセットを適用: <code>screens.graphics</code> の taste_confirmed_at / prompts_confirmed_at / step21e_completed_at / step21f_completed_at / generated_files と <code>approvals.graphics_human_approved</code> / <code>step21g_approved_at</code> をクリア (21a/21b の場所確定は維持)。save_count == 1 かつ Step 22 未実行のため 3 点セットの ②③ は操作不要。旧 pipeline-state.json は <code>_backup/pipeline-state.20260817_165821.json</code> に退避</li>
+<li><strong>[Step 21c] Pattern C (パイプライン設計 — 21c が auto-open の step_targets に未登録)</strong>: 人間ゲート preview helper (<code>skills/_shared/human-gate-preview.md</code>) は <code>pipeline.yaml.human_gate.artifact_preview.auto_open.step_targets</code> に登録された step のみ主要 HTML を auto-open する。21c の <code>step_id = &quot;21c-graphic-taste&quot;</code> は同マップに<strong>キーが存在しない</strong> (21b / 21g は登録済み) ため null 扱い = link-only に degrade する。しかし 21c のゲートは「A/B/C のサンプル画像を見比べて選ぶ」= 視覚比較が判断の全てであり、比較 HTML (<code>graphics/samples/taste-compare.html</code>) は auto-open の最適例。<strong>原因</strong>: グラフィックブロック追加時に 21b / 21g だけ step_targets へ登録し、21c が漏れた (21c も比較 view を生成する human gate である点が見落とされた)。<strong>改善案</strong>: <code>step_targets</code> に <code>&quot;21c-graphic-taste&quot;: &quot;graphics/samples/taste-compare.html&quot;</code> を追記する (degrade 経路でファイル不在時は helper の存在チェックが warn + skip するため fail-open は既に担保されている)。今回は helper の規約外だが main session で当該 1 ファイルのみ手動 open して進行 (spam 抑制の趣旨には反しない)</li>
+<li><strong>[Step 21g/調査] 誤検知の記録 (バックアップ hook は正常 — 前掲の Pattern C を撤回)</strong>: <code>screens/mobile/scr-01-welcome.html</code> の手 Edit 後に <code>_backup/screens/mobile/</code> へ新規退避が現れなかったため 「hook 未発火 (<code>${CLAUDE_PROJECT_DIR}</code> 未設定でパス解決失敗)」と一度記録したが、<strong>誤り</strong>。(a) <code>CLAUDE_PROJECT_DIR</code> は hook 実行時に Claude Code が注入する変数で、通常の Bash tool で空に見えることは未設定の証拠にならない。(b) 実際の理由は <code>artifact_backup.dedup: md5</code> の<strong>正常動作</strong> — 編集直前の内容が直近退避 <code>scr-01-welcome.20260817_112203.html</code> と byte 一致していたため複製が抑制された (diff で確認: 当該退避と現行ファイルの差は今回の CSS 3 行のみ = 編集前状態は既に保全されていた)。(c) 検証実験 (テスト行を追加→削除の 2 回 Edit) で 2 回目に <code>scr-01-welcome.20260818_100617.html</code> が自動生成され、hook 発火を確認。<strong>教訓</strong>: 「退避ファイルが増えていない」= 「hook が動いていない」ではない (dedup / cooldown で意図的に抑制される)。同一視して環境不具合と断定する前に、直近退避との内容一致を必ず確認する。schema-light-check / enforce-substate-scoring が無効という前掲の推測も同時に撤回する。<strong>残置</strong>: 診断中に生じた退避 2 件 (<code>...20260818_095705.html</code> = 修正後内容 / <code>...20260818_100617.html</code> = テスト行入り) は編集前の控えではないため、ユーザー承認の上で削除する</li>
+<li><strong>[Step 15] Pattern C</strong>: Atlassian MCP が未認証のため 2nd Confluence save をスキップ → 本セッションは非対話で OAuth 不可 → save_status=skipped で記録し Step 22 へ進行（Confluence 反映は認証後に /ayatori-screens 再実行 or 手動で保存が必要）</li>
+<li><strong>[Step 22] Pattern C（パイプライン設計の穴）</strong>: FIGMA_MCP_ENABLED=true（enabled mode）でユーザーが Figma 出力を辞退したが、その意思を記録できる state が存在しない → <code>screens.step22_figma_status</code> の enum が <code>skipped_stub_mode</code>（disabled mode 専用）1 値のみで、「enabled だがユーザー辞退」を表せない。また figma-state.json 未作成のため file_key の取得元が無く、Step 22 は毎回ユーザーへの問い合わせが必要 → 暫定対応として <code>skipped_stub_mode</code> を流用して記録し resume の詰まりを回避。恒久対応候補: enum に <code>skipped_by_user</code> を追加し、Step 24/25 の mode 判定でも同値を skip 条件に含める。</li>
+<li><strong>[Step 23] Pattern A（人間ゲート修正指示 / 分類=テイスト）</strong>: 最終承認ゲートで「絵そのものを写真素材風に作り直したい」と指示 → 現テイスト（あたたかい手描き水彩、style_directive に &quot;no photographic realism&quot; 明記）とは真逆でプロンプト差し戻し（21d）では届かず、21g §5 が「テイスト変更は v1 非対応・手動リセット運用」と規定 → 設計 §5 の 3 点セット（① screens.graphics の 21c 以降をリセット ② save_count 2→1 ③ step22_figma_status 削除）を実行し 21c へ巻き戻し。水彩版一式は _backup/taste-watercolour-20260818/ に退避。改善候補: 21g の修正指示 3 分類にテイスト起因を第 4 分類として追加し、コスト警告つきで 21c へ routing する script 経路を用意する（現状は手作業で 3 点セットを踏む必要があり取りこぼしやすい）。</li>
+<li><strong>[Step 21c] Pattern A（確定確認での修正指示）</strong>: style_directive の「オフホワイト #F8FAFA の地に調和 / 背景は必ず明るく」が不要、「フリー写真素材のように多少ばらつきがあってよい」との指示 → 初版 draft がブランド色調和と light background を厳密制約として書き、写真素材らしい自然なばらつきを潰していた（taste-guide §4 の「淡色背景が必要な案は on a light background を明示」を無条件適用したのが原因）→ 当該句を削除し palette を「gentle undertone / 厳密指定ではない」+「露出・光色・切り取りの自然なばらつきは歓迎」に改訂して確定。副作用（暗めの絵が出る可能性）は user へ告知済み、箇所別調整は 21d で行う。</li>
+<li><strong>[Step 21d] Pattern A（確定確認での修正指示）</strong>: 「写真が綺麗になりすぎないように。実在のシーンのようにしてほしい」との指示 → 初版 draft は前回水彩版の題材・構図を逐語継承しただけで、写実テイストに切り替えた際の「広告写真的な作り込み感」への抑制が入っていなかった（21c の style_directive も clean/documentary 側に寄っており生活感の指定を持たない）→ 全 6 slot の slot 固有部に candid snapshot 句（不完全な構図・むらのある光・使い込まれた日用品・雑多さ・レタッチなし）を追記して確定。テイスト本体は変更せず（style_directive 逐語一致を保持）slot 側で調整した。改善候補: 写実系テイストを 21c で選んだ場合、style_directive 合成時に「作り込み度（広告写真 ↔ 日常スナップ）」を 1 問確認する。</li>
+</ul>
+<ul>
+<li><strong>[Step 22] Pattern C — 記録語彙の欠落</strong>: FIGMA_MCP_ENABLED=true (連携有効) の環境で、ユーザー判断により Figma 出力を見送った → <code>pipeline-state.screens.step22_figma_status</code> の enum が <code>skipped_stub_mode</code> (disabled 環境専用) の 1 値のみで「ユーザー辞退」を表現できない → 後続 resume を通すため <code>skipped_stub_mode</code> を記録し、実態 (enabled + user declined) を本ログに残した。改善案: enum に <code>skipped_by_user</code> を追加し、Step 22 の enabled 経路にも辞退分岐を明記する。</li>
+</ul></div>
+  </main>
+</div>
+<script>
+(function(){
+  var body=document.body;
+  var frame=document.getElementById('frame');
+  var welcome=document.getElementById('welcome');
+  var curTitle=document.getElementById('cur-title');
+  var curExt=document.getElementById('cur-ext');
+  var burger=document.getElementById('burger');
+  var scrim=document.getElementById('scrim');
+  var mds=document.querySelectorAll('.md-body');
+  var pane=document.querySelector('.pane');
+  var mq=window.matchMedia('(max-width:767px)');
+  var STORE='ayatori-index-sidebar';
+  function setSidebar(open){
+    body.setAttribute('data-sidebar', open?'open':'closed');
+    burger.setAttribute('aria-expanded', open?'true':'false');
+    if(!mq.matches){ try{ localStorage.setItem(STORE, open?'open':'closed'); }catch(e){} }
+  }
+  function isOpen(){ return body.getAttribute('data-sidebar')==='open'; }
+  function initState(){
+    if(mq.matches){ setSidebar(false); return; }
+    var open=true;
+    try{ if(localStorage.getItem(STORE)==='closed'){ open=false; } }catch(e){}
+    setSidebar(open);
+  }
+  initState();
+  burger.addEventListener('click', function(){ setSidebar(!isOpen()); });
+  scrim.addEventListener('click', function(){ setSidebar(false); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && mq.matches && isOpen()){ setSidebar(false); } });
+  var onMq=function(){ initState(); };
+  if(mq.addEventListener){ mq.addEventListener('change', onMq); } else if(mq.addListener){ mq.addListener(onMq); }
+  function show(kind,ref,link){
+    welcome.hidden=true; frame.hidden=true;
+    for(var i=0;i<mds.length;i++){ mds[i].hidden=true; }
+    var prev=document.querySelector('.nav-link.active'); if(prev){ prev.classList.remove('active'); }
+    link.classList.add('active');
+    if(kind==='md'){ var d=document.getElementById(ref); if(d){ d.hidden=false; } }
+    else { if(frame.getAttribute('src')!==ref){ frame.setAttribute('src',ref); } frame.hidden=false; }
+    curTitle.textContent = link.getAttribute('data-label') || '成果物インデックス';
+    var op=link.getAttribute('data-open');
+    if(op){ curExt.setAttribute('href', op); curExt.hidden=false; } else { curExt.hidden=true; }
+    if(pane){ pane.scrollTop=0; }
+    if(mq.matches){ setSidebar(false); }
+  }
+  var links=document.querySelectorAll('.nav-link');
+  for(var i=0;i<links.length;i++){ (function(a){ a.addEventListener('click', function(e){ e.preventDefault(); show(a.getAttribute('data-kind'), a.getAttribute('data-ref'), a); }); })(links[i]); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyGreenStep Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-primary: #117F87;
+    --color-primary-hover: #0E6A71;
+    --color-text-primary: #0C0C0C;
+    --color-text-secondary: #6B6B6B;
+    --color-success: #2E7D32;
+    --color-error: #D32F2F;
+    --color-teal-200: #CFE5E7;
+    --color-surface: #FFFFFF;
+    --color-surface-secondary: #F5F5F5;
+    --color-border: #E0E0E0;
+
+    --font-display: 'Poppins', sans-serif;
+    --font-base: -apple-system, 'SF Pro', 'Helvetica Neue', sans-serif;
+    --font-numeric: 'SF Mono', ui-monospace, monospace;
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-base);
+    color: var(--color-text-primary);
+    background: var(--color-surface-secondary);
+    line-height: 1.5;
+  }
+
+  .page-header {
+    background: var(--color-primary);
+    color: #fff;
+    padding: var(--space-2xl) var(--space-xl);
+  }
+  .page-header h1 {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+  }
+  .page-header p {
+    opacity: 0.85;
+    font-size: 14px;
+  }
+
+  .container {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    padding: var(--space-lg);
+  }
+
+  .section {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    margin-bottom: var(--space-lg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .section-number {
+    display: inline-block;
+    background: var(--color-primary);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 12px;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    border-radius: var(--radius-full);
+    margin-right: var(--space-sm);
+    vertical-align: middle;
+  }
+
+  .section h2 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    margin-bottom: var(--space-lg);
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* 01. Color Tokens */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--space-md);
+  }
+  .color-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .color-swatch {
+    height: 80px;
+    position: relative;
+  }
+  .color-swatch .wcag-badge {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-numeric);
+  }
+  .color-swatch .wcag-badge.pass { background: var(--color-success); }
+  .color-info {
+    padding: var(--space-sm) var(--space-md);
+  }
+  .color-info .token {
+    font-size: 12px;
+    font-family: var(--font-numeric);
+    color: var(--color-text-secondary);
+  }
+  .color-info .hex {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-numeric);
+  }
+  .color-info .usage {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+  }
+
+  .contrast-demo {
+    margin-top: var(--space-lg);
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+  }
+  .contrast-demo-item {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    flex: 1;
+    min-width: 200px;
+  }
+
+  /* 02. Typography */
+  .type-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-lg);
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta {
+    width: 140px;
+    flex-shrink: 0;
+  }
+  .type-meta .token-name {
+    font-family: var(--font-numeric);
+    font-size: 12px;
+    color: var(--color-primary);
+  }
+  .type-meta .token-value {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .type-sample { flex: 1; }
+
+  .numeric-demo {
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--color-surface-secondary);
+    border-radius: var(--radius-md);
+  }
+  .numeric-demo .num {
+    font-family: var(--font-numeric);
+    font-variant-numeric: tabular-nums;
+    font-size: 32px;
+    font-weight: 600;
+  }
+  .numeric-demo .unit {
+    font-family: var(--font-base);
+    font-size: 16px;
+    color: var(--color-text-secondary);
+  }
+
+  /* 03. Spacing */
+  .spacing-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
+  }
+  .spacing-label {
+    width: 100px;
+    font-family: var(--font-numeric);
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .spacing-bar {
+    height: 24px;
+    background: var(--color-teal-200);
+    border-radius: var(--radius-sm);
+    position: relative;
+  }
+  .spacing-bar::after {
+    content: attr(data-px);
+    position: absolute;
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-family: var(--font-numeric);
+    color: var(--color-text-secondary);
+  }
+  .touch-target-demo {
+    margin-top: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+  .touch-box {
+    width: 44px;
+    height: 44px;
+    border: 2px dashed var(--color-primary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-family: var(--font-numeric);
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+
+  /* 04. Radius */
+  .radius-grid {
+    display: flex;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+    align-items: end;
+  }
+  .radius-item {
+    text-align: center;
+  }
+  .radius-box {
+    width: 80px;
+    height: 80px;
+    background: var(--color-teal-200);
+    border: 2px solid var(--color-primary);
+    margin-bottom: var(--space-sm);
+  }
+  .radius-item .label {
+    font-family: var(--font-numeric);
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .radius-item .value {
+    font-family: var(--font-numeric);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* 05. Components */
+  .comp-group {
+    margin-bottom: var(--space-xl);
+  }
+  .comp-row {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: var(--space-md);
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 24px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-base);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary { background: var(--color-primary); color: #fff; }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-disabled { background: var(--color-border); color: var(--color-text-secondary); cursor: not-allowed; }
+  .btn-outline { background: transparent; color: var(--color-primary); border: 2px solid var(--color-primary); }
+
+  /* Inputs */
+  .input-demo { max-width: 320px; }
+  .input-field {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #78AAAE;
+    border-radius: 12px;
+    font-family: var(--font-base);
+    font-size: 14px;
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-field::placeholder { color: #B0B0B0; }
+  .input-field:focus {
+    border-color: var(--color-primary);
+  }
+  .input-field.input-error {
+    border-color: var(--color-error);
+  }
+  .input-error-msg {
+    font-size: 13px;
+    color: var(--color-error);
+    margin-top: var(--space-xs);
+  }
+  .input-label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+    display: block;
+  }
+
+  /* Cards */
+  .demo-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    max-width: 340px;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-easy { background: #E8F5E9; color: #2E7D32; }
+  .badge-impact { background: #FFF3E0; color: #E65100; }
+  .badge-category { background: #F8FAFA; color: #117F87; border: 1px solid #CFE5E7; }
+
+  /* CO2 Dashboard Card */
+  .co2-card {
+    background: linear-gradient(135deg, #117F87, #0E6A71);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    max-width: 380px;
+    color: #fff;
+  }
+  .co2-day-label {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-bottom: var(--space-sm);
+  }
+  .co2-value {
+    font-family: var(--font-numeric);
+    font-variant-numeric: tabular-nums;
+    font-size: 40px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+  .co2-unit {
+    font-family: var(--font-base);
+    font-size: 16px;
+    color: rgba(255,255,255,0.85);
+    margin-left: 4px;
+  }
+  .co2-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    margin-top: var(--space-sm);
+  }
+  .co2-weekly {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    margin-top: var(--space-xs);
+  }
+
+  /* Action Card */
+  .action-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    max-width: 340px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+  }
+  .action-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .action-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--color-teal-200);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .action-text { flex: 1; }
+  .action-text .title { font-weight: 600; font-size: 15px; }
+  .action-text .desc { font-size: 13px; color: var(--color-text-secondary); }
+  .action-arrow { color: var(--color-text-secondary); font-size: 18px; }
+
+  /* 06. Usage Rules */
+  .usage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+  .usage-box {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    border: 2px solid;
+  }
+  .usage-do { border-color: var(--color-success); background: #F1F8F1; }
+  .usage-dont { border-color: var(--color-error); background: #FFF5F5; }
+  .usage-box .tag {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: var(--space-sm);
+  }
+  .usage-do .tag { color: var(--color-success); }
+  .usage-dont .tag { color: var(--color-error); }
+  .usage-box .example {
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .usage-box .caption {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-top: var(--space-sm);
+  }
+
+  /* Focus ring demo */
+  .focus-demo-btn {
+    height: 44px;
+    padding: 0 24px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .sub-label {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-sm);
+  }
+
+  /* Tab Bar */
+  .tab-bar {
+    display: flex;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    max-width: 375px;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    overflow: hidden;
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 6px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    gap: 2px;
+  }
+  .tab-item.active { color: var(--color-primary); }
+  .tab-item svg { width: 22px; height: 22px; }
+
+  /* Action Card variants */
+  .action-card-v2 {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    max-width: 375px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .action-card-v2 .action-icon {
+    width: 44px; height: 44px;
+    background: var(--color-teal-200);
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .action-card-v2 .action-body { flex: 1; min-width: 0; }
+  .action-card-v2 .action-title { font-weight: 600; font-size: 15px; }
+  .action-card-v2 .action-desc { font-size: 13px; color: var(--color-text-secondary); }
+  .action-card-v2 .action-co2 { font-size: 12px; color: var(--color-success); font-weight: 600; margin-top: 2px; }
+  .action-card-v2 .chevron { color: var(--color-text-secondary); font-size: 18px; flex-shrink: 0; }
+  .btn-done {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 32px; padding: 0 14px;
+    background: var(--color-primary); color: #fff;
+    border: none; border-radius: var(--radius-md);
+    font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0;
+  }
+
+  /* Progress Bar */
+  .progress-track {
+    height: 6px;
+    background: var(--color-surface-secondary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    max-width: 375px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-lg);
+    max-width: 320px;
+  }
+  .empty-state svg { color: var(--color-text-secondary); margin-bottom: var(--space-md); }
+  .empty-state .empty-title { font-weight: 600; font-size: 16px; margin-bottom: var(--space-xs); }
+  .empty-state .empty-desc { font-size: 14px; color: var(--color-text-secondary); }
+
+  /* Success Feedback Card */
+  .success-card {
+    background: #E8F5E9;
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    max-width: 375px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+  .success-card svg { color: #2E7D32; flex-shrink: 0; }
+  .success-card .success-text { font-size: 14px; font-weight: 600; color: #2E7D32; }
+
+  /* Error Banner */
+  .error-banner {
+    background: #FFEBEE;
+    border-left: 4px solid #D32F2F;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: var(--space-md);
+    max-width: 375px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+  .error-banner svg { color: #D32F2F; flex-shrink: 0; }
+  .error-banner .error-body { flex: 1; }
+  .error-banner .error-msg { font-size: 14px; color: #D32F2F; font-weight: 500; }
+  .error-banner .error-retry {
+    font-size: 13px; color: #D32F2F; font-weight: 600;
+    text-decoration: underline; cursor: pointer; margin-top: 4px;
+    background: none; border: none; padding: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .container { padding: var(--space-md); }
+    .section { padding: var(--space-md); }
+    .page-header { padding: var(--space-lg) var(--space-md); }
+    .page-header h1 { font-size: 24px; }
+    .color-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+    .type-row { flex-direction: column; gap: var(--space-sm); }
+    .type-meta { width: 100%; }
+    .contrast-demo { flex-direction: column; }
+    .contrast-demo-item { min-width: 100%; }
+    .input-demo, .card-demo, .co2-demo, .action-card-demo { max-width: 100%; }
+    .tab-demo { max-width: 100%; }
+    .comp-row { gap: var(--space-sm); }
+  }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>MyGreenStep</h1>
+  <p>Design System Reference &mdash; 2026-04-16 &mdash; ChargeMinder 2.0ベース ダッシュボード型</p>
+</div>
+
+<div class="container">
+
+  <!-- 01. Color Tokens -->
+  <div class="section">
+    <h2><span class="section-number">01</span>Color Tokens</h2>
+    <div class="color-grid">
+      <div class="color-card">
+        <div class="color-swatch" style="background:#117F87">
+          <span class="wcag-badge pass">4.6:1 AA</span>
+        </div>
+        <div class="color-info">
+          <div class="token">--color-primary</div>
+          <div class="hex">#117F87</div>
+          <div class="usage">CTA、選択状態、進捗</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#0C0C0C">
+          <span class="wcag-badge pass">19.6:1 AAA</span>
+        </div>
+        <div class="color-info">
+          <div class="token">--color-text-primary</div>
+          <div class="hex">#0C0C0C</div>
+          <div class="usage">見出し、本文テキスト</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#6B6B6B">
+          <span class="wcag-badge pass">4.6:1 AA</span>
+        </div>
+        <div class="color-info">
+          <div class="token">--color-text-secondary</div>
+          <div class="hex">#6B6B6B</div>
+          <div class="usage">補足テキスト、ラベル</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#2E7D32">
+          <span class="wcag-badge pass">4.9:1 AA</span>
+        </div>
+        <div class="color-info">
+          <div class="token">--color-success</div>
+          <div class="hex">#2E7D32</div>
+          <div class="usage">CO2削減量、完了</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#D32F2F">
+          <span class="wcag-badge">3.9:1</span>
+        </div>
+        <div class="color-info">
+          <div class="token">--color-error</div>
+          <div class="hex">#D32F2F</div>
+          <div class="usage">エラー状態のみ</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#CFE5E7">
+        </div>
+        <div class="color-info">
+          <div class="token">--color-teal-200</div>
+          <div class="hex">#CFE5E7</div>
+          <div class="usage">アイコン背景、ハイライト</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#FFFFFF; border-bottom:1px solid #E0E0E0">
+        </div>
+        <div class="color-info">
+          <div class="token">--color-surface</div>
+          <div class="hex">#FFFFFF</div>
+          <div class="usage">カード・ページ背景</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#F5F5F5">
+        </div>
+        <div class="color-info">
+          <div class="token">--color-surface-secondary</div>
+          <div class="hex">#F5F5F5</div>
+          <div class="usage">セクション背景</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#E0E0E0">
+        </div>
+        <div class="color-info">
+          <div class="token">--color-border</div>
+          <div class="hex">#E0E0E0</div>
+          <div class="usage">ボーダー、ディバイダー</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:var(--space-lg)">テキストコントラストデモ</h3>
+    <div class="contrast-demo">
+      <div class="contrast-demo-item" style="background:#FFFFFF; border:1px solid #E0E0E0">
+        <span style="color:#0C0C0C; font-weight:600">Text Primary on White — 19.6:1</span><br>
+        <span style="color:#6B6B6B">Text Secondary on White — 4.6:1</span><br>
+        <span style="color:#117F87; font-weight:600">Primary on White — 4.6:1</span>
+      </div>
+      <div class="contrast-demo-item" style="background:#117F87">
+        <span style="color:#FFFFFF; font-weight:600">White on Primary — 4.6:1</span>
+      </div>
+      <div class="contrast-demo-item" style="background:#0C0C0C">
+        <span style="color:#FFFFFF; font-weight:600">White on Text Primary — 19.6:1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02. Typography -->
+  <div class="section">
+    <h2><span class="section-number">02</span>Typography</h2>
+
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="token-name">--text-xl</div>
+        <div class="token-value">Poppins 24/32</div>
+      </div>
+      <div class="type-sample" style="font-family:'Poppins',sans-serif; font-size:24px; line-height:32px; font-weight:600">
+        画面タイトル Display Heading
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="token-name">--text-lg</div>
+        <div class="token-value">Poppins 20/28</div>
+      </div>
+      <div class="type-sample" style="font-family:'Poppins',sans-serif; font-size:20px; line-height:28px; font-weight:600">
+        セクション見出し Section Heading
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="token-name">--text-md</div>
+        <div class="token-value">SF Pro 16/24</div>
+      </div>
+      <div class="type-sample" style="font-size:16px; line-height:24px">
+        本文テキストです。MyGreenStepは日々のCO2削減を見える化するアプリです。
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="token-name">--text-sm</div>
+        <div class="token-value">SF Pro 14/20</div>
+      </div>
+      <div class="type-sample" style="font-size:14px; line-height:20px; color:var(--color-text-secondary)">
+        補足テキスト・キャプション — 最終更新: 2026年4月16日
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="token-name">--text-xs</div>
+        <div class="token-value">SF Pro 12/16</div>
+      </div>
+      <div class="type-sample" style="font-size:12px; line-height:16px; color:var(--color-text-secondary)">
+        バッジ・タグ用の極小テキスト
+      </div>
+    </div>
+
+    <h3 style="margin-top:var(--space-lg)">数値フォント (tabular-nums)</h3>
+    <div class="numeric-demo">
+      <div style="display:flex; gap:var(--space-xl); flex-wrap:wrap; align-items:baseline">
+        <div>
+          <div class="sub-label">CO2削減量</div>
+          <span class="num" style="color:var(--color-success)">1,284</span>
+          <span class="unit">kg</span>
+        </div>
+        <div>
+          <div class="sub-label">達成率</div>
+          <span class="num" style="color:var(--color-primary)">68.5</span>
+          <span class="unit">%</span>
+        </div>
+        <div>
+          <div class="sub-label">数字の整列</div>
+          <div style="font-family:var(--font-numeric); font-variant-numeric:tabular-nums; font-size:18px; line-height:1.6">
+            1,234 kg<br>
+              856 kg<br>
+           12,045 kg
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03. Spacing -->
+  <div class="section">
+    <h2><span class="section-number">03</span>Spacing</h2>
+    <div style="padding-right:60px">
+      <div class="spacing-row">
+        <div class="spacing-label">--space-xs</div>
+        <div class="spacing-bar" style="width:4px" data-px="4px"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">--space-sm</div>
+        <div class="spacing-bar" style="width:8px" data-px="8px"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">--space-md</div>
+        <div class="spacing-bar" style="width:16px" data-px="16px"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">--space-lg</div>
+        <div class="spacing-bar" style="width:24px" data-px="24px"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">--space-xl</div>
+        <div class="spacing-bar" style="width:32px" data-px="32px"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">--space-2xl</div>
+        <div class="spacing-bar" style="width:48px" data-px="48px"></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:var(--space-lg)">タッチターゲット (44px)</h3>
+    <div class="touch-target-demo">
+      <div class="touch-box">44px</div>
+      <span style="font-size:14px; color:var(--color-text-secondary)">すべてのタップ可能要素は最小 44 &times; 44px を確保</span>
+    </div>
+  </div>
+
+  <!-- 04. Border Radius -->
+  <div class="section">
+    <h2><span class="section-number">04</span>Border Radius</h2>
+    <div class="radius-grid">
+      <div class="radius-item">
+        <div class="radius-box" style="border-radius:4px"></div>
+        <div class="label">--radius-sm</div>
+        <div class="value">4px</div>
+      </div>
+      <div class="radius-item">
+        <div class="radius-box" style="border-radius:8px"></div>
+        <div class="label">--radius-md</div>
+        <div class="value">8px</div>
+      </div>
+      <div class="radius-item">
+        <div class="radius-box" style="border-radius:12px"></div>
+        <div class="label">--radius-lg</div>
+        <div class="value">12px</div>
+      </div>
+      <div class="radius-item">
+        <div class="radius-box" style="border-radius:16px"></div>
+        <div class="label">--radius-xl</div>
+        <div class="value">16px</div>
+      </div>
+      <div class="radius-item">
+        <div class="radius-box" style="border-radius:9999px"></div>
+        <div class="label">--radius-full</div>
+        <div class="value">9999px</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05. Components -->
+  <div class="section">
+    <h2><span class="section-number">05</span>Components</h2>
+
+    <!-- Buttons -->
+    <div class="comp-group">
+      <h3>Button</h3>
+      <div class="comp-row">
+        <button class="btn btn-primary">Primary</button>
+        <button class="btn btn-primary" style="background:var(--color-primary-hover)">Hover</button>
+        <button class="btn btn-disabled" disabled>Disabled</button>
+        <button class="btn btn-outline">Outline</button>
+      </div>
+      <div class="sub-label">フォーカスリング表示</div>
+      <div class="comp-row">
+        <button class="focus-demo-btn">Focus Ring Demo</button>
+        <span style="font-size:13px; color:var(--color-text-secondary)">outline: 2px solid #117F87, offset: 2px</span>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="comp-group">
+      <h3>Input</h3>
+      <div style="display:flex; gap:var(--space-lg); flex-wrap:wrap">
+        <div class="input-demo">
+          <label class="input-label">デフォルト</label>
+          <input class="input-field" type="text" placeholder="入力してください">
+        </div>
+        <div class="input-demo">
+          <label class="input-label">フォーカス状態</label>
+          <input class="input-field" type="text" value="入力中のテキスト" style="border-color:#117F87">
+        </div>
+        <div class="input-demo">
+          <label class="input-label">エラー状態</label>
+          <input class="input-field input-error" type="text" value="不正な値">
+          <div class="input-error-msg">正しい形式で入力してください</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="comp-group">
+      <h3>Card</h3>
+      <div class="comp-row">
+        <div class="demo-card">
+          <div style="font-weight:600; margin-bottom:var(--space-sm)">カードタイトル</div>
+          <div style="font-size:14px; color:var(--color-text-secondary)">カードの説明テキストがここに入ります。角丸12px、影付き。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badge -->
+    <div class="comp-group">
+      <h3>Badge</h3>
+      <div class="comp-row">
+        <span class="badge badge-easy">簡単</span>
+        <span class="badge badge-impact">インパクト大</span>
+        <span class="badge badge-category">食事</span>
+        <span class="badge badge-category">エネルギー</span>
+        <span class="badge badge-category">移動</span>
+        <span class="badge badge-category">住まい</span>
+        <span class="badge badge-category">買い物</span>
+      </div>
+    </div>
+
+    <!-- CO2 Dashboard Card -->
+    <div class="comp-group">
+      <h3>CO2 Dashboard Card</h3>
+      <div class="co2-card">
+        <div class="co2-day-label">Day 12</div>
+        <div>
+          <span class="co2-value">8.4</span>
+          <span class="co2-unit">kg CO2 削減</span>
+        </div>
+        <div class="co2-sub"><svg style="width:14px;height:14px;vertical-align:-2px;display:inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg> 木 0.6 本分</div>
+        <div class="co2-weekly">今週: 2.1 kg</div>
+      </div>
+    </div>
+
+    <!-- Action Card -->
+    <div class="comp-group">
+      <h3>Action Card</h3>
+      <div class="sub-label">未挑戦（一覧表示 / シェブロン付き）</div>
+      <div class="action-card-v2" style="margin-bottom:var(--space-md)">
+        <div class="action-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#117F87" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <div class="action-body">
+          <div class="action-title">電力会社を再エネプランに切り替える</div>
+          <div class="action-desc">年間の電気由来CO2を大幅カット</div>
+          <div class="action-co2">-320 kg CO2/年</div>
+        </div>
+        <span class="badge badge-impact" style="margin-right:8px">インパクト大</span>
+        <span class="chevron">&rsaquo;</span>
+      </div>
+      <div class="sub-label">実施中（「やった」ボタン付き）</div>
+      <div class="action-card-v2">
+        <div class="action-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#117F87" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <div class="action-body">
+          <div class="action-title">徒歩で通勤する</div>
+          <div class="action-desc">片道30分以内の通勤を徒歩に</div>
+          <div class="action-co2">-2.4 kg CO2</div>
+        </div>
+        <span class="badge badge-easy" style="margin-right:8px">簡単</span>
+        <button class="btn-done">やった</button>
+      </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="comp-group">
+      <h3>Tab Bar (Bottom Navigation)</h3>
+      <div class="tab-bar">
+        <div class="tab-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
+          <span>ダッシュボード</span>
+        </div>
+        <div class="tab-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+          <span>アクション</span>
+        </div>
+        <div class="tab-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          <span>設定</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:var(--space-lg); margin-top:var(--space-md)">
+        <div><span style="font-size:13px; color:var(--color-text-secondary)">Active: color #117F87</span></div>
+        <div><span style="font-size:13px; color:var(--color-text-secondary)">Inactive: color #6B6B6B</span></div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="comp-group">
+      <h3>Progress Bar</h3>
+      <div class="sub-label">アンケート進捗（SCR-04）: 3/5</div>
+      <div class="progress-track" style="margin-bottom:var(--space-sm)">
+        <div class="progress-fill" style="width:60%"></div>
+      </div>
+      <div class="sub-label">Teal fill on gray track, height 6px, border-radius full</div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="comp-group">
+      <h3>Empty State</h3>
+      <div class="empty-state" style="border:1px dashed var(--color-border); border-radius:var(--radius-lg)">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <div class="empty-title">まだデータがありません</div>
+        <div class="empty-desc">アクションを記録すると、ここにCO2削減量が表示されます。</div>
+      </div>
+    </div>
+
+    <!-- Success Feedback Card -->
+    <div class="comp-group">
+      <h3>Success Feedback Card</h3>
+      <div class="success-card">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+        <div class="success-text">「徒歩で通勤する」を記録しました！ -2.4 kg CO2</div>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div class="comp-group">
+      <h3>Error / Network Error Banner</h3>
+      <div class="error-banner">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div class="error-body">
+          <div class="error-msg">通信エラーが発生しました</div>
+          <button class="error-retry">再試行</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06. Usage Rules -->
+  <div class="section">
+    <h2><span class="section-number">06</span>Usage Rules</h2>
+
+    <h3>Primary #117F87 の使い方</h3>
+    <div class="usage-grid">
+      <div class="usage-box usage-do">
+        <div class="tag">DO</div>
+        <div class="example" style="background:var(--color-primary); color:#fff; border-radius:var(--radius-md)">
+          CTAボタン
+        </div>
+        <div class="caption">CTAボタンの背景色として使用</div>
+      </div>
+      <div class="usage-box usage-dont">
+        <div class="tag">DON'T</div>
+        <div class="example" style="background:var(--color-primary); color:#fff; border-radius:0; width:100%">
+          本文テキストの背景
+        </div>
+        <div class="caption">大面積の背景として使わない</div>
+      </div>
+    </div>
+
+    <h3>Success #2E7D32 の使い方</h3>
+    <div class="usage-grid">
+      <div class="usage-box usage-do">
+        <div class="tag">DO</div>
+        <div class="example" style="background:#E8F5E9; color:var(--color-success); font-family:var(--font-numeric); font-variant-numeric:tabular-nums">
+          -1,284 kg CO2
+        </div>
+        <div class="caption">CO2削減量の数値に使用</div>
+      </div>
+      <div class="usage-box usage-dont">
+        <div class="tag">DON'T</div>
+        <div class="example" style="background:var(--color-success); color:#fff; border-radius:var(--radius-md)">
+          ボタン
+        </div>
+        <div class="caption">ボタン背景色として使わない</div>
+      </div>
+    </div>
+
+    <h3>Teal 200 #CFE5E7 の使い方</h3>
+    <div class="usage-grid">
+      <div class="usage-box usage-do">
+        <div class="tag">DO</div>
+        <div class="example" style="justify-content:center; gap:var(--space-sm)">
+          <span style="display:inline-flex; width:44px; height:44px; background:var(--color-teal-200); border-radius:var(--radius-full); align-items:center; justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#117F87" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg></span>
+          アイコン背景に使用
+        </div>
+        <div class="caption">アイコンの円形背景として使用</div>
+      </div>
+      <div class="usage-box usage-dont">
+        <div class="tag">DON'T</div>
+        <div class="example" style="background:var(--color-teal-200); border-radius:var(--radius-lg); padding:var(--space-sm)">
+          カード全体の背景
+        </div>
+        <div class="caption">カード全体の背景として使わない</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

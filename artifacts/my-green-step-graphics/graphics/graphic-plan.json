@@ -1,0 +1,101 @@
+{
+  "app_name": "my-green-step-graphics",
+  "created_at": "2026-08-17T10:13:25+09:00",
+  "recommend_report_ref": "graphics/graphic-recommend.md",
+  "slots": [
+    {
+      "graphic_id": "welcome-bg",
+      "screen": "scr-01-welcome",
+      "platforms": [
+        "mobile"
+      ],
+      "placement": "画面全面の背景レイヤー (.screen の最背面に敷く)。文字可読性のため白のグラデーションスクリムを重ねる前提。透過なし",
+      "size_role": "hero",
+      "state": "default",
+      "rationale": "user 指示由来 (21b ヒアリング) — 候補 #1/#2 を却下し、代わりに画面全面の背景グラフィックとする方針"
+    },
+    {
+      "graphic_id": "action-energy",
+      "screen": "scr-06-action-list",
+      "platforms": [
+        "mobile"
+      ],
+      "placement": "おすすめカード ACT-001「再エネ電力プランへの切替」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要",
+      "size_role": "small",
+      "state": "default",
+      "rationale": "推奨レポート候補スロット #3 (content_media) を user が採用"
+    },
+    {
+      "graphic_id": "action-meat-free",
+      "screen": "scr-06-action-list",
+      "platforms": [
+        "mobile"
+      ],
+      "placement": "おすすめカード ACT-003「週1回の牛肉→鶏肉/豚肉」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要",
+      "size_role": "small",
+      "state": "default",
+      "rationale": "推奨レポート候補スロット #3 (content_media) を user が採用"
+    },
+    {
+      "graphic_id": "action-walk",
+      "screen": "scr-06-action-list",
+      "platforms": [
+        "mobile"
+      ],
+      "placement": "おすすめカード ACT-006「2km以内の移動を徒歩/自転車に」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要",
+      "size_role": "small",
+      "state": "default",
+      "rationale": "推奨レポート候補スロット #3 (content_media) を user が採用"
+    },
+    {
+      "graphic_id": "action-aircon-filter",
+      "screen": "scr-06-action-list",
+      "platforms": [
+        "mobile"
+      ],
+      "placement": "実施中カード ACT-004「エアコンフィルター月2回清掃」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要",
+      "size_role": "small",
+      "state": "default",
+      "rationale": "推奨レポート候補スロット #3 (content_media) を user が採用"
+    },
+    {
+      "graphic_id": "action-delivery",
+      "screen": "scr-06-action-list",
+      "platforms": [
+        "mobile"
+      ],
+      "placement": "実施中カード ACT-005「宅配便の置き配指定」の 44px アイコン枠 (.card-icon)。淡いティール面に載るため透過が必要",
+      "size_role": "small",
+      "state": "default",
+      "rationale": "推奨レポート候補スロット #3 (content_media) を user が採用"
+    },
+    {
+      "graphic_id": "action-meat-free",
+      "screen": "scr-07-action-detail",
+      "platforms": [
+        "mobile"
+      ],
+      "placement": "画面上部エリア (カテゴリ/難易度バッジの上) に、一覧で使う ACT-003 と同一画像を大きめに再掲する。一覧→詳細の親和性を出す目的",
+      "size_role": "small",
+      "state": "default",
+      "rationale": "user 指示由来 (21b ヒアリング) — 候補 #4 は新規生成せず #3 の ACT-003 画像を再利用する"
+    }
+  ],
+  "taste": {
+    "level1_words": [
+      "写実的（フォト）"
+    ],
+    "level2_choice": "A",
+    "style_directive": "Realistic documentary photography in the manner of a free stock-photo library, not illustration: full-frame camera with a 35mm lens at f/5.6, soft diffused natural daylight, natural unretouched surface texture and true-to-life material detail, moderate detail density with generous calm areas left uncluttered, loosely harmonized with #117F87 deep teal and #E0F2F1 pale celadon as a gentle undertone rather than a strict palette, natural variation in exposure, ambient colour and framing between images is welcome and expected, calm and hopeful and grounded in the everyday, absolutely no illustration, no painterly brushwork, no watercolour or hand-drawn line, no 3D render or CGI look, no high-key blown-out whiteness and no shallow-bokeh cinematic treatment",
+    "sample_files": [
+      "graphics/samples/taste-a.png",
+      "graphics/samples/taste-b.png",
+      "graphics/samples/taste-c.png"
+    ],
+    "palette_hints": [
+      "#117F87 (user-provided)",
+      "#E0F2F1 (user-provided)"
+    ],
+    "confirmed_at": "2026-08-19T09:03:56+09:00"
+  }
+}
