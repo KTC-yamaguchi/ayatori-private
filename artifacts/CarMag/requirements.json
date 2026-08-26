@@ -1,0 +1,60 @@
+{
+  "schema_version": "2026-05-22",
+  "app_name": "CarMag",
+  "created_at": "2026-07-17T00:00:00+09:00",
+  "interview_mode": "beginner",
+  "axis_scores": {
+    "1_target_user": 8,
+    "2_problem": 8,
+    "3_features": 7,
+    "4_competitors": 8,
+    "5_constraints": 6,
+    "6_platform": 8,
+    "7_design_scope": 7,
+    "average": 7.4
+  },
+  "readiness": "SHIPPABLE",
+  "target_user": "車を持つオーナー（メンテナンス時期・季節の備えで情報を探す人）",
+  "problem": "Google検索すると情報がバラバラ。ブログや広告が混じり、信頼できる情報にたどり着きにくい。",
+  "reference_app": "カーセンサー等の車メディア系サイト（記事中心・カテゴリ導線）",
+  "constraints": {
+    "deadline": null,
+    "budget_cap": null,
+    "tech_stack_decided": false,
+    "notes": "特に制約なし。後で決定可能"
+  },
+  "platform_primary": "web_browser",
+  "design_output_scope": {
+    "platform_combo": "mobile_and_web",
+    "web_viewports": [
+      "desktop",
+      "sm"
+    ],
+    "screen_coverage": "must_only",
+    "state_pattern": "default_only",
+    "dual_theme_mode": false,
+    "illustration_policy": "pictogram"
+  },
+  "must_features": [
+    {
+      "name": "カテゴリ別の記事一覧・閲覧",
+      "description": "メンテナンス / 季節 / 新車種などのカテゴリから記事を選んで閲覧できる",
+      "feasibility": "public_api",
+      "feasibility_detail": "車情報API / RSSフィード"
+    }
+  ],
+  "should_features": [
+    {
+      "name": "記事のキーワード検索",
+      "description": "車種名やキーワードで目的の記事を探せる",
+      "feasibility": "public_api",
+      "feasibility_detail": "車情報API / RSSフィード"
+    }
+  ],
+  "could_features": [],
+  "future_plans": [],
+  "recommendations_accepted": [],
+  "confluence_parent_id": null,
+  "provisional_flags": [],
+  "notes": "管理画面はスコープアウト。ユーザー向け閲覧画面に集中。記事データは外部API/RSSフィードから取得する想定。"
+}

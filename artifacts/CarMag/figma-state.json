@@ -1,0 +1,26 @@
+{
+  "app_name": "CarMag",
+  "file_key": "oyMthq9xZggnYXtxYgh0kP",
+  "page_name": "AYATORI Pipeline",
+  "page_id": "1649:2",
+  "nodes": {
+    "style-guide": null,
+    "screens": {
+      "01-home": {
+        "web": "1650:2",
+        "web-sm": "1652:2"
+      },
+      "02-article-detail": {
+        "web": "1651:2",
+        "web-sm": "1653:2"
+      }
+    }
+  },
+  "scope": {
+    "status": "success",
+    "user_selected": {
+      "platforms": ["web", "web-sm"],
+      "states": ["default"]
+    }
+  }
+}

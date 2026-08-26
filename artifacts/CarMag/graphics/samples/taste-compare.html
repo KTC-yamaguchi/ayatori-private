@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>テイスト比較 A/B/C — CarMag</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; margin: 24px; max-width: 1280px; }
+  h1 { font-size: 1.3rem; }
+  .meta { color: #666; font-size: .85rem; margin-bottom: 16px; }
+  .notice { background: #fff8e1; border: 1px solid #e0c96b; border-radius: 6px; padding: 8px 12px; font-size: .85rem; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .card { border: 1px solid #ccc; border-radius: 8px; padding: 12px; }
+  .card h2 { font-size: 1rem; margin: 0 0 8px; }
+  .card img { width: 100%; height: auto; border-radius: 4px; background: #f3f3f3; }
+  details { font-size: .8rem; margin-top: 8px; color: #555; }
+  @media (prefers-color-scheme: dark) {
+    .notice { background: #3a3320; border-color: #6b5f2e; }
+    .card { border-color: #555; }
+    .meta, details { color: #aaa; }
+  }
+</style>
+</head>
+<body>
+<h1>テイスト 2 段階目: サンプルグラフィック比較 (A/B/C)</h1>
+<p class="meta">app: CarMag / 1 段階目の選択: 洗練・フラット / 共通お題: A compact family sedan viewed from a calm three-quarter angle, accompanied by a few simple maintenance motifs (a wrench, an oil droplet, a snowflake) floating nearby, conveying trustworthy seasonal car care for everyday owners. Centered composition, generous negative space, subject fills about 60% of the frame. / 生成: gpt-image-2 / updated: 2026-07-29T11:08:43+09:00</p>
+<div class="notice">⚠️ これは <strong>テイスト選定用の見本 (ILLUSTRATIVE)</strong> です。本番グラフィックは 21d でプロンプト確定後、21e で slot ごとに生成されます — 本画像は実データに昇格しません。</div>
+<div class="grid">
+    <section class="card">
+      <h2>案 A — 洗練A (フラットベクター・単一アクセント)</h2>
+      <img src="taste-a.png" alt="taste-sample-a" width="1024" height="1024">
+      <details><summary>style block (prompt 抜粋)</summary><p>Refined flat vector illustration style, clean geometric shapes with no outlines, restrained two-tone treatment using a single accent of #006884 (deep teal) over a warm off-white #FBF8F6 background, ample negative space, on a light background</p></details>
+    </section>
+    <section class="card">
+      <h2>案 B — 洗練B (太線ミニマル・線画主体)</h2>
+      <img src="taste-b.png" alt="taste-sample-b" width="1024" height="1024">
+      <details><summary>style block (prompt 抜粋)</summary><p>Minimal line-art illustration style with confident bold uniform strokes in #006884 (deep teal), clearly heavier line weight for strong presence at small sizes, almost no fills, precise technical feel, very generous negative space, on a light background</p></details>
+    </section>
+    <section class="card">
+      <h2>案 C — 洗練C (ソフトグラデ・面主体)</h2>
+      <img src="taste-c.png" alt="taste-sample-c" width="1024" height="1024">
+      <details><summary>style block (prompt 抜粋)</summary><p>Polished editorial illustration style built from soft gradient planes without outlines, layered tonal depth harmonized with #006884 (deep teal) and #FBF8F6 (warm off-white), denser composition with subtle ambient shading, on a light background</p></details>
+    </section>
+</div>
+</body>
+</html>

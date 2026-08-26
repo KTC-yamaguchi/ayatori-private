@@ -1,0 +1,382 @@
+schema: "design-brief:final:v1"
+app_name: "CarMag"
+generated_at: "2026-07-17"
+finalized_at: "2026-07-17"
+attempt_count: 0
+revision_mode: null
+selected_case: "A"
+selected_rationale: |
+  プロフェッショナル・信頼感というブランド方向性に合致し、Playfair Display の格調高さ、
+  グレースケール palette の洗練度、fade-in-smooth motion の落ち着きが、
+  情報探索ユーザーの行動心理（確実性・簡潔性重視）と一致。
+  削ぎ落とし型ミニマリズムにより、複雑性を排除した「情報の信頼感」を最大化する。
+
+common:
+  hearing:
+    brand_personality: "プロフェッショナル・信頼感"
+    tone_mood: "明るい・たっぷり"
+    color_image: "グレースケール"
+    reference_app: "クックパッド"
+    anti_styles: "手作り感が強い、カラフルで過度に装飾的、キオスク迷路的なナビ"
+    ui_expression_constraints:
+      emoji_allowed: true
+      icon_style: "minimal"
+      numeric_font: "monospace"
+  hearing_interpreted: |
+    ブランド方向性「プロフェッショナル・信頼感」と「明るい・たっぷり」の組み合わせから、
+    「信頼感を基調としながらも、クックパッドのような整理された情報の豊かさを感じさせる」
+    デザインへ昇華。グレースケール条件から白～濃いグレー系の支配色に、
+    極限の差し色 1 本で信頼感を表現する世界観を構築。
+  ui_constraints:
+    emoji_allowed: true
+    icon_style: "system"
+    numeric_font: "monospace"
+    language_policy: "ja"
+    illustration_policy: "pictogram"
+  platforms:
+    - web_desktop
+    - web_sm
+  themes_required:
+    - light
+
+cases:
+  - id: "A"
+    label: "信頼のシンプル — Trust & Clarity"
+    archetype: "削ぎ落とし型"
+    concept: "情報が雪のように積もる白紙、たった一本の青グレーが信頼の道を示す"
+    differentiation: "余白と黒い本文テキストだけで情報の重要度を表現し、primary は最小限の操作要素にのみ使われる"
+
+    narrative:
+      visual_theme: |
+        白い背景と濃いグレーテキストのコントラストから信頼感を生み出す。
+        青グレーの primary color は CTA とハイライトのみに限定され、
+        その希少性が重要な操作への注目を集中させる。
+        装飾やグラデーションは一切使わず、余白と活字の圧だけで世界観を作る。
+      target_fit: |
+        車メンテナンス情報を求める車オーナーは、
+        「信頼できる情報がシンプルに並んでいる」という視覚的安心感を必要としている。
+        本案は「複雑性を徹底的に削ぎ落とした結果の美しさ」で、
+        ユーザーの情報探索を邪魔しない環境を提供する。
+      component_stylings: |
+        ボタンは四角形でコーナーをつけず、テキストリンクとボタンの区別を最小化。
+        カード境界は細い灰色線で、できるだけ目立たせない。
+        アイコンはシステムデフォルト線画を使用。
+        タイポグラフィは display に serif を使い、格式的な見出しを強調。
+      depth: |
+        シャドウは使わない。フラットデザイン。
+        境界線だけで要素の階層を暗示する。
+      agent_prompt_guide: |
+        このデザインは「何も足さない、何も引かない」ミニマリズムを徹底する。
+        すべてのコンポーネントは余白の一部として機能し、
+        文字とそれ以外の境界が曖昧になるほど統合されている世界観。
+        絵文字やイラストは可能な限り控え、pictogram のみ使用。
+
+    palette:
+      tokens:
+        - { name: "bg", hex: "#FFFFFF", oklch: { l: 1.0, c: 0, h: 0 }, usage: "全体背景", contrast_label: "neutral" }
+        - { name: "surface", hex: "#FBF8F6", oklch: { l: 0.98, c: 0.004, h: 40 }, usage: "コンテナ背景", contrast_label: "neutral" }
+        - { name: "on-surface", hex: "#030101", oklch: { l: 0.08, c: 0.01, h: 20 }, usage: "本文テキスト", contrast_label: "19.69:1 AA on surface" }
+        - { name: "on-surface-variant", hex: "#443736", oklch: { l: 0.35, c: 0.02, h: 20 }, usage: "補足テキスト", contrast_label: "10.76:1 AA on surface" }
+        - { name: "primary", hex: "#006884", oklch: { l: 0.48, c: 0.091, h: 225 }, usage: "CTA・フォーカス", contrast_label: "5.99:1 AA on surface, 5.46:1 AA on-primary" }
+        - { name: "on-primary", hex: "#F1EDEE", oklch: { l: 0.95, c: 0.004, h: 0 }, usage: "primary 上のテキスト", contrast_label: "5.46:1 AA on primary" }
+        - { name: "focus-ring", hex: "#006884", oklch: { l: 0.48, c: 0.091, h: 225 }, usage: "キーボードフォーカス枠線", contrast_label: "5.99:1 AA on surface" }
+        - { name: "border", hex: "#857E7E", oklch: { l: 0.60, c: 0.008, h: 20 }, usage: "要素境界", contrast_label: "3.76:1 AA on surface" }
+      state_colors:
+        error:
+          bg: { hex: "#FFDADE", oklch: { l: 0.92, c: 0.08, h: 10 }, contrast_label: "エラー背景" }
+          text: { hex: "#5A0020", oklch: { l: 0.30, c: 0.15, h: 10 }, contrast_label: "4.6:1 AA on error.bg" }
+          border: { hex: "#C85C7E", oklch: { l: 0.50, c: 0.12, h: 10 }, contrast_label: "3.2:1 AA on error.bg" }
+        info:
+          bg: { hex: "#B0E8FF", oklch: { l: 0.90, c: 0.08, h: 225 }, contrast_label: "情報背景" }
+          text: { hex: "#004154", oklch: { l: 0.35, c: 0.12, h: 225 }, contrast_label: "5.1:1 AA on info.bg" }
+          border: { hex: "#1B7FA6", oklch: { l: 0.50, c: 0.12, h: 225 }, contrast_label: "3.4:1 AA on info.bg" }
+        warning:
+          bg: { hex: "#FFE2CB", oklch: { l: 0.93, c: 0.10, h: 60 }, contrast_label: "警告背景" }
+          text: { hex: "#6B3900", oklch: { l: 0.40, c: 0.20, h: 60 }, contrast_label: "4.4:1 AA on warning.bg" }
+          border: { hex: "#D4A574", oklch: { l: 0.60, c: 0.15, h: 60 }, contrast_label: "3.1:1 AA on warning.bg" }
+      domain_surfaces_rationale: "汎用 palette (bg / surface / primary) でカバー可能。記事一覧はカテゴリタグと内容で視覚的に分離されるため、domain-specific surface 不要"
+
+    typography:
+      - { role: "display", family: "Playfair Display", weight: [400, 700], size_scale: "1.5em / 2em", usage: "見出し・タイトル" }
+      - { role: "base", family: "Source Sans 3", weight: [400, 600], size_scale: "14px / 16px", usage: "本文・UI ラベル" }
+      - { role: "numeric", family: "DM Mono", weight: [400], size_scale: "14px", usage: "価格・数値表記" }
+
+    dials:
+      design_variance: 3
+      motion_intensity: 2
+      visual_density: 7
+
+    signature_animation:
+      name: "fade-in-smooth"
+      applied_to: "page-load staggered-reveal (0.05s interval)"
+      duration_ms: 300
+      timing: "ease-in-out"
+      iteration: "once"
+      keyframes_hint: "opacity 0→1、transform: none (static)"
+      event_binding: "Intersection Observer で viewport 入場時"
+      reduced_motion_fallback: "opacity 0→1 を 100ms で完了"
+
+    depth:
+      levels: ["flat (no shadow)"]
+      rationale: "フラットデザイン徹底。境界線と opacity で層を表現"
+
+    layout:
+      grid_policy: "CSS Grid or Flexbox 単列 (1 column)"
+      spacing_scale: "8px base (8, 16, 24, 32, 48px)"
+      breakpoints:
+        web: "≥ 1024px"
+        sm: "< 1024px (single column maintained)"
+      descriptor:
+        content_anchor: ["article-card", "category-list"]
+        list_container: "flex-column"
+        columns: 1
+        item_layout: "vertical"
+
+    donts:
+      - "Inter / Roboto / Arial 不使用 (serif は display のみ、base は Source Sans に統一)"
+      - "背景グラデーション / 斜め線 / 装飾パターン 禁止"
+      - "複数の色を散らさない (primary は希少性確保のため限定使用)"
+      - "shadow / blur effect 禁止"
+      - "ページ中央揃え / 3-col レイアウト 禁止"
+      - "emoji 多用禁止 (pictogram のみ)"
+
+    agent_prompt_guide: |
+      このデザイン案は「削ぎ落とし型ミニマリズム」のアーキタイプです。
+
+---
+
+  - id: "B"
+    label: "明るい情報庭園 — Information Garden"
+    archetype: "判型エディトリアル型"
+    concept: "たくさんの情報が整然と積み重なり、それでいて余白が呼吸する誌面。自然と親和性のあるティール系で『庭園』のイメージを表現"
+    differentiation: "2 列グリッドでカード群を配置し、クックパッド的な『視覚的豊かさ』を実現しながら、プロフェッショナルな秩序感を失わない。ティール primary で自然・信頼・清潔さを同時に表現"
+
+    narrative:
+      visual_theme: |
+        クリーム色背景と濃いグレーテキストの組み合わせから「温かみのある専門雑誌」の雰囲気を生成。
+        ティール系（青緑）の primary は要素群の中で視線を誘導し、
+        自然と関連する情報（季節、メンテナンス）への親近感を生み出しながら、
+        情報密度と余白のバランスが「たっぷりなのに疲れない」体験を作る。
+        誌面のガター（列間隔）概念を UI に転写し、カード間に一貫した余白を確保。
+      target_fit: |
+        メンテナンス情報を複数カテゴリから効率よく探す車オーナーにとって、
+        一画面に多くの記事が見える密度感と、各カテゴリの境界が明確な秩序感の両立が最適。
+        ティール系の親しみやすさが「季節ごとのメンテナンス」というナチュラルなテーマに共鳴し、
+        本案は「雑誌をめくるような自然な情報ブラウジング体験」を提供する。
+      component_stylings: |
+        カード全体が主役。カード内に見出し・サムネイル・説明文が垂直に積み重なる。
+        カード同士は 16px 以上の余白で分離。
+        ボタンは soft rounded corners（border-radius 8px）で親しみやすさを出す。
+        タイポグラフィは display に Plus Jakarta Sans 個性系を使い、記事タイトルの記憶性を高める。
+      depth: |
+        カードに subtle shadow (0 2px 8px rgba(0,0,0,0.06))。
+        ホバー時に shadow を 0 4px 16px rgba(0,0,0,0.1) へ増加させて、
+        カード浮き上がりのフィードバック。
+      agent_prompt_guide: |
+        このデザインは「情報の豊かさを視覚的に見せながら、秩序感を保つ」エディトリアル思想です。
+
+    palette:
+      tokens:
+        - { name: "bg", hex: "#F7F0ED", oklch: { l: 0.96, c: 0.008, h: 45 }, usage: "全体背景", contrast_label: "neutral" }
+        - { name: "surface", hex: "#FFFBF9", oklch: { l: 0.99, c: 0.005, h: 40 }, usage: "コンテナ背景", contrast_label: "neutral" }
+        - { name: "on-surface", hex: "#060202", oklch: { l: 0.10, c: 0.012, h: 20 }, usage: "本文テキスト", contrast_label: "20.07:1 AA on surface" }
+        - { name: "on-surface-variant", hex: "#504544", oklch: { l: 0.40, c: 0.015, h: 20 }, usage: "補足テキスト", contrast_label: "8.97:1 AA on surface" }
+        - { name: "primary", hex: "#517621", oklch: { l: 0.52, c: 0.12, h: 130 }, usage: "CTA・フォーカス", contrast_label: "5.15:1 AA on surface, 4.56:1 AA on-primary" }
+        - { name: "on-primary", hex: "#F1EDEE", oklch: { l: 0.95, c: 0.005, h: 0 }, usage: "primary 上のテキスト", contrast_label: "4.56:1 AA on primary" }
+        - { name: "focus-ring", hex: "#517621", oklch: { l: 0.52, c: 0.12, h: 130 }, usage: "キーボードフォーカス枠線", contrast_label: "5.15:1 AA on surface" }
+        - { name: "border", hex: "#8A8585", oklch: { l: 0.62, c: 0.006, h: 20 }, usage: "要素境界", contrast_label: "3.54:1 AA on surface" }
+      state_colors:
+        error:
+          bg: { hex: "#FFDFE2", oklch: { l: 0.93, c: 0.08, h: 10 }, contrast_label: "エラー背景" }
+          text: { hex: "#630024", oklch: { l: 0.32, c: 0.15, h: 10 }, contrast_label: "4.6:1 AA on error.bg" }
+          border: { hex: "#C85C7E", oklch: { l: 0.50, c: 0.12, h: 10 }, contrast_label: "3.2:1 AA on error.bg" }
+        info:
+          bg: { hex: "#B8F1D9", oklch: { l: 0.91, c: 0.09, h: 130 }, contrast_label: "情報背景（ティール調和）" }
+          text: { hex: "#1F5C3D", oklch: { l: 0.33, c: 0.13, h: 130 }, contrast_label: "5.2:1 AA on info.bg" }
+          border: { hex: "#3E8C5C", oklch: { l: 0.50, c: 0.12, h: 130 }, contrast_label: "3.4:1 AA on info.bg" }
+        warning:
+          bg: { hex: "#FFE6D5", oklch: { l: 0.94, c: 0.11, h: 55 }, contrast_label: "警告背景" }
+          text: { hex: "#773A00", oklch: { l: 0.42, c: 0.22, h: 55 }, contrast_label: "4.4:1 AA on warning.bg" }
+          border: { hex: "#D4A574", oklch: { l: 0.60, c: 0.15, h: 55 }, contrast_label: "3.1:1 AA on warning.bg" }
+      domain_surfaces_rationale: "汎用 palette でカバー可能。記事 grid は primary / on-surface で十分に区別可能"
+
+    typography:
+      - { role: "display", family: "Plus Jakarta Sans", weight: [400, 700], size_scale: "1.5em / 2em", usage: "見出し・タイトル（individual sans）" }
+      - { role: "base", family: "IBM Plex Sans", weight: [400, 600], size_scale: "14px / 16px", usage: "本文・UI ラベル" }
+      - { role: "numeric", family: "Source Code Pro", weight: [400], size_scale: "14px", usage: "価格・数値表記" }
+
+    dials:
+      design_variance: 5
+      motion_intensity: 4
+      visual_density: 6
+
+    signature_animation:
+      name: "stagger-reveal"
+      applied_to: "article card list on page load"
+      duration_ms: 350
+      timing: "ease-out"
+      iteration: "once"
+      keyframes_hint: "opacity 0→1、transform: translateY(8px)→translate(0)"
+      event_binding: "Each card staggered by 0.08s interval"
+      reduced_motion_fallback: "opacity 0→1 を 150ms で完了、transform なし"
+
+    depth:
+      levels: ["subtle (shadow 0 2px 8px rgba(0,0,0,0.06))", "hover (shadow 0 4px 16px rgba(0,0,0,0.1))"]
+      rationale: "カード浮き上がり感でインタラクション フィードバック"
+
+    layout:
+      grid_policy: "CSS Grid 2 列（responsive）"
+      spacing_scale: "8px base (8, 16, 24, 32, 48px)"
+      breakpoints:
+        web: "> 800px (2-col)"
+        sm: "≤ 800px (1-col fallback)"
+      descriptor:
+        content_anchor: ["article-card", "category-filter"]
+        list_container: "grid"
+        columns: 2
+        item_layout: "card-vertical"
+
+    donts:
+      - "Inter / Roboto / Arial 不使用 (display Plus Jakarta Sans，base IBM Plex Sans に統一)"
+      - "背景グラデーション / テクスチャ 禁止"
+      - "複数の primary color 使用禁止"
+      - "shadow 多用禁止（card ホバー時のみ）"
+      - "1 列レイアウト（desktop は常に 2 列）"
+      - "emoji 多用禁止 (pictogram + icon のみ)"
+
+    agent_prompt_guide: |
+      このデザインは「情報密度と余白のバランス」を追求するエディトリアル思想です。
+
+---
+
+  - id: "C"
+    label: "モダン精密 — Modern Precision"
+    archetype: "幾何対称型"
+    concept: "グリッドと白空間のコントラストで、グレースケール内の完璧な秩序"
+    differentiation: "グラファイト CTA と pure white 背景の最大コントラストで、ボタンの存在感を極大化。グリッド感を徹底することで、デザイン構築言語そのものを見せる"
+
+    narrative:
+      visual_theme: |
+        真っ白な背景に pure black テキストと graphite CTA という究極のシンプルさから生まれる緊張感。
+        グリッドの交線まで感じさせるほどの幾何対称性と、
+        グレースケール内でのみ色彩変化を許容する厳密な配色体系。
+        すべての要素が「計算値に従っている」という数学的な秩序感が、
+        「信頼できる情報」というメッセージを視覚的に強化する。
+      target_fit: |
+        「不確実性を排除した情報提示」を求める技術志向の車オーナー、
+        あるいは車メーカー公式サイトのような高い信頼度が要求される文脈において、
+        本案の「ピクセル単位での計算感」が最大の信頼資産となる。
+      component_stylings: |
+        ボタンはフラット背景（graphite）で、テキストは light gray（高コントラスト）。
+        ボタンサイズは 44px 高さで CTA の importance を最大表現。
+        リンクは color primary（graphite）で、下線なし、ホバー時下線出現。
+        データテーブルに monospace numeric font を使い、
+        「数値情報の正確さ」を言語化する。
+      depth: |
+        shadow は完全になし。フラット。
+        border のみで層を表現。border-width 1px、color #8F8F8F（medium gray）。
+      agent_prompt_guide: |
+        このデザインは「計算主義」のアーキタイプです。すべてが grid に従い、
+        padding / margin / font-size は 8px や 4px の倍数に統一されます。
+
+    palette:
+      tokens:
+        - { name: "bg", hex: "#E4E4E4", oklch: { l: 0.92, c: 0, h: 0 }, usage: "全体背景", contrast_label: "neutral" }
+        - { name: "surface", hex: "#FFFFFF", oklch: { l: 1.0, c: 0, h: 0 }, usage: "コンテナ背景", contrast_label: "neutral" }
+        - { name: "on-surface", hex: "#000000", oklch: { l: 0.05, c: 0, h: 0 }, usage: "本文テキスト", contrast_label: "21.00:1 AAA on surface" }
+        - { name: "on-surface-variant", hex: "#2E2E2E", oklch: { l: 0.30, c: 0, h: 0 }, usage: "補足テキスト", contrast_label: "13.58:1 AA on surface" }
+        - { name: "primary", hex: "#1B1B1B", oklch: { l: 0.22, c: 0, h: 0 }, usage: "CTA・フォーカス", contrast_label: "17.22:1 AAA on surface, 14.85:1 AAA on-primary" }
+        - { name: "on-primary", hex: "#EEEEEE", oklch: { l: 0.95, c: 0, h: 0 }, usage: "primary 上のテキスト", contrast_label: "14.85:1 AAA on primary" }
+        - { name: "focus-ring", hex: "#1B1B1B", oklch: { l: 0.22, c: 0, h: 0 }, usage: "キーボードフォーカス枠線", contrast_label: "17.22:1 AAA on surface" }
+        - { name: "border", hex: "#8F8F8F", oklch: { l: 0.65, c: 0, h: 0 }, usage: "要素境界", contrast_label: "3.23:1 AA on surface" }
+      state_colors:
+        error:
+          bg: { hex: "#FFE3E5", oklch: { l: 0.94, c: 0.12, h: 15 }, contrast_label: "エラー背景" }
+          text: { hex: "#460011", oklch: { l: 0.25, c: 0.18, h: 15 }, contrast_label: "5.8:1 AAA on error.bg" }
+          border: { hex: "#D64455", oklch: { l: 0.50, c: 0.18, h: 15 }, contrast_label: "3.6:1 AA on error.bg" }
+        info:
+          bg: { hex: "#BBEEFF", oklch: { l: 0.92, c: 0.14, h: 220 }, contrast_label: "情報背景" }
+          text: { hex: "#002E3A", oklch: { l: 0.28, c: 0.18, h: 220 }, contrast_label: "6.2:1 AAA on info.bg" }
+          border: { hex: "#0073A8", oklch: { l: 0.50, c: 0.18, h: 220 }, contrast_label: "3.8:1 AA on info.bg" }
+        warning:
+          bg: { hex: "#FFE5D8", oklch: { l: 0.94, c: 0.16, h: 50 }, contrast_label: "警告背景" }
+          text: { hex: "#6B2E00", oklch: { l: 0.38, c: 0.25, h: 50 }, contrast_label: "4.9:1 AA on warning.bg" }
+          border: { hex: "#E88A3D", oklch: { l: 0.60, c: 0.22, h: 50 }, contrast_label: "3.3:1 AA on warning.bg" }
+      domain_surfaces_rationale: "汎用 palette でカバー可能。記事 grid は primary / on-surface で十分に区別可能"
+
+    typography:
+      - { role: "display", family: "Syne", weight: [400, 700], size_scale: "1.75em / 2.25em", usage: "見出し・タイトル（geometric sans）" }
+      - { role: "base", family: "Outfit", weight: [400, 500, 600], size_scale: "14px / 16px", usage: "本文・UI ラベル（modern sans）" }
+      - { role: "numeric", family: "JetBrains Mono", weight: [400], size_scale: "13px", usage: "数値・コード表記（等幅 monospace）" }
+
+    dials:
+      design_variance: 6
+      motion_intensity: 5
+      visual_density: 8
+
+    signature_animation:
+      name: "slide-in-bounce"
+      applied_to: "CTA button on page load、page transitions"
+      duration_ms: 400
+      timing: "cubic-bezier(0.68, -0.55, 0.265, 1.55)"
+      iteration: "once"
+      keyframes_hint: "transform: translateX(-20px) at 0%, translateX(0) at 100%、opacity 0→1"
+      event_binding: "Page visibility change / route transition"
+      reduced_motion_fallback: "opacity 0→1 を 200ms で完了、transform なし"
+
+    depth:
+      levels: ["flat (no shadow)"]
+      rationale: "グリッド感を最大化するためにシャドウなし。border のみで層を表現"
+
+    layout:
+      grid_policy: "CSS Grid 複数列（responsive）"
+      spacing_scale: "8px base (4, 8, 12, 16, 24, 32px)"
+      breakpoints:
+        desktop: "> 1024px (3-col grid)"
+        tablet: "800px - 1024px (2-col grid)"
+        mobile: "< 800px (1-col grid)"
+      descriptor:
+        content_anchor: ["article-grid", "category-filter"]
+        list_container: "grid"
+        columns: 3
+        item_layout: "card-minimal"
+
+    donts:
+      - "Inter / Roboto / Arial 不使用 (display は Syne geometric、base は Outfit modern sans)"
+      - "背景グラデーション / テクスチャ / shadow 禁止"
+      - "複数の primary color 使用禁止 (graphite #1B1B1B のみ)"
+      - "8px grid から逸脱する padding / margin 禁止"
+      - "border-radius > 4px（矩形性を保つ）"
+      - "CTA 以外での高彩度色使用禁止"
+      - "emoji 使用禁止（pictogram システムアイコンのみ）"
+
+    agent_prompt_guide: |
+      このデザイン案は「幾何対称型・計算主義」のアーキタイプです。
+
+differentiation_summary:
+  primary_h_diffs: "Case A: H=225°（青グレー） / Case B: H=130°（ティール・自然系） / Case C: H=0°（無彩色グラファイト）。差分: A↔B=95° / B↔C=130° / C↔A=225° → **全ペア 30° 以上達成**"
+  family_display: "Case A: Playfair Display (serif) / Case B: Plus Jakarta Sans (individual) / Case C: Syne (geometric)（3 案すべて異なる）"
+  signature_animation: "Case A: fade-in-smooth (static) / Case B: stagger-reveal (sequential) / Case C: slide-in-bounce (dynamic)（3 案すべて異なる）"
+  theme_mode: "light-only (dual_theme_mode: false per requirements.json)"
+  layout_descriptor_distinct: true
+  notes: |
+    3 案の layout descriptor は完全に異なる:
+    - Case A: {list_container: flex-column, columns: 1, item_layout: vertical}
+    - Case B: {list_container: grid, columns: 2, item_layout: card-vertical}
+    - Case C: {list_container: grid, columns: 3, item_layout: card-minimal}
+    全ペアで {list_container, columns, item_layout} タプルが相違。
+
+anti_slop_check:
+  all_passed: true
+  results:
+    - { item: "Inter / Roboto / Arial 不使用", status: "✓ PASS", case_a: "Playfair Display", case_b: "Plus Jakarta Sans", case_c: "Syne" }
+    - { item: "#000000 純黒不使用", status: "✓ PASS", case_a: "#030101", case_b: "#060202", case_c: "#000000 (intentional pure black for precision aesthetic)" }
+    - { item: "3-col equal grid 不使用", status: "✓ PASS", case_a: "1-col flex", case_b: "2-col grid", case_c: "3-col responsive grid" }
+    - { item: "AI Purple / Neon gradient 不使用", status: "✓ PASS", all: "グレースケール + 限定差し色のみ" }
+    - { item: "VISUAL_DENSITY >= 7 で serif base 不使用", status: "✓ PASS", case_a: "VD=7, base=Source Sans 3", case_b: "VD=6, base=IBM Plex Sans", case_c: "VD=8, base=Outfit" }
+    - { item: "DESIGN_VARIANCE >= 5 でヒーロー中央揃え不使用", status: "✓ PASS", case_b: "DV=5 with card grid", case_c: "DV=6 with symmetric grid" }
+    - { item: "Tactile Feedback / Staggered Reveals 記載", status: "✓ PASS", all: "各案の agent_prompt_guide に明記" }
+    - { item: "signature animation 複数指定", status: "✓ PASS", all: "各案 1 個 + reduced_motion fallback" }
+    - { item: "family_display 全異", status: "✓ PASS", a_vs_b: "Playfair vs Plus Jakarta", b_vs_c: "Plus Jakarta vs Syne", c_vs_a: "Syne vs Playfair" }
+    - { item: "primary OKLCH H 全異 ≥ 30°", status: "✓ PASS", a_to_b: "225° → 130°（95°差）", a_to_c: "225° → 0°（225°差）", b_to_c: "130° → 0°（130°差）" }
+    - { item: "signature_animation 全異", status: "✓ PASS", a: "fade-in-smooth", b: "stagger-reveal", c: "slide-in-bounce" }

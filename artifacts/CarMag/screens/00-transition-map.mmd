@@ -1,0 +1,13 @@
+%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+graph TD
+    entry(["Entry: App Start"])
+    scrArticleList["Article List<br/>(Home)"]
+    scrArticleDetail["Article Detail"]
+
+    entry --> scrArticleList
+    scrArticleList --> scrArticleDetail
+    scrArticleDetail -->|"戻るボタン (Header B)"| scrArticleList
+
+    style entry fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+    style scrArticleList fill:#FFFFFF,stroke:#333,stroke-width:2px
+    style scrArticleDetail fill:#FFFFFF,stroke:#333,stroke-width:2px

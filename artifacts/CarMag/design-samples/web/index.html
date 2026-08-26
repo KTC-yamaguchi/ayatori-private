@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja" data-variant="A">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarMag - デザイン方向性 3案サンプル（web）</title>
+<style>
+  :root[data-variant="A"]{
+    --color-bg:#FFFFFF;
+    --color-surface:#FBF8F6;
+    --color-on-surface:#030101;
+    --color-on-surface-variant:#443736;
+    --color-primary:#006884;
+    --color-on-primary:#F1EDEE;
+    --color-focus-ring:#006884;
+    --color-border:#857E7E;
+    --font-display:"Playfair Display", Georgia, serif;
+    --font-base:"Source Sans 3", -apple-system, sans-serif;
+    --font-numeric:"DM Mono", monospace;
+    --radius:0px;
+    --shadow-card:none;
+  }
+  :root[data-variant="B"]{
+    --color-bg:#F7F0ED;
+    --color-surface:#FFFBF9;
+    --color-on-surface:#060202;
+    --color-on-surface-variant:#504544;
+    --color-primary:#517621;
+    --color-on-primary:#F1EDEE;
+    --color-focus-ring:#517621;
+    --color-border:#8A8585;
+    --font-display:"Plus Jakarta Sans", -apple-system, sans-serif;
+    --font-base:"IBM Plex Sans", -apple-system, sans-serif;
+    --font-numeric:"Source Code Pro", monospace;
+    --radius:8px;
+    --shadow-card:0 2px 8px rgba(0,0,0,0.06);
+    --shadow-card-hover:0 4px 16px rgba(0,0,0,0.1);
+  }
+  :root[data-variant="C"]{
+    --color-bg:#E4E4E4;
+    --color-surface:#FFFFFF;
+    --color-on-surface:#000000;
+    --color-on-surface-variant:#2E2E2E;
+    --color-primary:#1B1B1B;
+    --color-on-primary:#EEEEEE;
+    --color-focus-ring:#1B1B1B;
+    --color-border:#8F8F8F;
+    --font-display:"Syne", -apple-system, sans-serif;
+    --font-base:"Outfit", -apple-system, sans-serif;
+    --font-numeric:"JetBrains Mono", monospace;
+    --radius:2px;
+    --shadow-card:none;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--color-bg);
+    color:var(--color-on-surface);
+    font-family:var(--font-base);
+    min-width:1440px;
+  }
+  a{color:inherit;}
+  :focus-visible{outline:2px solid var(--color-focus-ring); outline-offset:2px;}
+
+  /* variant switcher nav (frame外・上) */
+  .variant-switcher{
+    display:flex;
+    gap:16px;
+    align-items:center;
+    padding:12px 24px;
+    background:#222;
+    color:#fff;
+    font-family:-apple-system, sans-serif;
+    font-size:14px;
+  }
+  .variant-switcher label{
+    display:flex; align-items:center; gap:6px; cursor:pointer; min-height:44px;
+  }
+  .variant-switcher input[type="radio"]{ accent-color:#fff; width:18px; height:18px; }
+
+  .placeholder-badge{
+    display:inline-block;
+    margin:16px 24px 0;
+    padding:6px 12px;
+    background:#FFE2CB;
+    color:#6B3900;
+    border:1px solid #D4A574;
+    font-size:13px;
+    border-radius:4px;
+  }
+
+  main.sample-screen[hidden]{ display:none; }
+
+  main.sample-screen{
+    width:1440px;
+    margin:0 auto;
+    padding:32px 48px 64px;
+  }
+
+  .hero{
+    margin-bottom:32px;
+  }
+  .hero h1{
+    font-family:var(--font-display);
+    font-size:2em;
+    margin:0 0 8px;
+    color:var(--color-on-surface);
+  }
+  .hero p{
+    font-size:16px;
+    color:var(--color-on-surface-variant);
+    margin:0 0 16px;
+  }
+  .cta{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    padding:0 24px;
+    background:var(--color-primary);
+    color:var(--color-on-primary);
+    font-family:var(--font-base);
+    font-weight:600;
+    font-size:14px;
+    border:none;
+    cursor:pointer;
+    border-radius:var(--radius);
+  }
+
+  .category-list{
+    display:flex;
+    gap:12px;
+    margin:0 0 24px;
+    padding:0;
+    list-style:none;
+    flex-wrap:wrap;
+  }
+  .category-list li{
+    border:1px solid var(--color-border);
+    padding:6px 14px;
+    font-size:13px;
+    color:var(--color-on-surface-variant);
+    border-radius:var(--radius);
+  }
+
+  /* icons: inline SVG pictogram, stroke-width 1.5, no literal fill */
+  .icon{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; vertical-align:middle; }
+
+  .article-card{
+    background:var(--color-surface);
+    border:1px solid var(--color-border);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:var(--shadow-card);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:0;
+  }
+  .article-card .thumb{
+    width:100%;
+    aspect-ratio:16/9;
+    background:var(--color-bg);
+    border:1px solid var(--color-border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--color-on-surface-variant);
+    border-radius:var(--radius);
+  }
+  .article-card h2{
+    font-family:var(--font-display);
+    font-size:1.15em;
+    margin:0;
+  }
+  .article-card p{
+    font-size:14px;
+    color:var(--color-on-surface-variant);
+    margin:0;
+  }
+  .article-card .meta{
+    font-family:var(--font-numeric);
+    font-size:12px;
+    color:var(--color-on-surface-variant);
+  }
+  .article-card .tag{
+    font-size:12px;
+    color:var(--color-primary);
+  }
+
+  /* ===== Variant A: flex-column, 1 col, vertical item ===== */
+  :root[data-variant="A"] .article-card{
+    animation: fade-in-smooth 300ms ease-in-out both;
+  }
+  :root[data-variant="A"] .article-list{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+  }
+  :root[data-variant="A"] .article-card{
+    flex-direction:row;
+    align-items:flex-start;
+    gap:20px;
+    border:none;
+    border-bottom:1px solid var(--color-border);
+    border-radius:0;
+    padding:20px 0;
+  }
+  :root[data-variant="A"] .article-card .thumb{
+    width:180px;
+    flex:none;
+  }
+  :root[data-variant="A"] .article-card .body{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+
+  /* ===== Variant B: grid 2 col, card-vertical ===== */
+  :root[data-variant="B"] .article-list{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:24px;
+  }
+  :root[data-variant="B"] .article-card{
+    transition:box-shadow 200ms ease-out;
+    animation: stagger-reveal 350ms ease-out both;
+  }
+  :root[data-variant="B"] .article-card:hover{
+    box-shadow:var(--shadow-card-hover);
+  }
+  :root[data-variant="B"] .article-card:nth-child(1){ animation-delay:0ms; }
+  :root[data-variant="B"] .article-card:nth-child(2){ animation-delay:80ms; }
+  :root[data-variant="B"] .article-card:nth-child(3){ animation-delay:160ms; }
+  :root[data-variant="B"] .article-card:nth-child(4){ animation-delay:240ms; }
+  :root[data-variant="B"] .article-card:nth-child(5){ animation-delay:320ms; }
+  :root[data-variant="B"] .article-card:nth-child(6){ animation-delay:400ms; }
+
+  /* ===== Variant C: grid 3 col responsive, card-minimal ===== */
+  :root[data-variant="C"] .article-list{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:16px;
+  }
+  :root[data-variant="C"] .article-card{
+    border:1px solid var(--color-border);
+    padding:16px;
+  }
+  :root[data-variant="C"] .cta{
+    animation: slide-in-bounce 400ms cubic-bezier(0.68,-0.55,0.265,1.55) both;
+  }
+
+  @keyframes fade-in-smooth{
+    from{ opacity:0; }
+    to{ opacity:1; }
+  }
+  @keyframes stagger-reveal{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @keyframes slide-in-bounce{
+    0%{ transform:translateX(-20px); opacity:0; }
+    100%{ transform:translateX(0); opacity:1; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    :root[data-variant="A"] .article-card{ animation:fade-in-smooth 100ms ease-in-out both; }
+    :root[data-variant="B"] .article-card{ animation:fade-in-smooth 150ms ease-in-out both; transform:none; }
+    :root[data-variant="C"] .cta{ animation:fade-in-smooth 200ms ease-in-out both; transform:none; }
+  }
+
+  .sr-only{
+    position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);
+  }
+</style>
+</head>
+<body data-platform="web">
+  <nav class="variant-switcher" aria-label="デザイン案切替">
+    <span>デザイン案切替:</span>
+    <label><input type="radio" name="variant" value="A" checked> A. 信頼のシンプル</label>
+    <label><input type="radio" name="variant" value="B"> B. 明るい情報庭園</label>
+    <label><input type="radio" name="variant" value="C"> C. モダン精密</label>
+  </nav>
+  <span class="placeholder-badge">※ 仮データです</span>
+
+  <main class="sample-screen">
+    <section class="hero">
+      <h1>CarMag — 車のメンテナンス情報を、信頼できるかたちで</h1>
+      <p>カテゴリ別に整理された記事から、必要な情報だけをすばやく見つけられます。</p>
+      <button class="cta" type="button">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+        記事をさがす
+      </button>
+    </section>
+
+    <ul class="category-list" aria-label="カテゴリ">
+      <li>定期メンテナンス</li>
+      <li>季節の備え</li>
+      <li>新車種情報</li>
+      <li>タイヤ・バッテリー</li>
+    </ul>
+
+    <section class="article-list" aria-label="記事一覧">
+      <article class="article-card">
+        <div class="thumb" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5-4 4-2-2-5 5"/></svg>
+        </div>
+        <div class="body">
+          <span class="tag">定期メンテナンス</span>
+          <h2>冬前に確認したいバッテリー点検のポイント</h2>
+          <p>気温が下がる前に見ておきたい、バッテリー劣化のサインと対処法をまとめました。</p>
+          <span class="meta">2026.11.02</span>
+        </div>
+      </article>
+      <article class="article-card">
+        <div class="thumb" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5-4 4-2-2-5 5"/></svg>
+        </div>
+        <div class="body">
+          <span class="tag">季節の備え</span>
+          <h2>雪道走行前に見直したいタイヤの選び方</h2>
+          <p>スタッドレスタイヤへの交換タイミングと、選定時に注意したいポイントを解説。</p>
+          <span class="meta">2026.10.28</span>
+        </div>
+      </article>
+      <article class="article-card">
+        <div class="thumb" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5-4 4-2-2-5 5"/></svg>
+        </div>
+        <div class="body">
+          <span class="tag">新車種情報</span>
+          <h2>2027年モデルの注目コンパクトSUV 3選</h2>
+          <p>燃費性能と積載性を両立した、最新コンパクトSUVの動向をチェック。</p>
+          <span class="meta">2026.10.20</span>
+        </div>
+      </article>
+      <article class="article-card">
+        <div class="thumb" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5-4 4-2-2-5 5"/></svg>
+        </div>
+        <div class="body">
+          <span class="tag">タイヤ・バッテリー</span>
+          <h2>タイヤの空気圧、正しいチェック頻度は？</h2>
+          <p>月1回の点検で防げるトラブルと、簡単なセルフチェック方法を紹介します。</p>
+          <span class="meta">2026.10.15</span>
+        </div>
+      </article>
+      <article class="article-card">
+        <div class="thumb" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5-4 4-2-2-5 5"/></svg>
+        </div>
+        <div class="body">
+          <span class="tag">定期メンテナンス</span>
+          <h2>オイル交換の目安距離とサインを見極める</h2>
+          <p>車種ごとの交換サイクルと、劣化を示す代表的な症状を整理しました。</p>
+          <span class="meta">2026.10.08</span>
+        </div>
+      </article>
+      <article class="article-card">
+        <div class="thumb" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5-4 4-2-2-5 5"/></svg>
+        </div>
+        <div class="body">
+          <span class="tag">季節の備え</span>
+          <h2>梅雨時期のワイパー・ガラスコーティング対策</h2>
+          <p>視界不良を防ぐための、この時期ならではのメンテナンス項目をまとめました。</p>
+          <span class="meta">2026.09.30</span>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      var radios = document.querySelectorAll('.variant-switcher input[name="variant"]');
+      radios.forEach(function(r){
+        r.addEventListener('change', function(){
+          if (this.checked) {
+            document.documentElement.setAttribute('data-variant', this.value);
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

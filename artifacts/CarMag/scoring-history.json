@@ -1,0 +1,253 @@
+{
+  "schema_version": "2026-05-22",
+  "app_name": "CarMag",
+  "attempts": [
+    {
+      "attempt_number": 1,
+      "evaluated_at": "2026-07-17T10:30:00+09:00",
+      "check_results": [
+        {
+          "id": "correctness-C1",
+          "axis": "correctness",
+          "awarded_points": 5,
+          "determination": "yes",
+          "evidence": "01-overview.md で『信頼できる情報に素早くアクセスできる環境を提供』『カテゴリ化された記事をキュレーション形式で提供』と明示。05-features.md の F-01（カテゴリ別記事一覧）と F-02（キーワード検索）がこの課題ステートメントに直結し、情報への導線を簡潔化している。よって yes。"
+        },
+        {
+          "id": "correctness-C2",
+          "axis": "correctness",
+          "awarded_points": 0,
+          "determination": "no",
+          "evidence": "07-data-definition.md『連携 1: 記事データ取得 API』に『連携先: 車情報 API（TBD）/ RSSフィード、v1 では未決定、Step 5 で確定予定』と明示。具体的なサービス（カーセンサー API、楽天車検 API）は指定されておらず、TBD（To Be Determined）のまま。よって no。"
+        },
+        {
+          "id": "correctness-C3",
+          "axis": "correctness",
+          "awarded_points": 2.5,
+          "determination": "partial",
+          "evidence": "06-non-functional.md で NFR-01〜NFR-04 に性能指標が明示（ホーム画面 3 秒、記事一覧 2 秒等）。05-features.md の F-01, F-03 の読み込み量と矛盾がない。ただし、記事データボリューム（何 KB / MB、何件の記事など）がないため、性能指標の実現可能性の根拠が不完全。よって partial。"
+        },
+        {
+          "id": "correctness-C4",
+          "axis": "correctness",
+          "awarded_points": 2.5,
+          "determination": "partial",
+          "evidence": "08-constraints.md で C-01『PoC 4 週間』『1 エンジニア + デザイナー支援』と記載。05-features.md の Must 機能（F-01, F-03）は実現可能に見えるが、C-05『技術スタック未決定』のため、フロントエンド・バックエンド・インフラの確定なしに実現可能性判定が困難。工数見積、リスク分析も不足。よって partial。"
+        },
+        {
+          "id": "unambiguity-U1",
+          "axis": "unambiguity",
+          "awarded_points": 2.5,
+          "determination": "partial",
+          "evidence": "F-01, F-02 は『入力』『処理』『出力』が 05-features.md で明示。F-03（記事詳細表示）は『表示要素』『出力』は明記されるが、『入力』（何を選択するか）が暗黙的。F-03 の入力を明示的に定義する必要あり。よって partial。"
+        },
+        {
+          "id": "unambiguity-U2",
+          "axis": "unambiguity",
+          "awarded_points": 5,
+          "determination": "yes",
+          "evidence": "03-user-flow.md『ナビゲーション構造』セクションで、ツリー図により『ホーム画面 → カテゴリ一覧 → 記事一覧 → 詳細』『検索ボックス → 検索結果 → 詳細』と一義的に定義。複数経路の曖昧性がない。よって yes。"
+        },
+        {
+          "id": "unambiguity-U3",
+          "axis": "unambiguity",
+          "awarded_points": 2.5,
+          "determination": "partial",
+          "evidence": "07-data-definition.md の Article エンティティで各フィールドに型・形式が示される（id: 文字列 『article_20260717_001』、published_date: ISO 8601 『2026-07-15T09:00:00Z』、content: HTML 等）。ただし required/nullable の制約、最大長、word_count の精度等が不明確。よって partial。"
+        },
+        {
+          "id": "unambiguity-U4",
+          "axis": "unambiguity",
+          "awarded_points": 2.5,
+          "determination": "partial",
+          "evidence": "UC-01, UC-02 は『アクター』『前提条件』『基本フロー』『代替フロー』『後条件』が全て記載。UC-03 は同じ構成だが、代替フロー『A1』のみで『A2（異常系）』がない。UC-03 の代替フロー が不完全。よって partial。"
+        },
+        {
+          "id": "completeness-C1",
+          "axis": "completeness",
+          "awarded_points": 5,
+          "determination": "yes",
+          "evidence": "03-user-flow.md『エラーケース』表に E-01（API 失敗）E-02（結果ゼロ）E-03（タイムアウト）E-04（画像読み込み失敗）の 4 ケースが全て対応策と共に記載。よって yes。"
+        },
+        {
+          "id": "completeness-C2",
+          "axis": "completeness",
+          "awarded_points": 5,
+          "determination": "yes",
+          "evidence": "08-constraints.md『受け入れ条件』AC-01〜AC-08 が全て [ ] チェックボックス形式で『何を・どの画面で・何が起きたら合格』と測定可能な粒度で記述。例：AC-01『少なくとも 3 つ以上のカテゴリが表示される』『タップでカテゴリの記事一覧に遷移する』。よって yes。"
+        },
+        {
+          "id": "completeness-C3",
+          "axis": "completeness",
+          "awarded_points": 5,
+          "determination": "yes",
+          "evidence": "06-non-functional.md に『セキュリティ』（NFR-10 HTTPS、NFR-12 API キー管理）『エラーハンドリング』（NFR-20〜NFR-25 リトライ 3 回、タイムアウト 5 秒）『アクセシビリティ』（NFR-30 WCAG 2.2 AA、NFR-31〜NFR-38 詳細条件）が全て明示。よって yes。"
+        },
+        {
+          "id": "completeness-C4",
+          "axis": "completeness",
+          "awarded_points": 2.5,
+          "determination": "partial",
+          "evidence": "07-data-definition.md『エラーレスポンス定義』で 404, 500, 503 が記載される。ただし、Endpoint 1〜3 に対しては『どのステータスを返すか』が明示されず、Endpoint 4 のみ 404 が示される。全エンドポイント別にエラーレスポンスを定義する必要あり。よって partial。"
+        },
+        {
+          "id": "consistency-C1",
+          "axis": "consistency",
+          "awarded_points": 5,
+          "determination": "yes",
+          "evidence": "02-scope.md『F-01: MUST』『F-02: SHOULD』と定義。05-features.md で F-01『MoSCoW: **MUST**』F-02『MoSCoW: **SHOULD**』F-03『MoSCoW: **MUST**』と同一の優先度付けが一貫。よって yes。"
+        },
+        {
+          "id": "consistency-C2",
+          "axis": "consistency",
+          "awarded_points": 5,
+          "determination": "yes",
+          "evidence": "『カテゴリ』の定義が 02-scope.md『記事をユーザーの検索ニーズに合わせて分類するラベル』→ 04-use-cases.md『カテゴリリストから選択』→ 07-data-definition.md『Category エンティティ』で同じ意味で一貫。矛盾なし。よって yes。"
+        },
+        {
+          "id": "consistency-C3",
+          "axis": "consistency",
+          "awarded_points": 5,
+          "determination": "yes",
+          "evidence": "02-scope.md『スコープ外: 管理画面・ユーザーアカウント・多言語対応』と明示。05-features.md では管理画面・アカウント・多言語の記載なし。06-non-functional.md『NFR-11: v1 ではユーザーアカウント不要』と明示。スコープ外項目が誤って含まれていない。よって yes。"
+        },
+        {
+          "id": "consistency-C4",
+          "axis": "consistency",
+          "awarded_points": 5,
+          "determination": "yes",
+          "evidence": "08-constraints.md『技術スタック未決定（Step 5 で確定予定）』。05-features.md『UI フレームワーク: React / Vue など（Step 5 で確定予定）』『検索ライブラリ例』と述べ、特定技術を前提としない。07-data-definition.md『REST API / RSS（未決定、Step 5 で確定予定）』と未決定を維持。よって yes。"
+        },
+        {
+          "id": "feasibility-F1",
+          "axis": "feasibility",
+          "awarded_points": 2.5,
+          "determination": "partial",
+          "evidence": "07-data-definition.md / 06-non-functional.md に『認証: API キー（環境変数）』『リトライ 3 回・指数バックオフ』『タイムアウト 5 秒』『キャッシング 24 時間』が記載。ただし API の『利用制限』（レート制限、リクエスト/日クォータ）や『キャッシング時の競合管理』が不明確。よって partial。"
+        },
+        {
+          "id": "feasibility-F2",
+          "axis": "feasibility",
+          "awarded_points": 0,
+          "determination": "no",
+          "evidence": "08-constraints.md『PoC 4 週間、1 エンジニア + デザイナー支援』と記載されるが、『工数見積（何時間 × 何タスク）』『タスク分解（設計・実装・テスト・デプロイの期間配分）』『リスク評価（API 確保、技術選定遅延の影響）』がない。実現可能性の根拠が不足。よって no。"
+        },
+        {
+          "id": "feasibility-F3",
+          "axis": "feasibility",
+          "awarded_points": 2.5,
+          "determination": "partial",
+          "evidence": "06-non-functional.md 性能要件（ホーム画面 3 秒、記事一覧 2 秒等）は React / Vue 等の Web フレームワークで一般的に達成可能な粒度。ただし『ネットワーク速度: 4G、実測 10 Mbps』という仮定の根拠が不明確。実測値の測定環境・キャリア・地域が不明。よって partial。"
+        },
+        {
+          "id": "feasibility-F4",
+          "axis": "feasibility",
+          "awarded_points": 2.5,
+          "determination": "partial",
+          "evidence": "02-scope.md『管理画面なし、記事は外部 API から自動取得』と明示。05-features.md / 07-data-definition.md でも同様。スコープがユーザー向け画面のみに絞られている認識あり。ただし『この制限により工数が何時間削減される』という『工数削減効果の明示』がない。よって partial。"
+        }
+      ],
+      "scores": {
+        "correctness": 10,
+        "unambiguity": 12.5,
+        "completeness": 17.5,
+        "consistency": 20,
+        "feasibility": 7.5
+      },
+      "total": 67.5,
+      "deficiencies": [
+        {
+          "check_id": "correctness-C2",
+          "artifact": "07-data-definition.md",
+          "section": "連携 1: 記事データ取得 API",
+          "description": "外部 API / RSSフィード が『TBD（To Be Determined）』のままで、具体的な API サービス（カーセンサー API、楽天車検 API など）が指定されていない。Step 5 での確定を待つため、現段階ではリスク評価が困難。",
+          "tag": "人間対応必要",
+          "severity": "high"
+        },
+        {
+          "check_id": "correctness-C3",
+          "artifact": "06-non-functional.md / 05-features.md",
+          "section": "NFR-01〜NFR-04 / F-01, F-03",
+          "description": "性能指標（ホーム画面 3 秒等）と Must 機能の読み込み量の間に矛盾はないが、『記事データボリューム』（典型的に何 KB、何件の記事、何個の画像など）が定義されていない。性能テストの実現可能性が検証不可。",
+          "tag": "AI改善可能",
+          "severity": "medium"
+        },
+        {
+          "check_id": "correctness-C4",
+          "artifact": "08-constraints.md",
+          "section": "C-05 技術スタック",
+          "description": "『PoC 4 週間、1 エンジニア』と記載されているが、技術スタックが Step 5 で未決定のため、実現可能性の確定判断ができない。フロントエンド（React/Vue）バックエンド（Node/Python）API 方式（REST/GraphQL）の選択により工数が大きく変動する可能性。",
+          "tag": "人間対応必要",
+          "severity": "high"
+        },
+        {
+          "check_id": "unambiguity-U1",
+          "artifact": "05-features.md",
+          "section": "F-03 記事詳細表示",
+          "description": "F-03 の『入力』が明示されていない。『ユーザーが記事一覧 / 検索結果から 1 件の記事をクリック』という前提が暗黙的。明示的に『入力: 記事一覧または検索結果からの記事選択操作』と記載すべき。",
+          "tag": "AI改善可能",
+          "severity": "low"
+        },
+        {
+          "check_id": "unambiguity-U3",
+          "artifact": "07-data-definition.md",
+          "section": "エンティティ 1: Article",
+          "description": "各フィールドの型・形式は示されているが、制約条件（nullable / required、最大長、word_count の許容範囲など）が定義されていない。例: title は何文字以内か、author は複数いるのか単数か。",
+          "tag": "AI改善可能",
+          "severity": "medium"
+        },
+        {
+          "check_id": "unambiguity-U4",
+          "artifact": "04-use-cases.md",
+          "section": "UC-03 記事詳細を読む",
+          "description": "UC-03 の代替フロー『A1: 記事が削除または利用不可の場合』のみ。異常系『A2: 画像の読み込み失敗』『A3: スクロール操作でのパフォーマンス低下』など、ユーザーが実際に遭遇しうる代替フローが不足。",
+          "tag": "AI改善可能",
+          "severity": "low"
+        },
+        {
+          "check_id": "completeness-C4",
+          "artifact": "07-data-definition.md",
+          "section": "Endpoint 1〜4 / エラーレスポンス定義",
+          "description": "Endpoint 1（カテゴリリスト）Endpoint 2（カテゴリ別記事）Endpoint 3（検索）に対して『どの HTTP ステータスコード（404, 500, 503）を返すのか』が明示されていない。各エンドポイント別に『正常・エラー系のレスポンス』を定義すべき。",
+          "tag": "AI改善可能",
+          "severity": "medium"
+        },
+        {
+          "check_id": "feasibility-F1",
+          "artifact": "07-data-definition.md / 06-non-functional.md",
+          "section": "連携 1 / NFR-12, NFR-14",
+          "description": "『認証: API キー管理』『リトライ: 3 回』『タイムアウト: 5 秒』『キャッシング: 24 時間』は記載。ただし『API 利用制限』（例: 1 日 1000 リクエスト、1 秒 10 リクエスト）『キャッシング時の競合管理』（複数ユーザーが同時にキャッシュをリードライトする場合）『キャッシュ無効化戦略』が不明確。",
+          "tag": "人間対応必要",
+          "severity": "high"
+        },
+        {
+          "check_id": "feasibility-F2",
+          "artifact": "08-constraints.md",
+          "section": "開発制約 / リリース判定基準",
+          "description": "『PoC 4 週間、1 エンジニア + デザイナー』と記載されるが、『実装工数見積』『タスク分解（設計・実装・テスト・デプロイ・QA の期間）』『リスク評価（API 確保、技術選定遅延、外部依存によるリスク）』がない。4 週間での実現可能性の根拠が欠落。",
+          "tag": "人間対応必要",
+          "severity": "high"
+        },
+        {
+          "check_id": "feasibility-F3",
+          "artifact": "06-non-functional.md",
+          "section": "AC-08 性能要件を満たす",
+          "description": "『4G ネットワーク（実測速度: 10 Mbps）でアプリを使用』という仮定が記載されているが、この実測値の根拠（測定環境・キャリア・地域・時間帯）が不明確。都市部と地方、移動中と停止中で 4G 速度が大きく異なる。想定ユーザーの典型的なネットワーク環境を詳細化すべき。",
+          "tag": "人間対応必要",
+          "severity": "medium"
+        },
+        {
+          "check_id": "feasibility-F4",
+          "artifact": "08-constraints.md / 02-scope.md",
+          "section": "スコープ制限の認識",
+          "description": "『管理画面なし、記事は外部 API から自動取得』と明示され、スコープがユーザー向け画面のみに絞られている認識あり。ただし『この制限により実装工数が何時間削減される / 合計何人日で実現可能』という『工数削減効果の定量化』がない。スコープ制限の実装的メリットを明示化すべき。",
+          "tag": "AI改善可能",
+          "severity": "medium"
+        }
+      ],
+      "ai_improvable_count": 5,
+      "human_required_count": 5,
+      "summary": "要件は全体的に構造化され、主要フロー（カテゴリ一覧・検索・詳細表示）が明確に定義されている。一方、外部 API 仕様の具体化（TBD 解消）、工数見積・技術スタック確定、性能要件の詳細化（データボリューム・ネットワーク環境）、エラーレスポンスの完全化が必要。Consistency 軸は優秀（20/20）だが、Feasibility 軸（7.5/20）が弱い。"
+    }
+  ]
+}

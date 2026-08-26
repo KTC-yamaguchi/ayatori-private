@@ -1,0 +1,70 @@
+{
+  "schema_version": "2026-06-03",
+  "app_name": "CarMag",
+  "enumerated_at": "2026-07-17T10:15:00+09:00",
+  "specifics": [
+    {
+      "ref": "F-01.data_source",
+      "value": "外部 API または RSSフィード をポーリング / リアルタイム購読",
+      "artifact": "requirements/05-features.md",
+      "provenance": "ai_proposed",
+      "note": "ユーザーが「車情報 API / RSSフィード」と言及したが、具体的な実現方法は AI が列挙。Step 5 で確定予定"
+    },
+    {
+      "ref": "F-02.search_targets",
+      "value": "検索対象: 記事タイトル・本文・カテゴリタグ・著者名",
+      "artifact": "requirements/05-features.md",
+      "provenance": "ai_proposed",
+      "note": "ユーザーは「キーワード検索」とのみ言及。検索対象フィールドは全文検索慣例から AI が補完"
+    },
+    {
+      "ref": "F-03.display_elements",
+      "value": "タイトル・著者・公開日・カテゴリ・本文・画像・出典・戻るボタン",
+      "artifact": "requirements/05-features.md",
+      "provenance": "derived",
+      "derived_from": "参考アプリ（カーセンサー等）のメディアレイアウト慣例"
+    },
+    {
+      "ref": "NFR-01.homepage_load_time",
+      "value": "ホーム画面初期読み込み 3 秒以内（4G 環境）",
+      "artifact": "requirements/06-non-functional.md",
+      "provenance": "ai_proposed",
+      "note": "Web パフォーマンス標準。ユーザーは性能要件未指示"
+    },
+    {
+      "ref": "NFR-05.image_lazy_loading",
+      "value": "Lazy Loading で下部画像は遅延読み込み",
+      "artifact": "requirements/06-non-functional.md",
+      "provenance": "ai_proposed",
+      "note": "モバイル パフォーマンス最適化。ユーザー未指示"
+    },
+    {
+      "ref": "NFR-30.wcag_compliance",
+      "value": "WCAG 2.2 AA レベル準拠",
+      "artifact": "requirements/06-non-functional.md",
+      "provenance": "ai_proposed",
+      "note": "Web アクセシビリティ国際標準。公開サービスとして必須と AI が判断"
+    },
+    {
+      "ref": "NFR-36.screen_reader_speed",
+      "value": "スクリーンリーダー対応、NVDA/VoiceOver で 1 項目あたり ≤ 5 秒",
+      "artifact": "requirements/06-non-functional.md",
+      "provenance": "ai_proposed",
+      "note": "WCAG 準拠時の測定基準。ユーザー未指示"
+    },
+    {
+      "ref": "C-01.schedule_poc",
+      "value": "PoC フェーズ: 4 週間",
+      "artifact": "requirements/08-constraints.md",
+      "provenance": "ai_proposed",
+      "note": "典型的 PoC 期間。ユーザーは「制約なし、後で決める」のため AI が推奨値を提案"
+    },
+    {
+      "ref": "C-03.team_size",
+      "value": "チーム構成: 1 名のエンジニア（フルスタック想定）+ デザイナー支援",
+      "artifact": "requirements/08-constraints.md",
+      "provenance": "ai_proposed",
+      "note": "ユーザー未指示。一般的な PoC チーム編成から推測"
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+:root {
+  /* Primitive Colors - Neutral */
+  --color-neutral-0: #FFFFFF;
+  --color-neutral-10: #FBF8F6;
+  --color-neutral-50: #F1EDEB;
+  --color-neutral-100: #E8E3E0;
+  --color-neutral-200: #D9D1CC;
+  --color-neutral-300: #C8BDB5;
+  --color-neutral-400: #857E7E;
+  --color-neutral-500: #6B6464;
+  --color-neutral-600: #443736;
+  --color-neutral-700: #2A2425;
+  --color-neutral-800: #1B1515;
+  --color-neutral-900: #030101;
+
+  /* Primitive Colors - Blue */
+  --color-blue-primary: #006884;
+
+  /* Primitive Colors - State */
+  --color-error-light: #FFDADE;
+  --color-error-dark: #5A0020;
+  --color-error-border: #C85C7E;
+  --color-info-light: #B0E8FF;
+  --color-info-dark: #004154;
+  --color-info-border: #1B7FA6;
+  --color-warning-light: #FFE2CB;
+  --color-warning-dark: #6B3900;
+  --color-warning-border: #D4A574;
+
+  /* Semantic Colors */
+  --color-background: #FFFFFF;
+  --color-surface: #FBF8F6;
+  --color-on-surface: #030101;
+  --color-on-surface-variant: #443736;
+  --color-primary: #006884;
+  --color-on-primary: #FBF8F6;
+  --color-focus-ring: #006884;
+  --color-border: #857E7E;
+
+  /* Error State */
+  --color-error-bg: #FFDADE;
+  --color-error-text: #5A0020;
+  --color-error-border-color: #C85C7E;
+
+  /* Info State */
+  --color-info-bg: #B0E8FF;
+  --color-info-text: #004154;
+  --color-info-border-color: #1B7FA6;
+
+  /* Warning State */
+  --color-warning-bg: #FFE2CB;
+  --color-warning-text: #6B3900;
+  --color-warning-border-color: #D4A574;
+
+  /* Typography */
+  --font-family-display: "Playfair Display", serif;
+  --font-family-base: "Source Sans 3", sans-serif;
+  --font-family-numeric: "DM Mono", monospace;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 32px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-loose: 1.75;
+
+  /* Component Tokens */
+  --button-primary-bg: #006884;
+  --button-primary-text: #FBF8F6;
+  --button-primary-padding: 12px 24px;
+  --button-primary-border-radius: 0px;
+  --button-primary-font-size: 16px;
+  --button-primary-font-weight: 600;
+  --button-primary-min-height: 44px;
+
+  --button-secondary-bg: #FBF8F6;
+  --button-secondary-text: #030101;
+  --button-secondary-border: 1px solid #857E7E;
+  --button-secondary-padding: 12px 24px;
+  --button-secondary-border-radius: 0px;
+
+  --card-bg: #FBF8F6;
+  --card-border: 1px solid #857E7E;
+  --card-padding: 16px;
+  --card-border-radius: 0px;
+
+  --input-bg: #FBF8F6;
+  --input-border: 1px solid #857E7E;
+  --input-border-focus: 2px solid #006884;
+  --input-padding: 8px 12px;
+  --input-border-radius: 0px;
+
+  --link-color: #006884;
+  --link-text-decoration: none;
+  --link-text-decoration-hover: underline;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Motion */
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 300ms;
+  --motion-duration-slow: 500ms;
+  --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}

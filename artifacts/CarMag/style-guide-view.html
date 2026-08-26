@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarMag Design System — Case A: 信頼のシンプル</title>
+    <style>
+        :root {
+            --neutral-0: #FFFFFF;
+            --neutral-10: #FBF8F6;
+            --neutral-50: #F1EDEB;
+            --neutral-100: #E8E3E0;
+            --neutral-200: #D9D1CC;
+            --neutral-300: #C8BDB5;
+            --neutral-400: #857E7E;
+            --neutral-500: #6B6464;
+            --neutral-600: #443736;
+            --neutral-700: #2A2425;
+            --neutral-800: #1B1515;
+            --neutral-900: #030101;
+            --blue-primary: #006884;
+            --error-light: #FFDADE;
+            --error-dark: #5A0020;
+            --error-border: #C85C7E;
+            --info-light: #B0E8FF;
+            --info-dark: #004154;
+            --info-border: #1B7FA6;
+            --warning-light: #FFE2CB;
+            --warning-dark: #6B3900;
+            --warning-border: #D4A574;
+
+            --font-display: "Playfair Display", serif;
+            --font-base: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-numeric: "DM Mono", monospace;
+
+            --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            background-color: var(--neutral-0);
+            color: var(--neutral-900);
+            font-family: var(--font-base);
+            line-height: 1.5;
+        }
+
+        body {
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 12px;
+            color: var(--neutral-900);
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--neutral-600);
+            margin-bottom: 40px;
+        }
+
+        section {
+            margin-bottom: 60px;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--neutral-900);
+            border-bottom: 1px solid var(--neutral-300);
+            padding-bottom: 12px;
+        }
+
+        /* Color Palette Section */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .color-swatch {
+            border: 1px solid var(--neutral-300);
+            background: var(--neutral-10);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.3s var(--ease-in-out), box-shadow 0.3s var(--ease-in-out);
+        }
+
+        .color-swatch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .color-sample {
+            width: 100%;
+            height: 80px;
+            border: 1px solid var(--neutral-300);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-numeric);
+            font-size: 12px;
+            color: var(--neutral-600);
+            background-size: 8px 8px;
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc),
+                              linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+            background-position: 0 0, 4px 4px;
+        }
+
+        .color-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--neutral-900);
+        }
+
+        .color-hex {
+            font-family: var(--font-numeric);
+            font-size: 12px;
+            color: var(--neutral-600);
+            word-break: break-all;
+        }
+
+        .color-usage {
+            font-size: 11px;
+            color: var(--neutral-500);
+            line-height: 1.3;
+        }
+
+        /* State Colors */
+        .state-colors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .state-card {
+            border: 1px solid var(--neutral-300);
+            background: var(--neutral-10);
+            padding: 20px;
+        }
+
+        .state-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .state-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .state-sample {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--neutral-300);
+            flex-shrink: 0;
+        }
+
+        .state-info {
+            font-size: 12px;
+            flex: 1;
+        }
+
+        .state-info-label {
+            font-weight: 600;
+            color: var(--neutral-900);
+            margin-bottom: 2px;
+        }
+
+        .state-info-value {
+            font-family: var(--font-numeric);
+            color: var(--neutral-600);
+        }
+
+        /* Typography Section */
+        .typography-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .typo-sample {
+            border: 1px solid var(--neutral-300);
+            background: var(--neutral-10);
+            padding: 24px;
+        }
+
+        .typo-sample h3 {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--neutral-600);
+            margin-bottom: 12px;
+        }
+
+        .typo-sample-display {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--neutral-900);
+            margin-bottom: 20px;
+        }
+
+        .typo-sample-body {
+            font-family: var(--font-base);
+            font-size: 16px;
+            font-weight: 400;
+            line-height: 1.5;
+            color: var(--neutral-900);
+            margin-bottom: 16px;
+        }
+
+        .typo-sample-numeric {
+            font-family: var(--font-numeric);
+            font-size: 14px;
+            color: var(--neutral-600);
+            background: rgba(0, 104, 132, 0.05);
+            padding: 12px;
+            border-radius: 0;
+            margin-bottom: 12px;
+        }
+
+        .typo-spec {
+            font-size: 11px;
+            color: var(--neutral-500);
+            line-height: 1.6;
+            border-top: 1px solid var(--neutral-300);
+            padding-top: 12px;
+        }
+
+        /* Motion Demo */
+        .motion-demo {
+            background: var(--neutral-10);
+            border: 1px solid var(--neutral-300);
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .motion-box {
+            width: 80px;
+            height: 80px;
+            background: var(--blue-primary);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            animation: fadeInSmooth 0.3s var(--ease-in-out) forwards;
+            opacity: 0;
+        }
+
+        .motion-box:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .motion-box:nth-child(2) {
+            animation-delay: 0.05s;
+        }
+
+        .motion-box:nth-child(3) {
+            animation-delay: 0.1s;
+        }
+
+        .motion-box:nth-child(4) {
+            animation-delay: 0.15s;
+        }
+
+        @keyframes fadeInSmooth {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .motion-desc {
+            font-size: 12px;
+            color: var(--neutral-600);
+            margin-top: 16px;
+        }
+
+        .motion-replay {
+            margin-top: 20px;
+        }
+
+        .motion-replay button {
+            background: var(--blue-primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-family: var(--font-base);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .motion-replay button:hover {
+            opacity: 0.9;
+        }
+
+        /* Component Showcase */
+        .component-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .component-box {
+            border: 1px solid var(--neutral-300);
+            background: var(--neutral-10);
+            padding: 24px;
+        }
+
+        .component-box h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--neutral-900);
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-family: var(--font-base);
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 0;
+            cursor: pointer;
+            transition: opacity 0.2s, background-color 0.2s;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--blue-primary);
+            color: var(--neutral-10);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--neutral-10);
+            color: var(--neutral-900);
+            border: 1px solid var(--neutral-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--neutral-50);
+        }
+
+        .input-example {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-example input {
+            padding: 8px 12px;
+            border: 1px solid var(--neutral-300);
+            font-family: var(--font-base);
+            font-size: 16px;
+            background: var(--neutral-10);
+            color: var(--neutral-900);
+        }
+
+        .input-example input:focus {
+            outline: none;
+            border: 2px solid var(--blue-primary);
+        }
+
+        .link-example a {
+            color: var(--blue-primary);
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .link-example a:hover {
+            text-decoration: underline;
+        }
+
+        /* Spacing Scale */
+        .spacing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+        }
+
+        .spacing-item {
+            border: 1px solid var(--neutral-300);
+            background: var(--neutral-10);
+            padding: 12px;
+        }
+
+        .spacing-block {
+            width: 100%;
+            background: var(--blue-primary);
+            margin-bottom: 8px;
+        }
+
+        .spacing-label {
+            font-family: var(--font-numeric);
+            font-size: 12px;
+            color: var(--neutral-600);
+        }
+
+        /* Accessibility Focus Indicator */
+        *:focus-visible {
+            outline: 2px solid var(--blue-primary);
+            outline-offset: 2px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 24px 16px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            .color-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .typo-sample-display {
+                font-size: 24px;
+            }
+
+            .typo-sample-body {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CarMag Design System</h1>
+        <p class="subtitle">Case A: 信頼のシンプル — Trust & Clarity</p>
+
+        <!-- Color Palette -->
+        <section>
+            <h2>Color Palette</h2>
+
+            <h3 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px; color: var(--neutral-900);">Neutral Colors</h3>
+            <div class="color-grid">
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-0);"></div>
+                    <div class="color-name">Neutral 0</div>
+                    <div class="color-hex">#FFFFFF</div>
+                    <div class="color-usage">Pure white, absolute background</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-10);"></div>
+                    <div class="color-name">Neutral 10</div>
+                    <div class="color-hex">#FBF8F6</div>
+                    <div class="color-usage">Off-white, container background</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-50);"></div>
+                    <div class="color-name">Neutral 50</div>
+                    <div class="color-hex">#F1EDEB</div>
+                    <div class="color-usage">Very light neutral</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-100);"></div>
+                    <div class="color-name">Neutral 100</div>
+                    <div class="color-hex">#E8E3E0</div>
+                    <div class="color-usage">Light neutral</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-200);"></div>
+                    <div class="color-name">Neutral 200</div>
+                    <div class="color-hex">#D9D1CC</div>
+                    <div class="color-usage">Light-medium neutral</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-300);"></div>
+                    <div class="color-name">Neutral 300</div>
+                    <div class="color-hex">#C8BDB5</div>
+                    <div class="color-usage">Medium neutral, hover</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-400);"></div>
+                    <div class="color-name">Neutral 400</div>
+                    <div class="color-hex">#857E7E</div>
+                    <div class="color-usage">Medium-dark, borders</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-500);"></div>
+                    <div class="color-name">Neutral 500</div>
+                    <div class="color-hex">#6B6464</div>
+                    <div class="color-usage">Dark neutral</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-600);"></div>
+                    <div class="color-name">Neutral 600</div>
+                    <div class="color-hex">#443736</div>
+                    <div class="color-usage">Very dark neutral, secondary text</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-700);"></div>
+                    <div class="color-name">Neutral 700</div>
+                    <div class="color-hex">#2A2425</div>
+                    <div class="color-usage">Nearly black</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-800);"></div>
+                    <div class="color-name">Neutral 800</div>
+                    <div class="color-hex">#1B1515</div>
+                    <div class="color-usage">Very dark, high contrast</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--neutral-900);"></div>
+                    <div class="color-name">Neutral 900</div>
+                    <div class="color-hex">#030101</div>
+                    <div class="color-usage">Near-black, primary text</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px; color: var(--neutral-900);">Primary Color</h3>
+            <div class="color-grid" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));">
+                <div class="color-swatch">
+                    <div class="color-sample" style="background: var(--blue-primary);"></div>
+                    <div class="color-name">Primary Blue</div>
+                    <div class="color-hex">#006884</div>
+                    <div class="color-usage">CTA, focus, highlights</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px; color: var(--neutral-900);">State Colors</h3>
+            <div class="state-colors">
+                <div class="state-card">
+                    <h3 style="color: var(--error-dark);">Error</h3>
+                    <div class="state-row">
+                        <div class="state-sample" style="background: var(--error-light);"></div>
+                        <div class="state-info">
+                            <div class="state-info-label">Light</div>
+                            <div class="state-info-value">#FFDADE</div>
+                        </div>
+                    </div>
+                    <div class="state-row">
+                        <div class="state-sample" style="background: var(--error-dark);"></div>
+                        <div class="state-info">
+                            <div class="state-info-label">Dark</div>
+                            <div class="state-info-value">#5A0020</div>
+                        </div>
+                    </div>
+                    <div class="state-row">
+                        <div class="state-sample" style="background: var(--error-border);"></div>
+                        <div class="state-info">
+                            <div class="state-info-label">Border</div>
+                            <div class="state-info-value">#C85C7E</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="state-card">
+                    <h3 style="color: var(--info-dark);">Info</h3>
+                    <div class="state-row">
+                        <div class="state-sample" style="background: var(--info-light);"></div>
+                        <div class="state-info">
+                            <div class="state-info-label">Light</div>
+                            <div class="state-info-value">#B0E8FF</div>
+                        </div>
+                    </div>
+                    <div class="state-row">
+                        <div class="state-sample" style="background: var(--info-dark);"></div>
+                        <div class="state-info">
+                            <div class="state-info-label">Dark</div>
+                            <div class="state-info-value">#004154</div>
+                        </div>
+                    </div>
+                    <div class="state-row">
+                        <div class="state-sample" style="background: var(--info-border);"></div>
+                        <div class="state-info">
+                            <div class="state-info-label">Border</div>
+                            <div class="state-info-value">#1B7FA6</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="state-card">
+                    <h3 style="color: var(--warning-dark);">Warning</h3>
+                    <div class="state-row">
+                        <div class="state-sample" style="background: var(--warning-light);"></div>
+                        <div class="state-info">
+                            <div class="state-info-label">Light</div>
+                            <div class="state-info-value">#FFE2CB</div>
+                        </div>
+                    </div>
+                    <div class="state-row">
+                        <div class="state-sample" style="background: var(--warning-dark);"></div>
+                        <div class="state-info">
+                            <div class="state-info-label">Dark</div>
+                            <div class="state-info-value">#6B3900</div>
+                        </div>
+                    </div>
+                    <div class="state-row">
+                        <div class="state-sample" style="background: var(--warning-border);"></div>
+                        <div class="state-info">
+                            <div class="state-info-label">Border</div>
+                            <div class="state-info-value">#D4A574</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Typography -->
+        <section>
+            <h2>Typography</h2>
+            <div class="typography-grid">
+                <div class="typo-sample">
+                    <h3>Display Font</h3>
+                    <div style="font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--neutral-900); margin-bottom: 16px; line-height: 1.2;">Playfair Display</div>
+                    <div class="typo-spec">
+                        <strong>Family:</strong> Playfair Display<br>
+                        <strong>Weight:</strong> 400, 700<br>
+                        <strong>Usage:</strong> Headings, titles<br>
+                        <strong>Line Height:</strong> 1.2<br>
+                        <strong>Style:</strong> Serif, classical
+                    </div>
+                </div>
+                <div class="typo-sample">
+                    <h3>Body Font</h3>
+                    <div style="font-family: var(--font-base); font-size: 16px; font-weight: 400; color: var(--neutral-900); margin-bottom: 16px; line-height: 1.5;">Source Sans 3</div>
+                    <p style="font-family: var(--font-base); font-size: 14px; color: var(--neutral-600); margin-bottom: 12px;">The quick brown fox jumps over the lazy dog. Comfortable reading for body text and UI labels.</p>
+                    <div class="typo-spec">
+                        <strong>Family:</strong> Source Sans 3<br>
+                        <strong>Weight:</strong> 400, 600<br>
+                        <strong>Usage:</strong> Body, UI labels<br>
+                        <strong>Line Height:</strong> 1.5
+                    </div>
+                </div>
+                <div class="typo-sample">
+                    <h3>Numeric Font</h3>
+                    <div class="typo-sample-numeric">$1,234.56 | ¥9,876 | 0x3F4A2B | 42.857%</div>
+                    <div class="typo-spec">
+                        <strong>Family:</strong> DM Mono<br>
+                        <strong>Weight:</strong> 400<br>
+                        <strong>Usage:</strong> Numbers, prices, data<br>
+                        <strong>Style:</strong> Monospace
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Motion -->
+        <section>
+            <h2>Motion</h2>
+            <div class="motion-demo">
+                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 20px; color: var(--neutral-900); text-transform: uppercase; letter-spacing: 0.5px;">Fade-in-smooth (300ms, ease-in-out)</h3>
+                <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;" id="motionContainer">
+                    <div class="motion-box">1</div>
+                    <div class="motion-box">2</div>
+                    <div class="motion-box">3</div>
+                    <div class="motion-box">4</div>
+                </div>
+                <div class="motion-desc">Staggered reveal with 50ms intervals. Smooth ease-in-out timing for natural motion.</div>
+                <div class="motion-replay">
+                    <button onclick="replayMotion()">Replay Animation</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Components -->
+        <section>
+            <h2>Components</h2>
+            <div class="component-showcase">
+                <div class="component-box">
+                    <h3>Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary">Primary Button</button>
+                        <button class="btn btn-secondary">Secondary Button</button>
+                    </div>
+                </div>
+                <div class="component-box">
+                    <h3>Input</h3>
+                    <div class="input-example">
+                        <input type="text" placeholder="Enter search...">
+                    </div>
+                </div>
+                <div class="component-box">
+                    <h3>Links</h3>
+                    <div class="link-example">
+                        <a href="#">Primary Link</a><br><br>
+                        <a href="#">Another Link</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Spacing Scale -->
+        <section>
+            <h2>Spacing Scale</h2>
+            <div class="spacing-grid">
+                <div class="spacing-item">
+                    <div class="spacing-block" style="height: 4px;"></div>
+                    <div class="spacing-label">XS: 4px</div>
+                </div>
+                <div class="spacing-item">
+                    <div class="spacing-block" style="height: 8px;"></div>
+                    <div class="spacing-label">SM: 8px</div>
+                </div>
+                <div class="spacing-item">
+                    <div class="spacing-block" style="height: 16px;"></div>
+                    <div class="spacing-label">MD: 16px</div>
+                </div>
+                <div class="spacing-item">
+                    <div class="spacing-block" style="height: 24px;"></div>
+                    <div class="spacing-label">LG: 24px</div>
+                </div>
+                <div class="spacing-item">
+                    <div class="spacing-block" style="height: 32px;"></div>
+                    <div class="spacing-label">XL: 32px</div>
+                </div>
+                <div class="spacing-item">
+                    <div class="spacing-block" style="height: 48px;"></div>
+                    <div class="spacing-label">2XL: 48px</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--neutral-300);">
+            <h2>Design Principles</h2>
+            <p style="font-size: 16px; line-height: 1.6; color: var(--neutral-900); margin-bottom: 16px;">
+                <strong>信頼のシンプル</strong> is built on minimalist principles:
+            </p>
+            <ul style="margin-left: 20px; color: var(--neutral-900); font-size: 16px; line-height: 1.8;">
+                <li><strong>削ぎ落とし型デザイン:</strong> 不要な装飾を徹底的に排除し、余白と活字の圧だけで情報の重要度を表現</li>
+                <li><strong>グレースケール支配色:</strong> 白から濃いグレーまでの限定パレットで、極限の信頼感を実現</li>
+                <li><strong>差し色は青グレー (#006884) のみ:</strong> CTA とハイライトにのみ使用し、希少性で注目を集中</li>
+                <li><strong>フラットデザイン:</strong> シャドウなし、ボーダーだけで層を表現</li>
+                <li><strong>Playfair Display の格式性:</strong> Serif で見出しの格調高さを演出、高級感を付与</li>
+                <li><strong>静寂なモーション:</strong> fade-in-smooth (300ms) で穏やかな画面遷移、reduce-motion に対応</li>
+            </ul>
+        </section>
+    </div>
+
+    <script>
+        function replayMotion() {
+            const container = document.getElementById('motionContainer');
+            const boxes = container.querySelectorAll('.motion-box');
+
+            // Remove and readd animation
+            boxes.forEach(box => {
+                box.style.animation = 'none';
+                // Trigger reflow
+                void box.offsetHeight;
+                box.style.animation = '';
+            });
+        }
+    </script>
+</body>
+</html>

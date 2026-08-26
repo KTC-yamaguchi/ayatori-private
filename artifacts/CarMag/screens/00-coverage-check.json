@@ -1,0 +1,19 @@
+{
+  "coverage_check": {
+    "checked_at": "2026-07-17T00:00:00+09:00",
+    "scope": "screen_list",
+    "layers": {
+      "l1_ui_states": { "missing": [] },
+      "l2_action_result": { "missing": [] },
+      "l3_flow_end": { "missing": [] },
+      "l4_content_replace": { "missing": [] },
+      "l5_connectivity": { "defects": [] }
+    },
+    "summary": {
+      "total_missing": 0,
+      "by_classification": { "個別画面化": 0, "テンプレート代表1枚": 0, "DS吸収": 0 },
+      "connectivity_defects": 0
+    },
+    "user_accepted_gaps": true
+  }
+}

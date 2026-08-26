@@ -1,0 +1,40 @@
+{
+  "app_name": "CarMag",
+  "updated_at": "2026-07-29T11:08:43+09:00",
+  "model": "gpt-image-2",
+  "size_px": "1024x1024",
+  "level1_words": [
+    "洗練",
+    "フラット"
+  ],
+  "subject": "A compact family sedan viewed from a calm three-quarter angle, accompanied by a few simple maintenance motifs (a wrench, an oil droplet, a snowflake) floating nearby, conveying trustworthy seasonal car care for everyday owners. Centered composition, generous negative space, subject fills about 60% of the frame.",
+  "variants": [
+    {
+      "id": "A",
+      "label": "洗練A (フラットベクター・単一アクセント)",
+      "style_block": "Refined flat vector illustration style, clean geometric shapes with no outlines, restrained two-tone treatment using a single accent of #006884 (deep teal) over a warm off-white #FBF8F6 background, ample negative space, on a light background",
+      "prompt": "Refined flat vector illustration style, clean geometric shapes with no outlines, restrained two-tone treatment using a single accent of #006884 (deep teal) over a warm off-white #FBF8F6 background, ample negative space, on a light background. A compact family sedan viewed from a calm three-quarter angle, accompanied by a few simple maintenance motifs (a wrench, an oil droplet, a snowflake) floating nearby, conveying trustworthy seasonal car care for everyday owners. Centered composition, generous negative space, subject fills about 60% of the frame. No embedded text, no readable letters, no real brand likeness. Square 1:1, resolution 1024x1024 pixels.",
+      "digest": "e5b8797f53f02a5a32527d6d066e86a614a7503c711729614209ea16761d3114",
+      "file": "graphics/samples/taste-a.png",
+      "generated_at": "2026-07-29T10:34:34+09:00"
+    },
+    {
+      "id": "B",
+      "label": "洗練B (太線ミニマル・線画主体)",
+      "style_block": "Minimal line-art illustration style with confident bold uniform strokes in #006884 (deep teal), clearly heavier line weight for strong presence at small sizes, almost no fills, precise technical feel, very generous negative space, on a light background",
+      "prompt": "Minimal line-art illustration style with confident bold uniform strokes in #006884 (deep teal), clearly heavier line weight for strong presence at small sizes, almost no fills, precise technical feel, very generous negative space, on a light background. A compact family sedan viewed from a calm three-quarter angle, accompanied by a few simple maintenance motifs (a wrench, an oil droplet, a snowflake) floating nearby, conveying trustworthy seasonal car care for everyday owners. Centered composition, generous negative space, subject fills about 60% of the frame. No embedded text, no readable letters, no real brand likeness. Square 1:1, resolution 1024x1024 pixels.",
+      "digest": "6b3865500c4620792bff93184367c519653c6cc87972a536a7afdce8e2700089",
+      "file": "graphics/samples/taste-b.png",
+      "generated_at": "2026-07-29T11:08:43+09:00"
+    },
+    {
+      "id": "C",
+      "label": "洗練C (ソフトグラデ・面主体)",
+      "style_block": "Polished editorial illustration style built from soft gradient planes without outlines, layered tonal depth harmonized with #006884 (deep teal) and #FBF8F6 (warm off-white), denser composition with subtle ambient shading, on a light background",
+      "prompt": "Polished editorial illustration style built from soft gradient planes without outlines, layered tonal depth harmonized with #006884 (deep teal) and #FBF8F6 (warm off-white), denser composition with subtle ambient shading, on a light background. A compact family sedan viewed from a calm three-quarter angle, accompanied by a few simple maintenance motifs (a wrench, an oil droplet, a snowflake) floating nearby, conveying trustworthy seasonal car care for everyday owners. Centered composition, generous negative space, subject fills about 60% of the frame. No embedded text, no readable letters, no real brand likeness. Square 1:1, resolution 1024x1024 pixels.",
+      "digest": "a9bf3bd81ba5a7c6915288888494402b87eb9cf63ee7c1bc61213146c0791f1c",
+      "file": "graphics/samples/taste-c.png",
+      "generated_at": "2026-07-29T10:35:16+09:00"
+    }
+  ]
+}

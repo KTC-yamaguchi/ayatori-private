@@ -1,0 +1,161 @@
+{
+  "schema_version": "2026-05-22",
+  "app_name": "CarMag",
+  "criteria": [
+    {
+      "axis": "correctness",
+      "weight": 20,
+      "description": "05-features.md の各機能が、01-overview.md の課題（信頼できる情報へのアクセス）と直結しているか。07-data-definition.md で指定される外部 API / RSSフィード が実現可能か。",
+      "checks": [
+        {
+          "id": "correctness-C1",
+          "question": "05-features.md の F-01（カテゴリ別記事一覧）と F-02（キーワード検索）が、01-overview.md の『信頼できる情報にたどり着きやすくする』という課題ステートメントに直結しているか",
+          "max_points": 5,
+          "doc_targets": ["01-overview.md", "05-features.md"]
+        },
+        {
+          "id": "correctness-C2",
+          "question": "07-data-definition.md で参照される『外部 API / RSSフィード』が具体的に存在するサービス（カーセンサー API、楽天車検 API など）を指しているか、または一般的に入手可能なデータソースか",
+          "max_points": 5,
+          "doc_targets": ["07-data-definition.md", "05-features.md"]
+        },
+        {
+          "id": "correctness-C3",
+          "question": "06-non-functional.md の性能指標（ホーム画面 3 秒以内、記事一覧 2 秒以内など）が、05-features.md の Must 機能（F-01 / F-03）の読み込み量と矛盾していないか",
+          "max_points": 5,
+          "doc_targets": ["05-features.md", "06-non-functional.md"]
+        },
+        {
+          "id": "correctness-C4",
+          "question": "08-constraints.md で指定された制約（PoC 4 週間、技術スタック未決定など）が、05-features.md の Must 機能の実現可能性に対して現実的か",
+          "max_points": 5,
+          "doc_targets": ["08-constraints.md", "05-features.md"]
+        }
+      ]
+    },
+    {
+      "axis": "unambiguity",
+      "weight": 20,
+      "description": "05-features.md の各機能が『入力・処理・出力』として明確に定義されているか。03-user-flow.md のナビゲーション構造が一義的か。曖昧な用語（『適切に』『など』『できれば』）がないか。",
+      "checks": [
+        {
+          "id": "unambiguity-U1",
+          "question": "05-features.md の F-01 / F-02 / F-03 それぞれに『入力』『処理』『出力』の 3 項目が明示されているか",
+          "max_points": 5,
+          "doc_targets": ["05-features.md"]
+        },
+        {
+          "id": "unambiguity-U2",
+          "question": "03-user-flow.md のナビゲーション構造（ホーム → カテゴリ → 記事一覧 → 詳細）が、図またはテキストで一義的に定義されているか。複数の遷移経路の曖昧性はないか",
+          "max_points": 5,
+          "doc_targets": ["03-user-flow.md"]
+        },
+        {
+          "id": "unambiguity-U3",
+          "question": "07-data-definition.md の Article エンティティが、各フィールド（id, title, author, published_date など）を具体的な型・形式で定義しているか（例: published_date は『ISO 8601 形式』など）",
+          "max_points": 5,
+          "doc_targets": ["07-data-definition.md"]
+        },
+        {
+          "id": "unambiguity-U4",
+          "question": "04-use-cases.md の UC-01 〜 UC-03 に『アクター』『前提条件』『基本フロー』『代替フロー』『後条件』が全て記載されているか",
+          "max_points": 5,
+          "doc_targets": ["04-use-cases.md"]
+        }
+      ]
+    },
+    {
+      "axis": "completeness",
+      "weight": 20,
+      "description": "Must 機能（F-01 / F-02）に対して、03-user-flow.md で全シナリオ（正常系・エラー系）がカバーされているか。08-constraints.md の受け入れ条件が測定可能か。非機能要件が網羅されているか。",
+      "checks": [
+        {
+          "id": "completeness-C1",
+          "question": "03-user-flow.md のエラーケース表に、API 接続失敗・ネットワーク遮断・検索結果ゼロ・画像読み込み失敗がそれぞれ対応策と共に記載されているか",
+          "max_points": 5,
+          "doc_targets": ["03-user-flow.md"]
+        },
+        {
+          "id": "completeness-C2",
+          "question": "08-constraints.md の受け入れ条件（AC-01 〜 AC-08）が、チェックボックス形式で『何を・どの画面で・何が起きたら合格』と測定可能な粒度で記述されているか",
+          "max_points": 5,
+          "doc_targets": ["08-constraints.md"]
+        },
+        {
+          "id": "completeness-C3",
+          "question": "06-non-functional.md に『セキュリティ（HTTPS・API キー保管）』『エラーハンドリング（リトライ回数・タイムアウト）』『アクセシビリティ（WCAG 2.2 AA）』が明示されているか",
+          "max_points": 5,
+          "doc_targets": ["06-non-functional.md"]
+        },
+        {
+          "id": "completeness-C4",
+          "question": "07-data-definition.md の API エンドポイント定義（Endpoint 1 〜 4）に、エラーレスポンス（404、500、503）が記載されているか",
+          "max_points": 5,
+          "doc_targets": ["07-data-definition.md"]
+        }
+      ]
+    },
+    {
+      "axis": "consistency",
+      "weight": 20,
+      "description": "Must / Should の優先度設定が一貫しているか。複数ファイル間で同じ概念（『カテゴリ』『記事』『検索』）の定義にズレがないか。02-scope.md のスコープとファイル内容が矛盾していないか。",
+      "checks": [
+        {
+          "id": "consistency-C1",
+          "question": "02-scope.md で『Must 機能 = F-01 + F-03』『Should 機能 = F-02』と定義されているのに対し、05-features.md でも同一の優先度付けが一貫しているか",
+          "max_points": 5,
+          "doc_targets": ["02-scope.md", "05-features.md"]
+        },
+        {
+          "id": "consistency-C2",
+          "question": "『カテゴリ』という概念が 02-scope.md / 04-use-cases.md / 07-data-definition.md で同じ意味で使われており、矛盾がないか",
+          "max_points": 5,
+          "doc_targets": ["02-scope.md", "04-use-cases.md", "07-data-definition.md"]
+        },
+        {
+          "id": "consistency-C3",
+          "question": "02-scope.md で『スコープ外 = 管理画面・ユーザーアカウント・多言語対応』と明示されているのに対し、05-features.md や 06-non-functional.md でこれらが誤って含まれていないか",
+          "max_points": 5,
+          "doc_targets": ["02-scope.md", "05-features.md", "06-non-functional.md"]
+        },
+        {
+          "id": "consistency-C4",
+          "question": "08-constraints.md で『技術スタック未決定（Step 5 で確定予定）』と述べられているのに対し、05-features.md や 07-data-definition.md が React / Vue など特定の技術を前提としていないか",
+          "max_points": 5,
+          "doc_targets": ["08-constraints.md", "05-features.md", "07-data-definition.md"]
+        }
+      ]
+    },
+    {
+      "axis": "feasibility",
+      "weight": 20,
+      "description": "05-features.md の実装工数が 08-constraints.md の『PoC 4 週間』で実現可能か。外部 API 依存度が高いリスクが認識されているか。技術スタック未決定のまま進める分析がされているか。",
+      "checks": [
+        {
+          "id": "feasibility-F1",
+          "question": "08-constraints.md / 06-non-functional.md で、外部 API / RSSフィード の『実装時の確認リスク』（API 認証・利用制限・キャッシング戦略）が明示されているか",
+          "max_points": 5,
+          "doc_targets": ["08-constraints.md", "06-non-functional.md", "07-data-definition.md"]
+        },
+        {
+          "id": "feasibility-F2",
+          "question": "08-constraints.md の『PoC 4 週間』が、Must 機能 2 つ（F-01 カテゴリ記事一覧、F-03 詳細表示）+ API 連携の最小実装で実現可能と判定されているか。見積根拠は記載されているか",
+          "max_points": 5,
+          "doc_targets": ["08-constraints.md", "05-features.md"]
+        },
+        {
+          "id": "feasibility-F3",
+          "question": "08-constraints.md で『技術スタック未決定』と述べながらも、06-non-functional.md の性能要件（3 秒以内など）が一般的な Web フレームワーク（React / Vue / Next.js）で達成可能な粒度か",
+          "max_points": 5,
+          "doc_targets": ["08-constraints.md", "06-non-functional.md"]
+        },
+        {
+          "id": "feasibility-F4",
+          "question": "02-scope.md で『管理画面なし、記事は外部 API から取得』と明示されているため、実装スコープがユーザー向け画面のみに絞られ、工数が削減されているか認識されているか",
+          "max_points": 5,
+          "doc_targets": ["02-scope.md", "05-features.md"]
+        }
+      ]
+    }
+  ]
+}

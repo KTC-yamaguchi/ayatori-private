@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarMag - 車のメンテナンス情報を簡潔に</title>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <style>
+    :root {
+      --color-neutral-0: #FFFFFF;
+      --color-neutral-10: #FBF8F6;
+      --color-neutral-50: #F1EDEB;
+      --color-neutral-100: #E8E3E0;
+      --color-neutral-200: #D9D1CC;
+      --color-neutral-300: #C8BDB5;
+      --color-neutral-400: #857E7E;
+      --color-neutral-500: #6B6464;
+      --color-neutral-600: #443736;
+      --color-neutral-700: #2A2425;
+      --color-neutral-800: #1B1515;
+      --color-neutral-900: #030101;
+      --color-blue-primary: #006884;
+      --color-error-light: #FFDADE;
+      --color-error-dark: #5A0020;
+      --color-error-border: #C85C7E;
+      --color-info-light: #B0E8FF;
+      --color-info-dark: #004154;
+      --color-info-border: #1B7FA6;
+      --color-warning-light: #FFE2CB;
+      --color-warning-dark: #6B3900;
+      --color-warning-border: #D4A574;
+      --color-background: #FFFFFF;
+      --color-surface: #FBF8F6;
+      --color-on-surface: #030101;
+      --color-on-surface-variant: #443736;
+      --color-primary: #006884;
+      --color-on-primary: #FBF8F6;
+      --color-focus-ring: #006884;
+      --color-border: #857E7E;
+      --color-error-bg: #FFDADE;
+      --color-error-text: #5A0020;
+      --color-error-border-color: #C85C7E;
+      --color-info-bg: #B0E8FF;
+      --color-info-text: #004154;
+      --color-info-border-color: #1B7FA6;
+      --color-warning-bg: #FFE2CB;
+      --color-warning-text: #6B3900;
+      --color-warning-border-color: #D4A574;
+      --font-family-display: "Playfair Display", serif;
+      --font-family-base: "Source Sans 3", sans-serif;
+      --font-family-numeric: "DM Mono", monospace;
+      --font-size-xs: 12px;
+      --font-size-sm: 14px;
+      --font-size-md: 16px;
+      --font-size-lg: 20px;
+      --font-size-xl: 24px;
+      --font-size-2xl: 32px;
+      --font-weight-regular: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --line-height-tight: 1.2;
+      --line-height-normal: 1.5;
+      --line-height-loose: 1.75;
+      --button-primary-bg: #006884;
+      --button-primary-text: #FBF8F6;
+      --button-primary-padding: 12px 24px;
+      --button-primary-border-radius: 0px;
+      --button-primary-font-size: 16px;
+      --button-primary-font-weight: 600;
+      --button-primary-min-height: 44px;
+      --button-secondary-bg: #FBF8F6;
+      --button-secondary-text: #030101;
+      --button-secondary-border: 1px solid #857E7E;
+      --button-secondary-padding: 12px 24px;
+      --button-secondary-border-radius: 0px;
+      --card-bg: #FBF8F6;
+      --card-border: 1px solid #857E7E;
+      --card-padding: 16px;
+      --card-border-radius: 0px;
+      --input-bg: #FBF8F6;
+      --input-border: 1px solid #857E7E;
+      --input-border-focus: 2px solid #006884;
+      --input-padding: 8px 12px;
+      --input-border-radius: 0px;
+      --link-color: #006884;
+      --link-text-decoration: none;
+      --link-text-decoration-hover: underline;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --spacing-2xl: 48px;
+      --motion-duration-fast: 150ms;
+      --motion-duration-normal: 300ms;
+      --motion-duration-slow: 500ms;
+      --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      font-family: var(--font-family-base);
+      background-color: var(--color-background);
+      color: var(--color-on-surface);
+      font-size: var(--font-size-md);
+      line-height: var(--line-height-normal);
+    }
+
+    /* Header (Chrome) */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      height: 48px;
+      background-color: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      animation: fadeIn var(--motion-duration-normal) var(--motion-easing);
+    }
+
+    .header-logo {
+      font-family: var(--font-family-display);
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-on-surface);
+    }
+
+    .header-search-icon {
+      cursor: pointer;
+      font-size: var(--font-size-lg);
+      color: var(--color-on-surface-variant);
+    }
+
+    /* Main Container */
+    .container {
+      padding: var(--spacing-md);
+    }
+
+    /* Search Section */
+    .search-section {
+      margin-bottom: var(--spacing-lg);
+      animation: fadeIn var(--motion-duration-normal) var(--motion-easing) 50ms both;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: var(--input-padding);
+      border: var(--input-border);
+      border-radius: var(--input-border-radius);
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-md);
+      background-color: var(--input-bg);
+      color: var(--color-on-surface);
+      min-height: 44px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border: var(--input-border-focus);
+    }
+
+    /* Category Filter */
+    .category-section {
+      margin-bottom: var(--spacing-lg);
+      animation: fadeIn var(--motion-duration-normal) var(--motion-easing) 100ms both;
+    }
+
+    .category-label {
+      font-size: var(--font-size-xs);
+      color: var(--color-on-surface-variant);
+      margin-bottom: var(--spacing-sm);
+      font-weight: var(--font-weight-semibold);
+    }
+
+    .category-list {
+      display: flex;
+      gap: var(--spacing-xs);
+      flex-wrap: wrap;
+    }
+
+    .category-tag {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--card-border-radius);
+      font-size: var(--font-size-xs);
+      color: var(--color-on-surface);
+      cursor: pointer;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      transition: all var(--motion-duration-fast) var(--motion-easing);
+    }
+
+    .category-tag:hover {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+
+    .category-tag.active {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+
+    /* Article List */
+    .articles-section {
+      animation: fadeIn var(--motion-duration-normal) var(--motion-easing) 150ms both;
+    }
+
+    .articles-title {
+      font-family: var(--font-family-display);
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-on-surface);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .article-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .article-card {
+      background-color: var(--color-surface);
+      border: var(--card-border);
+      border-radius: var(--card-border-radius);
+      padding: var(--spacing-md);
+      cursor: pointer;
+      transition: all var(--motion-duration-fast) var(--motion-easing);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .article-card:hover {
+      border-color: var(--color-primary);
+    }
+
+    .article-card-image {
+      width: 100%;
+      height: 120px;
+      background-color: var(--color-neutral-100);
+      border-radius: var(--card-border-radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-on-surface-variant);
+      font-size: var(--font-size-lg);
+    }
+
+    .article-card-category {
+      font-size: var(--font-size-xs);
+      color: var(--color-primary);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--font-family-numeric);
+    }
+
+    .article-card-title {
+      font-family: var(--font-family-display);
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-on-surface);
+      line-height: var(--line-height-tight);
+    }
+
+    .article-card-excerpt {
+      font-size: var(--font-size-sm);
+      color: var(--color-on-surface-variant);
+      line-height: var(--line-height-normal);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .article-card-meta {
+      font-size: var(--font-size-xs);
+      color: var(--color-on-surface-variant);
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 100ms !important;
+        transition-duration: 100ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header A: Home Header -->
+  <header class="header">
+    <div class="header-logo">CarMag</div>
+    <div class="header-search-icon">🔍</div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Search Section -->
+    <section class="search-section">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="キーワード検索"
+        aria-label="記事検索入力欄"
+      />
+    </section>
+
+    <!-- Category Filter -->
+    <section class="category-section">
+      <p class="category-label">カテゴリ</p>
+      <div class="category-list">
+        <button class="category-tag active">メンテ</button>
+        <button class="category-tag">季節</button>
+        <button class="category-tag">新車</button>
+        <button class="category-tag">修理</button>
+        <button class="category-tag">点検</button>
+      </div>
+    </section>
+
+    <!-- Articles -->
+    <section class="articles-section">
+      <h1 class="articles-title">記事一覧</h1>
+      <div class="article-list">
+        <article class="article-card" tabindex="0">
+          <div class="article-card-image">📰</div>
+          <span class="article-card-category">メンテナンス</span>
+          <h2 class="article-card-title">夏の定期メンテナンス：エアコンと冷却液のチェック</h2>
+          <p class="article-card-excerpt">
+            夏シーズンに備えるための重要なメンテナンスポイント。エアコンの効きが悪い場合や冷却液の見方を解説。
+          </p>
+          <p class="article-card-meta">2026年7月17日 • 8分</p>
+        </article>
+
+        <article class="article-card" tabindex="0">
+          <div class="article-card-image">🔧</div>
+          <span class="article-card-category">修理ガイド</span>
+          <h2 class="article-card-title">タイヤの空気圧チェック：正しい測定方法</h2>
+          <p class="article-card-excerpt">
+            タイヤの空気圧が低いとどんな問題が起きるか。自分で測定するにはどうすればいいかを説明。
+          </p>
+          <p class="article-card-meta">2026年7月15日 • 6分</p>
+        </article>
+
+        <article class="article-card" tabindex="0">
+          <div class="article-card-image">❄️</div>
+          <span class="article-card-category">季節の備え</span>
+          <h2 class="article-card-title">冬に向けた準備ガイド：バッテリーとワイパーの交換</h2>
+          <p class="article-card-excerpt">
+            寒冷地での運転に必要な事前準備。バッテリーの寿命の見分け方や交換時期についてアドバイス。
+          </p>
+          <p class="article-card-meta">2026年7月10日 • 7分</p>
+        </article>
+
+        <article class="article-card" tabindex="0">
+          <div class="article-card-image">🛢️</div>
+          <span class="article-card-category">点検方法</span>
+          <h2 class="article-card-title">オイル交換の目安と選び方</h2>
+          <p class="article-card-excerpt">
+            エンジンオイルの重要性から交換時期、選び方まで。初心者向けの分かりやすいガイド。
+          </p>
+          <p class="article-card-meta">2026年7月8日 • 9分</p>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

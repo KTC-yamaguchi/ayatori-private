@@ -1,0 +1,48 @@
+{
+  "schema_version": "2026-07-14",
+  "app_name": "CarMag",
+  "created_at": "2026-07-29T10:00:00+09:00",
+  "slots": [
+    {
+      "graphic_id": "home-hero",
+      "screen": "01-home",
+      "platforms": [
+        "web",
+        "mobile"
+      ],
+      "placement": "ヒーロー領域 (ヘッダー直下の大見出し横)",
+      "size_role": "hero",
+      "state": "default",
+      "rationale": "21c 検証用スタブ (POCTEAMA-186 手動テスト)。トップの第一印象を担う代表 slot"
+    },
+    {
+      "graphic_id": "article-thumb",
+      "screen": "02-article-detail",
+      "platforms": [
+        "web"
+      ],
+      "placement": "記事本文中の挿絵ブロック",
+      "size_role": "content",
+      "state": "default",
+      "rationale": "21c 検証用スタブ (POCTEAMA-186 手動テスト)。代表 slot 選定が hero 優先で効くことの確認用"
+    }
+  ],
+  "taste": {
+    "level1_words": [
+      "洗練",
+      "フラット"
+    ],
+    "level2_choice": "A",
+    "style_directive": "Refined flat vector illustration style with no outlines: subjects are built from clean geometric planes of solid colour, rendered in a restrained two-tone treatment that pairs a single deep teal accent (#006884) with a warm off-white ground (#FBF8F6). Keep shading minimal and non-atmospheric — no gradients, no textures, no decorative background scenery — and preserve generous negative space around the subject on a light background. Compared with the rejected line-art option, forms are filled rather than drawn in outline; compared with the rejected soft-gradient option, tonal depth and ambient background ornament are deliberately omitted to stay calm and utilitarian.",
+    "sample_files": [
+      "graphics/samples/taste-a.png",
+      "graphics/samples/taste-b.png",
+      "graphics/samples/taste-c.png"
+    ],
+    "palette_hints": [
+      "#006884 (primitive.colors.blue.primary)",
+      "#FBF8F6 (primitive.colors.neutral.10)"
+    ],
+    "confirmed_at": "2026-07-29T10:43:04+09:00"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "2026-05-22",
+  "app_name": "CarMag",
+  "approvals": {
+    "step01_completed_at": "2026-07-17T00:00:00+09:00",
+    "step07_approved_at": "2026-07-17T11:45:00+09:00",
+    "step13_approved_at": "2026-07-17T14:45:00+09:00",
+    "step16_approved_at": "2026-07-17T15:10:00+09:00",
+    "screens_human_approved": true,
+    "final_approved": true
+  },
+  "selections": {
+    "selected_sample_id": "A"
+  },
+  "screens": {
+    "graphics": {
+      "decision": "generate",
+      "decided_by": "step21b",
+      "decided_at": "2026-07-29T10:00:00+09:00"
+    }
+  },
+  "pending_questions_open": 0
+}

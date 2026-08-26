@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>記事詳細 - CarMag</title>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <style>
+    :root {
+      --color-neutral-0: #FFFFFF;
+      --color-neutral-10: #FBF8F6;
+      --color-neutral-50: #F1EDEB;
+      --color-neutral-100: #E8E3E0;
+      --color-neutral-200: #D9D1CC;
+      --color-neutral-300: #C8BDB5;
+      --color-neutral-400: #857E7E;
+      --color-neutral-500: #6B6464;
+      --color-neutral-600: #443736;
+      --color-neutral-700: #2A2425;
+      --color-neutral-800: #1B1515;
+      --color-neutral-900: #030101;
+      --color-blue-primary: #006884;
+      --color-error-light: #FFDADE;
+      --color-error-dark: #5A0020;
+      --color-error-border: #C85C7E;
+      --color-info-light: #B0E8FF;
+      --color-info-dark: #004154;
+      --color-info-border: #1B7FA6;
+      --color-warning-light: #FFE2CB;
+      --color-warning-dark: #6B3900;
+      --color-warning-border: #D4A574;
+      --color-background: #FFFFFF;
+      --color-surface: #FBF8F6;
+      --color-on-surface: #030101;
+      --color-on-surface-variant: #443736;
+      --color-primary: #006884;
+      --color-on-primary: #FBF8F6;
+      --color-focus-ring: #006884;
+      --color-border: #857E7E;
+      --color-error-bg: #FFDADE;
+      --color-error-text: #5A0020;
+      --color-error-border-color: #C85C7E;
+      --color-info-bg: #B0E8FF;
+      --color-info-text: #004154;
+      --color-info-border-color: #1B7FA6;
+      --color-warning-bg: #FFE2CB;
+      --color-warning-text: #6B3900;
+      --color-warning-border-color: #D4A574;
+      --font-family-display: "Playfair Display", serif;
+      --font-family-base: "Source Sans 3", sans-serif;
+      --font-family-numeric: "DM Mono", monospace;
+      --font-size-xs: 12px;
+      --font-size-sm: 14px;
+      --font-size-md: 16px;
+      --font-size-lg: 20px;
+      --font-size-xl: 24px;
+      --font-size-2xl: 32px;
+      --font-weight-regular: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --line-height-tight: 1.2;
+      --line-height-normal: 1.5;
+      --line-height-loose: 1.75;
+      --button-primary-bg: #006884;
+      --button-primary-text: #FBF8F6;
+      --button-primary-padding: 12px 24px;
+      --button-primary-border-radius: 0px;
+      --button-primary-font-size: 16px;
+      --button-primary-font-weight: 600;
+      --button-primary-min-height: 44px;
+      --button-secondary-bg: #FBF8F6;
+      --button-secondary-text: #030101;
+      --button-secondary-border: 1px solid #857E7E;
+      --button-secondary-padding: 12px 24px;
+      --button-secondary-border-radius: 0px;
+      --card-bg: #FBF8F6;
+      --card-border: 1px solid #857E7E;
+      --card-padding: 16px;
+      --card-border-radius: 0px;
+      --input-bg: #FBF8F6;
+      --input-border: 1px solid #857E7E;
+      --input-border-focus: 2px solid #006884;
+      --input-padding: 8px 12px;
+      --input-border-radius: 0px;
+      --link-color: #006884;
+      --link-text-decoration: none;
+      --link-text-decoration-hover: underline;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --spacing-2xl: 48px;
+      --motion-duration-fast: 150ms;
+      --motion-duration-normal: 300ms;
+      --motion-duration-slow: 500ms;
+      --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      font-family: var(--font-family-base);
+      background-color: var(--color-background);
+      color: var(--color-on-surface);
+      font-size: var(--font-size-md);
+      line-height: var(--line-height-normal);
+    }
+
+    /* Header (Chrome) */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      height: 48px;
+      background-color: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      animation: fadeIn var(--motion-duration-normal) var(--motion-easing);
+    }
+
+    .header-back {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: var(--font-size-lg);
+      color: var(--color-on-surface);
+      min-height: 44px;
+      min-width: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color var(--motion-duration-fast) var(--motion-easing);
+    }
+
+    .header-back:hover {
+      color: var(--color-primary);
+    }
+
+    .header-back:focus {
+      outline: 2px solid var(--color-focus-ring);
+      outline-offset: 2px;
+    }
+
+    .header-spacer {
+      flex: 1;
+    }
+
+    /* Main Container */
+    .container {
+      padding: var(--spacing-md);
+    }
+
+    /* Article Header */
+    .article-header {
+      margin-bottom: var(--spacing-lg);
+      animation: fadeIn var(--motion-duration-normal) var(--motion-easing) 50ms both;
+    }
+
+    .article-category {
+      font-size: var(--font-size-xs);
+      color: var(--color-primary);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--font-family-numeric);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .article-title {
+      font-family: var(--font-family-display);
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-on-surface);
+      line-height: var(--line-height-tight);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .article-meta {
+      font-size: var(--font-size-xs);
+      color: var(--color-on-surface-variant);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    /* Article Hero Image */
+    .article-hero {
+      width: 100%;
+      height: 200px;
+      background-color: var(--color-neutral-100);
+      border: var(--card-border);
+      border-radius: var(--card-border-radius);
+      margin: var(--spacing-lg) 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-on-surface-variant);
+      font-size: var(--font-size-xl);
+      animation: fadeIn var(--motion-duration-normal) var(--motion-easing) 100ms both;
+    }
+
+    /* Article Content */
+    .article-content {
+      animation: fadeIn var(--motion-duration-normal) var(--motion-easing) 150ms both;
+    }
+
+    .article-body {
+      font-size: var(--font-size-sm);
+      color: var(--color-on-surface);
+      line-height: var(--line-height-loose);
+    }
+
+    .article-body p {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .article-body h2 {
+      font-family: var(--font-family-display);
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-on-surface);
+      margin: var(--spacing-lg) 0 var(--spacing-sm) 0;
+      line-height: var(--line-height-tight);
+    }
+
+    .article-body h3 {
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-on-surface);
+      margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+    }
+
+    .article-body ul {
+      margin-left: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .article-body li {
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .article-highlight {
+      background-color: var(--color-info-bg);
+      border-left: 4px solid var(--color-primary);
+      padding: var(--spacing-md);
+      margin: var(--spacing-lg) 0;
+      border-radius: var(--card-border-radius);
+    }
+
+    .article-highlight p {
+      margin: 0;
+      color: var(--color-info-text);
+      font-size: var(--font-size-sm);
+    }
+
+    /* Related Articles */
+    .related-section {
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .related-title {
+      font-family: var(--font-family-display);
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-on-surface);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .related-articles {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .related-card {
+      background-color: var(--color-surface);
+      border: var(--card-border);
+      border-radius: var(--card-border-radius);
+      padding: var(--spacing-md);
+      cursor: pointer;
+      transition: all var(--motion-duration-fast) var(--motion-easing);
+    }
+
+    .related-card:hover {
+      border-color: var(--color-primary);
+    }
+
+    .related-card-title {
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-on-surface);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .related-card-excerpt {
+      font-size: var(--font-size-xs);
+      color: var(--color-on-surface-variant);
+      line-height: var(--line-height-normal);
+    }
+
+    /* Back Button */
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      background-color: var(--button-secondary-bg);
+      color: var(--button-secondary-text);
+      border: var(--button-secondary-border);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--button-secondary-border-radius);
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      cursor: pointer;
+      min-height: 44px;
+      width: 100%;
+      justify-content: center;
+      margin-top: var(--spacing-lg);
+      transition: all var(--motion-duration-fast) var(--motion-easing);
+    }
+
+    .back-button:hover {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+
+    .back-button:focus {
+      outline: 2px solid var(--color-focus-ring);
+      outline-offset: 2px;
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 100ms !important;
+        transition-duration: 100ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header B: Article Detail Header -->
+  <header class="header">
+    <button class="header-back" aria-label="戻る">← </button>
+    <div class="header-spacer"></div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Article Header -->
+    <header class="article-header">
+      <p class="article-category">メンテナンス</p>
+      <h1 class="article-title">夏の定期メンテナンス：エアコンと冷却液のチェック</h1>
+      <div class="article-meta">
+        <span>2026年7月17日</span>
+        <span>約8分で読める</span>
+      </div>
+    </header>
+
+    <!-- Hero Image -->
+    <div class="article-hero">🌞</div>
+
+    <!-- Article Content -->
+    <article class="article-content">
+      <section class="article-body">
+        <p>
+          夏のドライブシーズンが到来します。気温が上昇する季節には、車のエアコンと冷却システムの調子が特に重要になります。本記事では、夏を快適で安全に乗り切るためのメンテナンスポイントを分かりやすく解説します。
+        </p>
+
+        <h2>なぜ夏のメンテナンスが重要なのか</h2>
+        <p>
+          夏の高温環境では、エンジンとエアコンコンプレッサーが通常以上に負荷を強いられます。
+        </p>
+
+        <div class="article-highlight">
+          <p>
+            💡 高温による部品の劣化が加速し、故障のリスクが格段に高まります。
+          </p>
+        </div>
+
+        <h2>エアコンのチェックポイント</h2>
+        <h3>1. エアコンの効きを確認</h3>
+        <p>
+          エンジン始動直後のエアコンが冷えるまでの時間や、最大冷房時の風の冷たさをチェックしましょう。
+        </p>
+
+        <h3>2. エアコンフィルターの交換</h3>
+        <ul>
+          <li>フィルターが汚れていないか確認</li>
+          <li>通常は1年または15,000km ごとに交換推奨</li>
+        </ul>
+
+        <h2>冷却液（クーラント）のチェック</h2>
+        <p>
+          冷却液はエンジンの熱を吸収し、適切な温度を保つための重要な液体です。
+        </p>
+
+        <div class="article-highlight">
+          <p>
+            ⚠️ 必ずエンジンが冷めた状態でキャップを開けてください。
+          </p>
+        </div>
+      </section>
+    </article>
+
+    <!-- Related Articles -->
+    <aside class="related-section">
+      <h2 class="related-title">関連記事</h2>
+      <div class="related-articles">
+        <div class="related-card">
+          <h3 class="related-card-title">タイヤの空気圧チェック</h3>
+          <p class="related-card-excerpt">
+            タイヤの空気圧が低いとどんな問題が起きるか、測定方法を説明。
+          </p>
+        </div>
+        <div class="related-card">
+          <h3 class="related-card-title">オイル交換の目安と選び方</h3>
+          <p class="related-card-excerpt">
+            エンジンオイルの重要性から交換時期、選び方まで。初心者向けガイド。
+          </p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Back Button -->
+    <button class="back-button">← 記事一覧に戻る</button>
+  </main>
+</body>
+</html>
