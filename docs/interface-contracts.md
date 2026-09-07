@@ -48,7 +48,7 @@ artifacts/{app_name}/
     ├── 00-screen-list.md          # 14 画面一覧
     ├── 00-transition-map.mmd      # 14 画面遷移図 SSoT（Pure Mermaid）
     ├── 00-transition-map.html     # 14 画面遷移図 派生（template + .mmd で機械生成）
-    ├── {画面名}.md                # 17 画面仕様書（platform 共通、root に 1 つ）
+    ├── {slug}.md                  # 17 画面仕様書（platform 共通、root に 1 つ。振る舞い詳細 / データ項目 を含む。{slug} = 画面ファイル列）
     ├── _shared/                   # 17 共有 CSS（root-variables.css / common-styles.css）
     ├── web/                       # 17 Web 版（platform_combo ∋ web 時のみ）
     │   ├── {画面名}.html          # 1440×900
@@ -851,9 +851,9 @@ anti_slop_check:
 
 | | ファイル | 状態 |
 |---|---|---|
-| **IN** | `requirements.json`・`tokens.json`・`style-guide.md`・`screens/00-*` | 読み取り |
+| **IN** | `requirements.json`・`tokens.json`・`style-guide.md`・`screens/00-*`・`requirements/*.md` (03/04/05/06 = 振る舞い詳細の導出元 / 05・07 = データ項目の導出元。加えて `screens/00-screen-list.md` の機能 ID 列) | 読み取り |
 | **IN（ループ時）** | `scores.json` | `current.tags` から AI 改善可能タグを抽出 |
-| **OUT** | `screens/{画面名}.md` | 新規作成 または 上書き（platform 共通、root に 1 つ） |
+| **OUT** | `screens/{slug}.md` | 新規作成 または 上書き（platform 共通、root に 1 つ。振る舞い詳細 [操作イベント・入力チェック・操作制御・実装ノート] と データ項目 [固定 7 列] を含む。並列経路の writer は `phases/screens/SKILL.md` Step B-0 = main context。{slug} = `画面ファイル` 列） |
 | **OUT** | `screens/web/{画面名}.html` | Web デスクトップ版 1440×900（`platform_combo ∋ web` かつ `web_viewports ∋ desktop`〔欠落時 desktop 扱い〕時） |
 | **OUT** | `screens/web-sm/{画面名}.html` | Web スマホ幅版 390×844・ブラウザページ体裁（`platform_combo ∋ web` かつ `web_viewports ∋ sm` 時） |
 | **OUT** | `screens/mobile/{画面名}.html` | モバイル 390×844（`platform_combo ∋ mobile` 時） |
@@ -904,9 +904,9 @@ anti_slop_check:
 | **IN** | `screens/**/*.html`（Web + モバイル + 状態パターン、web/ + mobile/ サブフォルダ含む） | キャプチャ対象 |
 | **IN** | `figma-state.json` | `file_key`・`page_id` 参照 |
 | **OUT** | Figma ページ `AYATORI Pipeline` | HTML キャプチャ |
-| **OUT** | `figma-state.json` | `nodes.screens.{画面名}` 更新（キャプチャ失敗時は `use_figma` 補助） |
+| **OUT** | `figma-state.json` | `nodes.screens.{画面名}` 更新（キャプチャ失敗時は `use_figma` 補助 — ただし上限拒否時は補助呼び出しも追加消費になるため行わない） |
 
-**前提条件**: `FIGMA_MCP_ENABLED=true`（未設定時はスキップして 23 へ）。
+**前提条件**: `FIGMA_MCP_ENABLED=true`（未設定時はスキップして 23 へ）+ **ユーザーの Figma プラン / シートが呼び出し上限を満たしていること** — flag が true でも上限に達すると拒否され、`scope.status = "blocked"` で停止する（`docs/figma-plan-limits.md`）。
 
 ### 23 人間最終承認（ゲート）
 
@@ -1091,6 +1091,7 @@ Completion → pipeline-state.json(reverse_verify.runs[-1].completed_at)
 
 | 変更の種類 | 確認対象 |
 |---|---|
+| `screens/{slug}.md` のセクション構成 / `データ項目` 7 列の変更 (本行が唯一のインベントリ — 17 はここを参照する) | **フォーマット SoT**: 17 (テンプレート + 記入規則) / reverse 06-format-convert E4 ・ **上流 gap-check**: 02-iso-breakdown ・ **読む・書き換える**: 18 / 19 + refs/rubric.json / 21 + `_shared/behavior-pending-confirm.md` + `_shared/preflight-gate.md` / 23 (残件 grep) / 27c / 29 (new 画面の full 生成) / 29b / reverse-verify V1 / 25a (除外側) / 25b subagent (`.claude/agents/ayatori-screen-state-builder.md`) / `phases/screens` Step B-0 ・ **セクションの有無を見る**: `scripts/pipeline-status.mjs` (`SPEC_REQUIRED_SECTIONS` — JS 唯一の定義。`scripts/build-artifact-index.mjs` は import) / `phases/delta` と 27c の bash 述語 (契約テストが label を突合) / 28 (Spec Format 節) / `phases/status` ・ **ヘッダ リテラルの複製**: `pipeline.yaml` の `screens/{slug}.md` note / `docs/artifact-file-responsibility.md` / refs/rubric.json / `scripts/build-artifact-index.test.mjs` fixture ・ **抑制記録の enum**: `schemas/pipeline-state.schema.json` `delta.spec_backfill_declined_sections` ・ **列挙単位**: `docs/principle4-disambiguation.md` §5.2 screens 層 ・ **説明文**: `CLAUDE.md` Phase 5 行 |
 | `rubric.json` のキー名変更 | 03（writer、criteria 不変量のみ）/ 04（reader）/ 26（reader） |
 | `scoring-history.json` のキー名変更 | 03（init）/ 04（writer、append）/ 05 / 07 / 26（reader） |
 | `scores.json` のキー名変更 | 19 / 20 / 17（ループ時） |

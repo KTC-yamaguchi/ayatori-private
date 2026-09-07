@@ -38,6 +38,7 @@ Find the row closest to your situation and run the corresponding command.
 | Hand-edited screen HTML outside the pipeline → reflect into the screen spec (edits that diverge from the requirements can be promoted into the requirement docs at the gate) | `/ayatori-delta` (screen-edit mode) |
 | Add a feature to a completed project (from an interview)                       | `/ayatori-add-feature` (or `/ayatori-delta` feature-add mode) |
 | Need a self-contained document for external sharing / delivery                 | `/ayatori-export`      |
+| Need an English version of the (Japanese) deliverables                         | `/ayatori-export-en`   |
 | See all deliverables in one screen (requirements/screens/design/scoring)       | `/ayatori-index`       |
 | Consult on behavior change / nudge design (ChargeMinder)                       | `/ayatori-cm-consult`  |
 | Not sure how far you've progressed / what to do next                           | `/ayatori-status`      |
@@ -112,6 +113,7 @@ flowchart TD
 |-----------------------|-----------------------------------------------------------------|
 | `/ayatori-status`     | Progress dashboard + next-action recommendation                 |
 | `/ayatori-export`     | Generate a self-contained distribution HTML (35, optional)      |
+| `/ayatori-export-en`  | Generate an English mirror at `artifacts/{app}-en/` (37, optional; the Japanese tree stays untouched) |
 | `/ayatori-index`      | Aggregate all deliverables into one index.html (left TOC + right preview, optional) |
 | `/ayatori-cm-consult` | ChargeMinder consultant (standalone, merges into the main line) |
 | `/ayatori-idea`       | Idea brushup (standalone; emits idea-brief.md and merges into Phase 1a in the same conversation) |
@@ -135,6 +137,7 @@ flowchart TD
 | Retrospective after the main line completes         | Phase 4        | `/ayatori-retro`       | `final_approved` or `completed_at_states`                                 |
 | Retrospective for delta / req-delta runs            | Phase 6        | `/ayatori-delta-mini`  | completed (or `baseline_approved_at`) + a delta/req-delta run not yet retro'd |
 | Build a distribution artifact (self-contained HTML) | Standalone     | `/ayatori-export`      | After Phase 3 final approval (optional, anytime)                          |
+| Build an English version of the deliverables        | Standalone     | `/ayatori-export-en`   | Anytime `artifacts/{app_name}/` exists (typically after final approval)   |
 | See all deliverables in one screen                  | Standalone     | `/ayatori-index`       | Anytime `artifacts/{app_name}/` exists (works for partial runs)           |
 | Check progress / current position                   | —              | `/ayatori-status`      | None (anytime)                                                            |
 
@@ -156,6 +159,7 @@ flowchart TD
 | `/ayatori-delta`        | 5              | 27–30           | Regenerate only changed screens and update only the corresponding Figma frames after completion                                       | Entry: `final_approved` / `completed_at_states` / `baseline_approved_at` |
 | `/ayatori-delta-mini`   | 6              | 34              | Lightweight retrospective for delta / req-delta runs                                                                                  | Entry: completed (or `baseline_approved_at`) + a delta/req-delta run not yet retro'd |
 | `/ayatori-export`       | —              | 35              | Combine screens/requirements into a self-contained HTML with base64-embedded images (external sharing / delivery)                     | Entry: after Phase 3 completion, optional            |
+| `/ayatori-export-en`    | —              | 37              | One-way export of the Japanese deliverables into an English mirror `artifacts/{app}-en/` (enums/markers machine-mapped + prose LLM-translated; the mirror is distribution-only, never fed back into the pipeline) | Entry: anytime `artifacts/{app_name}/` exists, optional |
 | `/ayatori-index`        | —              | index           | Aggregate all deliverables (requirements/screens/design/scoring/audit) into one index.html (left TOC + right iframe/MD)               | Entry: anytime `artifacts/{app_name}/` exists        |
 | `/ayatori-status`       | —              | —               | Progress dashboard for all AYATORI projects + next-action recommendation                                                              | Entry: anytime                                       |
 | `/ayatori-cm-consult`   | —              | —               | From a behavior-change goal, propose nudge-theory-based measures + validation design + a requirements seed → merge into the main line | Entry: explicit invocation only (not in phase_order) |
@@ -246,6 +250,17 @@ A. AYATORI detects out-of-pipeline commands, halts, and confirms (external comma
 
 **Q. I want to change the spec after completion.**
 A. Post-completion changes go through `/ayatori-delta`, the single entry. Pick the starting point at the entry (requirement change / hand-edited screen HTML / feature addition) and it routes to the right mode. If you only want to change requirements before any UI exists, use `/ayatori-req-delta`.
+
+**Q. Figma export (Step 22 onward) stopped with `Figma MCP tool call limit on the Starter plan`.**
+A. **This is not an AYATORI defect — it is the call limit of your own Figma plan.** Figma's read MCP tools are capped per plan and seat type, and Starter allows only 20 calls per month — **roughly what a single pass through the pipeline consumes**. The plan name in the error message varies with your environment: even on paid plans, View / Collab seats get the same refusal at 6 calls per month. Several steps read from Figma **within the same month** (often in earlier runs), so the budget is typically gone before you even reach Step 22. **On Starter and on View / Collab seats the cap is monthly cumulative, not a per-minute rolling window, so waiting does not restore it and retrying only burns what is left** (paid plans with a Dev / Full seat are capped per day and per minute instead, where waiting does help).
+
+Before switching to the stub run described below, check `nodes.screens` in `artifacts/{app_name}/figma-state.json` — **if even one node was already captured, following this recipe as-is walks an incomplete Figma state straight through final approval**; read procedures B-0 / B (手順 B-0 / B) in [`figma-plan-limits.md`](figma-plan-limits.md) first in that case. With zero captures, proceed:
+
+For now, **switch to `FIGMA_MCP_ENABLED=false`, restart Claude Code, and continue `/ayatori-screens` as usual.** Only the Figma-canvas artifacts (frames, Variables, components) are skipped — **screen HTML, screen specs, design tokens and the Confluence saves are all still produced, and Phase 3 runs through to the end (Step 25a)**. Run the Figma export later, once a Professional-or-higher plan **with a Full seat** is available — the seat matters as much as the plan: View / Collab seats hit the same cap, and writing to the canvas requires a Full seat regardless of the quota.
+
+Note that **reverse (Phase 0b) with a Figma URL is the heaviest consumer** of the quota (it scales with the number of target frames). On Starter, either run reverse from code and documents only, or narrow the frames you cross-check. **Do the narrowing in the URL itself** — hand over `node-id` URLs for just the frames you need. Step 01's scope-confirmation gate appears **only for a whole-file URL** (a `node-id` URL skips the gate and fetches that frame directly), and for a whole-file URL the candidate-frame enumeration spends **one read call per Figma file** *before* the gate appears — so a refusal can arrive before you ever reach it.
+
+→ Limits, per-step consumption and workarounds: [`figma-plan-limits.md`](figma-plan-limits.md)
 
 ---
 
