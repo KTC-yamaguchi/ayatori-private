@@ -40,7 +40,7 @@ UX原則（ヒューリスティック）
 
 **状態の振る舞い記述チェック (main 視点)**
 
-main HTML 1 枚と仕様書 (.md) を見て、以下が **記述レベルで** 確認できるか:
+main HTML 1 枚と仕様書 (.md) を見て、以下が **記述レベルで** 確認できるか（確認先は仕様書の `## 振る舞い詳細`（操作イベント・入力チェック・操作制御）と `## 状態パターン`）:
 1. API待ち（ローディング）→ 仕様書に振る舞いが記述されているか (HTML での状態遷移網羅評価は Step 25c に移管)
 2. エラー発生時 → 同上
 3. 成功時 → 同上
@@ -84,7 +84,7 @@ Read and execute `skills/00-figma-mode-detect/SKILL.md` to resolve `mode`:
 
 > **実装詳細は SKILL.md の「Layer 0」セクションを参照。** 以下はパイプラインコンテキスト。
 
-**目的**: step-17 で生成した Figma フレームが HTML 画面仕様書のビジュアル設計と整合しているかを検証する。
+**目的**: step-22 が step-17 の HTML からエクスポートした Figma フレームが、HTML 画面仕様書のビジュアル設計と整合しているかを検証する。
 
 **実行タイミング**: node-id 読み取り完了後、Layer 1 採点の前に実施する。
 
@@ -185,7 +185,10 @@ Layer 1 の前に、各画面 HTML / 仕様を `requirements.json`（+ `requirem
 **合意済み要件にトレースできない要素 / 文言 / データ前提**（AI が想像で補完したもの）を検出する。
 手順詳細は `docs/principle4-disambiguation.md` §5。
 
-- **機械列挙＋全件マップ (§5.2 forced-enumeration)**: 画面仕様書 (.md) の **component + 挙動 / インタラクション / 状態を列挙** し（component だけでなく「この画面が要件にない挙動 / 状態を持っていないか」も全件マップする。29 / 25c と列挙単位を揃える）、各要素を要件 (`requirements.json` / `05-features.md`) に **全件マップ**（「気づいた分だけ」でなく列挙全件を account、黙ってスキップ不可）。`requirement_ref` を埋められない要素が要件外。列挙総数を `coverage[]`（`phase="screens"`, `enumerated_count`, `enumerated_refs`）に記録する（**0 件でも必須**）。
+- **機械列挙＋全件マップ (§5.2 forced-enumeration)**: 画面仕様書 (.md) の **component + 挙動 / インタラクション / 状態 + データ項目を列挙** し（component だけでなく「この画面が要件にない挙動 / 状態 / データ前提を持っていないか」も全件マップする。列挙単位の SoT は `docs/principle4-disambiguation.md` §5.2 の screens 層 — 29 / 25c と同じ単位）、各要素を要件 (`requirements.json` / `05-features.md`) に **全件マップ**（「気づいた分だけ」でなく列挙全件を account、黙ってスキップ不可）。`requirement_ref` を埋められない要素が要件外。列挙総数を `coverage[]`（`phase="screens"`, `enumerated_count`, `enumerated_refs`）に記録する（**0 件でも必須**）。
+- **「振る舞い詳細」行の扱い**: 根拠列に有効な出典リンク (`requirements/*.md` の実在 ID) を持つ行は、そのリンクを `requirement_ref` として充足済みとみなす（再マップ不要 — 根拠列がトレースそのもの。ただしリンク先 ID が実在しない行は要件外候補）。`※不明 (unknown)` とマークされた行は **deviation として append しない**（既に pending-questions.json へ申告済みの「宣言された未確定」であり、Step 21 Section 1-F が解消点。二重報告を防ぐ）。
+- **「データ項目」行の扱い**: 根拠列に有効な出典を持つ行は、それを `requirement_ref` として充足済みとみなす（**有効な出典の集合は `skills/17-screen-gen/SKILL.md`「データ項目の記入規則」の「ID を発明しない」が SoT** — 導出元別に 07 の実在見出し / `Entity N` / `EXT-NN` 等の実在 ID・`05-features.md` の実在 ID・`00-screen-list.md` の実在行・本書内参照が挙がっている。ここに列挙を複製しない — 複製するとドリフトして、規則どおり書いた行が要件外候補に落ちる）（「振る舞い詳細」行と同じ規律 — 根拠列がトレースそのもの。ただしリンク先が実在しない行は要件外候補）。`※不明 (unknown)` とマークされた行は **deviation として append しない**（Step 21 Section 1-F が解消点）。要件のどこにも無いデータ項目 (要件外のデータ前提) は列挙対象であり、`requirement_ref` を埋められなければ deviation に append する。
+- **「データ項目」の `共有` 列の相互性は本 step が照合する**: 本 step は全画面の仕様書を横断して読む唯一の採点前 step のため、`共通 ({slug})` と書かれた行について (a) その slug が `00-screen-list.md` に実在するか、(b) 共有先の仕様書に同じ項目名の行があるかを確認する。名前が揺れている / 対応行が無い場合は deviation として append する — `deviation_kind` は schema の enum から選ぶ（共有先の項目自体が要件に無いなら `要件外追加`、要件にはあるが名前の揺れ・対応行の欠落でトレースが弱いなら `根拠薄弱`。「項目名の不一致」のような enum 外の値は書かない — hook は field の存在しか見ないため schema 違反のまま記録され、EN エクスポートの enum 置換からも漏れる）。不一致の内容そのものは `description` に書く (`※不明` 行は対象外)。Step 19 の `data_spec` は 1 画面内の形式のみを見るので、ここで見ないと誰も見ない。
 - トレースできない / 根拠が薄い / 明示なく一般論で決め打ちした項目を
   `artifacts/{app_name}/requirement-deviations.json` の `entries[]` に append
   （`phase="screens"`, `raised_by_step="18-design-review"`, `deviation_kind`, `requirement_ref`(無ければ null),
@@ -241,16 +244,16 @@ WCAG 数値閾値とロールベース分類（主要/非主要・3 条件・判
 **各画面の CTA・ナビゲーション・default 状態のフィードバック余地についてニールセンの発見的評価：**
 
 ```
-□ 状態の可視性 (main 視点): default HTML 上に状態遷移トリガー (CTA / フォーム / 非同期処理起点) が明確に置かれているか、仕様書 (.md) に sub-state の振る舞い (loading / 成功 / エラー) が記述されているか
+□ 状態の可視性 (main 視点): default HTML 上に状態遷移トリガー (CTA / フォーム / 非同期処理起点) が明確に置かれているか、仕様書 (.md) の「振る舞い詳細」と「状態パターン」に sub-state の振る舞い (loading / 成功 / エラー) が記述されているか
    ※ sub-state HTML 横断評価 (実際に loading.html / error.html が存在するか・状態間一貫性) は Step 25c で評価
 □ システムと言語の一致: ユーザーの言葉や概念で情報が伝えれているか
 □ ユーザーの主導権と自由: 誤操作を簡単にやり直せる仕組みが default 上の UI 配置で提供されているか
 □ 一貫性: 慣れた操作体系や表現が維持されているか
-□ エラー防止: 問題が起こる前に防ぐ設計が default UI に反映されているか (確認ダイアログの存在は仕様書記述で評価、HTML 化は Step 25b)
+□ エラー防止: 問題が起こる前に防ぐ設計が default UI に反映されているか (確認ダイアログ・送信中制御の存在は仕様書「振る舞い詳細」の記述で評価、HTML 化は Step 25b)
 □ 記憶よりも認知: ユーザーが情報を思い出すより見て判断できるようにされているか
 □ 柔軟性と効率性: 初心者にも熟練者にも効率的に使えるように設計されているか
 □ 美的で最小限のデザイン: 不要な情報を排し、目的に集中するようにされているか
-□ エラーの認識と回復支援 (main 視点): default HTML にエラー導線 (toast/banner 配置スロット) があり、仕様書にエラーメッセージ・解決策案が記述されているか
+□ エラーの認識と回復支援 (main 視点): default HTML にエラー導線 (toast/banner 配置スロット) があり、仕様書の「振る舞い詳細」(操作イベントの異常・境界時列 / 入力チェックのエラー表示列) にエラーメッセージ・解決策案が記述されているか
 □ ヘルプとドキュメント: 必要な支援情報を簡単に参照可能になされているか
 □ フィードバック (main 視点): default 状態の CTA 直近に loading / 成功 / エラー の置き場が確保されているか
    ※ 「sub-state HTML 横断で 4 状態が揃っているか」の網羅評価は Step 25c で実施

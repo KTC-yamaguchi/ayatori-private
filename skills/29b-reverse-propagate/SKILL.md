@@ -75,7 +75,7 @@ For each edited screen:
 2. Identify what the edit changed:
    - If `before` is non-null → compare the **before vs after HTML diff** (the concrete hunks from Step 27b).
    - If `before` is null (external edit, no snapshot) → compare the **current HTML against the current `.md` spec** (the spec represents the pre-edit intent).
-3. For each concrete change, update only the spec section it implies — `## 基本情報` / `## UI要素一覧` / `## 画面フロー` / `## バリデーション` / `## デザインノート`. **Preserve every section the diff did not touch verbatim** (same discipline as Step 29 Step 3, inverted).
+3. For each concrete change, update only the spec section it implies — `## 目的` / `## レイアウト構成` / `## コンポーネント一覧` / `## 状態パターン` / `## 振る舞い詳細` / `## データ項目` / `## 画面遷移` (reverse 産 spec ではさらに `## 仕様値（requirements/05-features.md より）`。`## 使用グラフィック` は Step 21g がマーカーで所有する領域のため本 step では編集しない). 挙動系の編集 (バリデーション・disabled・確認ダイアログ等) は `## 振る舞い詳細` の該当行へ、表示項目の追加・削除・出どころの変更は `## データ項目` の該当行へ反映し、根拠列は `確認済 (screen-edit 逆伝播ゲート)` とする (人間承認経由のマーカー更新。ラベルは spec 単独で読んで判別できる自己記述名 — `skills/_shared/behavior-pending-confirm.md` の `{gate_label}` 語彙に登録済み)。 **Preserve every section the diff did not touch verbatim** (same discipline as Step 29 Step 3, inverted).
 4. Write the updated `.md` back.
 
 **Operating Principle 4 — diff-bounded (mandatory)**:

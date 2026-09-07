@@ -26,6 +26,7 @@ Read the following:
 - `artifacts/{app_name}/screens/00-transition-map.mmd` (SSoT — read this instead of the derived `.html`)
 - `artifacts/{app_name}/screens/00-screen-nav.json` (optional — 各画面の入口/出口 派生ビュー。`new`/`affected` 画面の入口/出口要件を構造化列挙する際の参照)
 - For each screen in the screen list: attempt to Read `artifacts/{app_name}/screens/{screen}.md`. If the file does not exist, flag that screen as a **missing-spec** candidate — treat it as `removed` in the classification step (Step 3) and log: "⚠️ {screen}.md が見つかりません。removed として分類します。" Do not abort.
+- 各 spec を Read する際、`## 振る舞い詳細` と `## データ項目` の**セクションごとの有無**を記録する (**旧フォーマット検知**。行頭アンカーで判定)。いずれかが無い spec は Step 17 テンプレート改訂前に生成された旧フォーマットであり、それぞれ挙動記述 (操作イベント・入力チェック等) / データ項目の記述 (表示・更新するデータとその出どころ) を持たない。**不足セクション名を添えた件数**を Step 4 の impact-analysis.md「Spec Format」節で人間に報告する (例: `振る舞い詳細 未記載 3 件 / データ項目 未記載 5 件`) — 本 step で自動追記はしない (unchanged セクション verbatim 保存の原則。全画面まとめての追記は `/ayatori-delta` 起動時の追記提案 → `skills/27c-spec-backfill/SKILL.md` が担う。**new 画面のみ** Step 29 の full 生成で新フォーマットになり、affected 画面は差分セクションの更新に留まる [不足セクションは追加されない] ため、既存画面を揃えるには 27c を通す)。
 
 ### Step 1b: Detect sub-state awareness
 
@@ -162,6 +163,13 @@ Run ID: {run_id}  |  Date: {YYYY-MM-DD}
 sub_state_aware: true | false
 {sub_state_aware: true → "本プロジェクトは sub-state HTML を生成済み (proceed 経路)。affected/new/removed 画面の sub-state も連動して更新する。"}
 {sub_state_aware: false → "sub-state HTML は存在しない。本 delta は default state のみを扱う。"}
+
+## Spec Format
+
+振る舞い詳細セクション: {Nb} / {total} 画面に存在
+データ項目セクション: {Nd} / {total} 画面に存在
+{Nb < total または Nd < total のとき → "⚠️ 不足セクションのある画面仕様書があります ({不足セクション名と件数の列挙 — 振る舞い詳細 未記載 {total − Nb} 件 = 操作イベント・入力チェック等の挙動記述を持たない / データ項目 未記載 {total − Nd} 件 = 表示・更新するデータとその出どころを持たない})。本 delta では自動追記しない — new 画面と該当箇所の変更が入る affected 画面から順次新フォーマットへ移行される。全画面を揃えたい場合は次回 /ayatori-delta 起動時の追記提案 (spec-only の 27c-spec-backfill) で追記できる。"}
+{Nb == total かつ Nd == total のとき → 本節の警告行は省略し 2 行の存在数のみ}
 
 ## Affected Screens ({N} of {total})
 

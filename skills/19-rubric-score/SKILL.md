@@ -76,7 +76,7 @@ ask される従来挙動（`skills/_shared/preflight-gate.md` § append 経路�
 
 | 評価項目            | 配点  | 採点基準(Nielsen原則)                                    |
 |-----------------|-----|----------------------------------------------------|
-| 状態可視性 & フィードバック (main 視点) | 6pt | **default HTML 1 枚** に対して評価: 状態遷移トリガー (CTA / 非同期処理起点) が default 上に明確に置かれているか・仕様書 (.md) に sub-state の振る舞いが記述されているか・default 状態の即時反応 UI (toast/banner/inline-feedback) のスロットが確保されているか。画面パターン網羅性 (L1〜L4) は **main 視点に限る** (下記参照)。**sub-state HTML 横断の状態網羅評価は Step 25c (state-pattern-score) で実施** |
+| 状態可視性 & フィードバック (main 視点) | 6pt | **default HTML 1 枚** に対して評価: 状態遷移トリガー (CTA / 非同期処理起点) が default 上に明確に置かれているか・仕様書 (.md) の「振る舞い詳細」と「状態パターン」に sub-state の振る舞いが記述されているか (根拠列の空欄・実在しない出典 ID は減点、※不明 行は宣言された未確定として減点しない)・仕様書の「データ項目」に画面が表示 / 更新するデータ項目が固定 7 列で列挙され (1 行 = 1 項目 × 1 ソース — 複数ソースの項目は行分割が正)、ソース列が 6 種の分類語彙で埋まっているか (セクション不在・ヘッダのみの空表は減点。「静的文言のみ」を理由にした `該当なし` と宣言された未確定は減点しない — 未確定・要件未記載を理由にした `該当なし` は減点。**本項の減点は全画面合計で最大 -2pt**。差し引き順・上限の SoT は下記「減点判定」)・default 状態の即時反応 UI (toast/banner/inline-feedback) のスロットが確保されているか。画面パターン網羅性 (L1〜L4) は **main 視点に限る** (下記参照)。**sub-state HTML 横断の状態網羅評価は Step 25c (state-pattern-score) で実施** |
 | ナビゲーション & 操作性   | 6pt | CTAが明確か・戻る動作が自然か・画面のエントリーポイントと終了点が明確か        |
 | 一貫性 & 標準        | 5pt | UIパターンが統一されているか・用語・ラベルが統一されているか・プラットフォーム標準と一致しているか |
 | エラー設計（予防・回復）    | 5pt | エラーを事前に防げているか・エラー内容が理解できるか・復帰手段があるか (仕様書記述レベルで評価。実 HTML での error 状態評価は Step 25c) |
@@ -102,7 +102,7 @@ Step 14 で生成した `00-coverage-check.json` を起点に、Step 17 で生�
 
 - 各 Layer の `missing[]` に「個別画面化」または「テンプレート代表1枚」が必要な default 画面がある場合、それぞれ通常の減点ルール（Impact × Scope × Frequency）を適用
 - 画面パターン抜けは典型的に **Impact: High（フローが完結しない）、Scope: Local〜Multiple、Frequency: Always** → 1件あたり -3〜-5点
-- 全件の減点合計を Layer 2「状態可視性 & フィードバック」軸（6pt）から優先的に差し引く。**この軸の 6pt を使い切った場合の残余は Layer 2 の他軸へカスケードせず、`coverage_check.overflow_deduction` フィールドにマイナス値で記録する**（タグ `screen_coverage` を付与）
+- 全件の減点合計を Layer 2「状態可視性 & フィードバック」軸（6pt）から優先的に差し引く。**6pt の消費順は `data_spec` → `behavior_spec` → `screen_coverage`** (上限: `data_spec` は全画面合計で最大 -2pt、`behavior_spec` は上限なし、`screen_coverage` は件数比例)。**この軸の 6pt を使い切った場合の残余は Layer 2 の他軸へカスケードせず、`coverage_check.overflow_deduction` フィールドにマイナス値で記録する**（タグ `screen_coverage` を付与）— overflow へ流すのは `screen_coverage` の超過分のみ (`data_spec` / `behavior_spec` は先に差し引かれるので溢れない。順序を逆にすると overflow チャネルを持たない 2 者の減点が消える)
 - DS吸収に分類されたものは減点対象外
 - **sub-state HTML 視点での missing は Step 25c で評価** (本 step では加味しない)
 

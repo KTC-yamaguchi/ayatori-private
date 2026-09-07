@@ -207,7 +207,7 @@ Sub-state 生成の決定を保留しました。次回セッションで 25a �
 - 各画面の `states[]` は確定した `user_decision` から決定:
   - `all_four` → `["empty", "loading", "error"]` (default は含めない、main HTML が既存)
   - `individual` → Q2 で選択された `selected_states[]` をそのまま
-  - `nature_based` → `["empty", "loading", "error"]` + 画面性質に応じた追加 (フォーム画面なら `modal-dialog` / `validation-error`、削除画面なら `modal-dialog`)。性質判定は画面仕様 MD (`screens/{画面名}.md`) を Read して `## 状態パターン` セクションから抽出
+  - `nature_based` → `["empty", "loading", "error"]` + 画面性質に応じた追加 (フォーム画面なら `modal-dialog` / `validation-error`、削除画面なら `modal-dialog`)。性質判定は画面仕様 MD (`screens/{画面名}.md`) を Read して `## 状態パターン` セクションから抽出 (**抽出範囲は `## 状態パターン` セクション内のみ** — `## 振る舞い詳細` / `## データ項目` 等の他セクションに現れる状態語彙 [validation-error / modal / 空 / 読み込み 等] を判定材料にしない)
 - 各画面の `platforms[]` は Phase 0 で算出した `selected_platforms` をそのまま
 - 各画面の `themes[]` は Phase 0 で算出した `selected_themes` をそのまま (`dual_theme_mode==true` なら `["light", "dark"]`、それ以外なら `["default"]`)。**全画面で同じ themes 配列を持つ** (画面ごとに theme を変えるユースケースは現バージョン未対応)
 - `nature_based` で画面ごとに state が異なる場合は `rationale` フィールドに理由を書く

@@ -30,7 +30,7 @@ artifacts_to_review = [
 
 ### Step 1: 承認ゲート
 
-`artifacts/{app_name}/scores.json` と `figma-state.json`、Figma ページ URL を確認した上で、以下を表示してユーザーの選択を待つ:
+`artifacts/{app_name}/scores.json` と `figma-state.json`、Figma ページ URL を確認した上で、以下を表示してユーザーの選択を待つ。`{N}` は `artifacts/{app_name}/pending-questions.json` の `resolved_at` 未設定 かつ `reflect_to` が画面仕様書を指す entry（`screens/` で始まり `.md` で終わる値 — glob / 具体パスの両方。`skills/_shared/behavior-pending-confirm.md` の抽出条件と同一）の数（file 不在なら 0）。画面別内訳は各 entry の `target` を `screens[{slug}].{key}` 文法でパースして集計する:
 
 ```
 【最終承認ゲート 23】
@@ -39,6 +39,9 @@ Figma に全画面がキャプチャされました (上記 preview の Figma UR
 
 - 最終スコア: {total} / 100
 - AI改善可能な指摘: {ai_improvable_deductions} 件（残っている場合は人間採点で可否を判断してください）
+- 画面仕様の未確定 (※不明) 残: {N} 件{N > 0 なら画面別内訳を併記 — 例: （02-signup 2 件 / 05-dashboard 1 件）}（0 でない場合、画面仕様書に未確定を残したまま設計工程へ渡ります。解消するには ✏️ 修正で Step 21 の未確定一括確認に戻ってください）
+- 遷移先未解決: {M} 件{M = `grep -c "遷移先未解決" artifacts/{app_name}/screens/*.md` の合計 — pending-questions には登録されない不足画面の信号のため別集計。0 でない場合は宛先一覧を併記}（不足画面の候補です。追加は承認後の feature-add / requirement delta で）
+- EV 未解決: {K} 件{K = `grep -c "EV 未解決" artifacts/{app_name}/screens/*.md` の合計 — データ項目の更新行が結べる操作イベントを持たない保留。pending-questions には登録されないため別集計。0 でない場合は画面・項目を併記}（振る舞い詳細の追記 [Step 17 再生成 / 27c] で解消されます）
 
 Figma 上で以下を確認してください：
 1. 全画面が想定通りにキャプチャされている
