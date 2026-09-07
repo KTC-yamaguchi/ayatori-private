@@ -15,15 +15,22 @@ These apply project-wide, regardless of Phase / Step / tool.
 
 When a tool or command does not behave as expected during an AYATORI pipeline run, **do NOT attempt to fix it by installing an external CLI dependency** (e.g. `poppler` / `pdftoppm`, `imagemagick`, `ffmpeg`, or any other system package).
 
-- Do NOT suggest installation steps such as `brew install ...`, `apt-get install ...`, or `npm install -g ...` to the user.
-- "Opt-in is fine", "use it if it happens to be installed", and "keep it as a fallback" are all forbidden — the pipeline must not assume any external CLI is present, by design.
+- Do NOT suggest installation steps such as `brew install ...`, `apt-get install ...`, or `npm install -g ...` to the user (except for the three declared exceptions below, and even then only the setup documents carry the install guidance — never the agent during a run).
+- "Opt-in is fine", "use it if it happens to be installed", and "keep it as a fallback" are all forbidden (except for the three declared exceptions below) — the pipeline must not assume any external CLI is present, by design.
 - If a feature cannot be delivered without that dependency, either (a) drop the feature and switch to an alternative code path, or (b) ask the user to re-provide the input in a different format (paste as text, export to `.md` / `.txt`).
 
-Rationale: absorbing environment-specific dependency variance is the pipeline's responsibility, not the user's. Forcing the user to change their environment is contrary to AYATORI's stance. This principle applies across every Phase / Step / Skill / agent / tool call — no exceptions.
+Rationale: absorbing environment-specific dependency variance is the pipeline's responsibility, not the user's. Forcing the user to change their environment is contrary to AYATORI's stance. This principle applies across every Phase / Step / Skill / agent / tool call — the only exceptions are the three declared below (committed Node.js deps / OS-bundled commands / README-declared optional `jq`).
 
 **例外 (本 repo がコミット済みの依存)**: `package.json` で pin している Node.js 依存 (`style-dictionary@5.4.0` / `pdf-lib@1.17.1`、いずれも厳密固定) は本原則の対象外。これは「外部 CLI を install してくれ」とユーザーに依頼するのではなく、repo に **lock 済みの dev dependency** を `npm ci` 1 回で取得する形態。style-dictionary は Step 12 build-tokens で、pdf-lib は 10 ページ超 PDF の分割 (`scripts/split-pdf.mjs`) で使用する — PDF の**レンダリング**は poppler 必須のため本原則で不可のままだが、ページ**分割**は純 JS で完結するため pin 依存で賄える (Read tool の native 経路が読める 10 ページ未満の part に割ってから読む)。詳細は `README.md` 「依存パッケージのインストール」参照。
 
 **例外 (OS 同梱コマンド)**: 各 OS が既定でインストール済みのコマンド (macOS=`open` / Linux=`xdg-open` / Windows=`cmd.exe` の `cmd.exe /c start "" "<file>"` 形 / 全 OS 共通=`pwd` 等) は本原則の対象外。これらは「ユーザーに `brew install ...` 等の install 操作を強いる外部 CLI」とは性質が異なり、いかなる OS でも事前準備なしに利用できる。Step 07 / 10 / 13 / 16 / 21 / 23 / 26 の人間ゲート preview で利用する。存在しない / 失敗した場合は **link-only fallback** に degrade させること (CLI 不在を理由にエラー停止させない)。なお Windows の `start` は cmd.exe の builtin であり PATH 上の独立実行ファイルではない (`command -v start` で検出できない) ため、必ず `cmd.exe /c start` の形で外側から起動すること。
+
+**例外 (README 宣言済みの optional 前提 — `jq`)**: ガード hook 4 本 (`backup-on-edit` / `lint-screen-html` / `schema-light-check` / `enforce-substate-scoring`) が検査に使う `jq` は、README「前提条件」に **optional** として宣言済みの前提ツール。本例外が成立するのは、README に行を足すことではなく、以下 **3 条件の AND** を満たす呼び出し経路に限る (poppler / imagemagick / ffmpeg 等の禁止原型と分ける実質基準):
+1. **成果物生成の経路に関与しない検査・ガード専用** であること (不在で成果物の内容が変わらない)。
+2. **不在時の全呼び出し箇所が fail-open** (誤分岐・false pass なし) であることを確認済みであること。
+3. **導入案内はセットアップ文書 (README 前提条件 / `docs/setup*.md`) に限定** されていること (本 CLAUDE.md にも install コマンドは書かない)。
+
+**例外の射程は上記 3 条件を満たす hook 4 本のみ**。skill 本文が `jq` を直接呼ぶ 3 経路 (Step 12 token 語彙検査 / Step 28 判定値の取得 / reverse Step 01 アーカイブ自己検査) は条件 1 または 2 を満たさない (Step 28 は不在時に判定値が空になり再生成対象 = 成果物が変わる、Step 12 は exit 127 で進行が止まりうる、reverse 01 は 0 件素通り) ため **P1 例外ではなく未解決 gap** として README「前提条件」に別記し、skill 側に不在分岐を足す別課題とする。導入有無は `command -v jq` で人間がセットアップ時に確認し、無ければ **人間がセットアップ時に導入する** か fail-open 運用を選ぶ (導入手順は README「前提条件」/ `docs/setup*.md` を参照)。本例外が許すのは「セットアップ文書が事前準備として案内する」ことのみで、**パイプライン実行中に AI が install を提案・実行して問題を解決するのは引き続き禁止**。
 
 ### 2. Subagent permissions are pre-declared in settings.json
 
@@ -150,9 +157,10 @@ Read `pipeline.yaml` to confirm Phase order, then execute the corresponding Phas
 | 2 | `/ayatori-design` | 08~13 | Design brainstorm → sample HTML × 3 → WCAG → 3-tier tokens → human approval |
 | 3 | `/ayatori-screens` | 14~25 + 21a~21g + 25a~25e | Screen docs → **main (default) HTML** → review loop → (optional) **graphic generation block 21a~21g** → Figma export → final approval → design system update → component build → (optional) sub-state patterns 25a-25e。reverse 基線は screens-lite ルートあり (画面 HTML を作らず基線印まで) |
 | 4 | `/ayatori-retro` | 26 | Retrospective + pipeline improvement |
-| 5 | `/ayatori-delta` | 27~30 (+27b/29b/29c/27f) | **完成後変更の単一入口** — requirement / screen-edit / feature-add の 3 モード。影響画面のみ再生成し無関係画面に触れない。entry: 完走済 or ベースライン承認済 |
+| 5 | `/ayatori-delta` | 27~30 (+27b/27c/29b/29c/27f) | **完成後変更の単一入口** — requirement / screen-edit / feature-add の 3 モード。影響画面のみ再生成し無関係画面に触れない。起動時に不足セクション (振る舞い詳細 / データ項目) のある旧フォーマット仕様書を検知すると spec-only の追記 (27c) を提案。entry: 完走済 or ベースライン承認済 |
 | 6 | `/ayatori-delta-mini` | 34 | **delta / req-delta の軽量振り返り** — Pattern A/B/C 集計→改善提案を artifacts/pipeline-improvements.md (全プロジェクト共有) へ。entry: 完走済 or ベースライン承認済 + 未処理 run |
 | — | `/ayatori-export` | 35 | **配布物生成 (任意)** — MD 群を base64 画像埋め込みの自己完結 HTML に結合。PDF はブラウザ印刷で (Operating Principle 1 によりスコープ外) |
+| — | `/ayatori-export-en` | 37 | **英語版エクスポート (任意)** — 日本語成果物を `artifacts/{app_name}-en/` へ一方通行変換 (enum/マーカーは決定論置換 + prose は LLM 翻訳)。日本語版は無変更で併存。EN ミラーはパイプライン再入力不可の配布物 (線引きの正本は `docs/en-export.md`) |
 | — | `/ayatori-cm-consult` | cm-consult | **ChargeMinder コンサル (独立)** — ナッジ打ち手 + KPI 検証設計 + requirements.json 種を生成し 1b へ合流。明示起動のみ |
 | — | `/ayatori-train` | train-00〜04 + train-07 | **コンサルトレーニング (独立)** — オーナー役 AI と対話訓練→本体パイプラインで実践→振り返り。明示起動のみ。出力 artifacts/_train-* |
 | — | `/ayatori-index` | index | **成果物インデックス (独立)** — artifacts/{app_name}/ を index.html 1 枚に集約。人間ゲートでも自動再生成 |
@@ -243,8 +251,10 @@ Step 25b→25c→25d の実行順序は prose 記述ではなく二層で機械�
 
 ## Figma MCP Flag
 
-If environment variable `FIGMA_MCP_ENABLED` is `true`, Steps **17 / 18 / 22 / 24 / 25 / 25e** use Figma MCP.
-Otherwise, they operate as MD/JSON/HTML output stubs (22 / 24 / 25 / 25e は `skipped_stub_mode` として記録される。24 / 25 は skill 冒頭の mode 判定スタブ手順が `pipeline-state.json` に `screens.step24_figma_status` / `screens.step25_figma_status` + `step24/25_completed_at` を記録して次 step へ進むため、disabled 環境でも Phase 3 完了 [Step 25a 到達] が可能)。
+If environment variable `FIGMA_MCP_ENABLED` is `true`, Steps **18 / 22 / 24 / 25 / 25e** use Figma MCP. Step 17 resolves the same flag but never writes to Figma — its behavior is HTML generation only in both modes (`skills/17-screen-gen/SKILL.md`).
+Otherwise, **Steps 18 / 22 / 24 / 25 / 25e** operate as MD/JSON/HTML output stubs (22 / 24 / 25 / 25e は `skipped_stub_mode` として記録される。24 / 25 は skill 冒頭の mode 判定スタブ手順が `pipeline-state.json` に `screens.step24_figma_status` / `screens.step25_figma_status` + `step24/25_completed_at` を記録して次 step へ進むため、disabled 環境でも Phase 3 完了 [Step 25a 到達] が可能)。
+
+**gotcha — `true` でも実行できるとは限らない (プラン上限が律速する / POCTEAMA-411)**: Figma MCP の**読み取り系 tool** はユーザーのプラン・シート種別ごとに呼び出し上限があり (Starter = 月 20 回)、超えると `Figma MCP tool call limit on the <plan> plan` で拒否される。**枯渇時は書き込み系 (`generate_figma_design` / `use_figma`) も拒否され得る** — 公式免除リストは例示列挙で、免除を保証として扱わないこと (実測あり、SoT 参照)。**Starter / View・Collab シートでは月次の累積上限なので retry しても回復しない** (有料プラン + Dev/Full シートは日次/分次のため待てば回復する — 帯の判別は SoT) — 拒否を受けたら再試行ループに入らず、**その時点の capture 件数を state に正しく残して**停止し、`FIGMA_MCP_ENABLED=false` でのスタブ運用を提案すること。枯渇の**専用 state field は無く** root `notes` の `blocked_reason=figma_plan_quota` で代用しており、resume の挙動は capture 件数で逆向きに分かれる (0 件 = Step 22 を指し続ける / 一部成功 = Step 22 を飛ばす) — 専用 field・Step 別消費・状況別の回避手順の SoT は `docs/figma-plan-limits.md`。
 
 Step 12 (design-system) は tokens.json / style-guide HTML / マルチプラットフォームコード生成のみで Figma を書き込まない。Figma Variables 3 コレクション (Primitives / Semantic / Component) の登録は **Step 24 (design-system-update)** が担当する。
 
