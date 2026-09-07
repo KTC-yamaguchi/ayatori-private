@@ -196,7 +196,7 @@
         },
         "graphics": {
           "type": "object",
-          "description": "21a-21g グラフィック生成ブロックの進行 state (設計 docs/graphic-generation-design.md §9-2)。21g の完了記録は approvals.graphics_human_approved 側 (人間ゲート step は completed_at を持たない — 完了 = 承認)。writer: 21a (step21a_completed_at) / 21b (decision, decided_by=step21b) / 21c (taste_confirmed_at) / 21d (prompts_confirmed_at / rework_pending 消費 / decision=skip decided_by=step21d) / 21e (generated_files [成功ごと増分] / excluded_slots append / step21e_completed_at / decision=skip decided_by=step21e) / 21f (generated_files[].file の正典パス更新 / step21f_completed_at / transparency_waived append / excluded_slots append / retry 時の generated_files entry 削除 + step21e_completed_at クリア / decision=skip decided_by=step21f) / 21g (却下時の generated_files entry 削除 + excluded_slots append + 全却下時 decision=skip decided_by=step21g、writer 実体は commit-approval.mjs) / phase orchestrator (上流 skip の decision+decided_by=upstream_scope、21g 差し戻し routing の rework_pending + timestamp クリア — 実体は 21g の route-rework.mjs を phases/screens § Step 21g の指示で起動)。",
+          "description": "21a-21g グラフィック生成ブロックの進行 state (設計 docs/graphic-generation-design.md §9-2)。21g の完了記録は approvals.graphics_human_approved 側 (人間ゲート step は completed_at を持たない — 完了 = 承認)。writer: 21a (step21a_completed_at) / 21b (decision, decided_by=step21b) / 21c (taste_confirmed_at) / 21d (prompts_confirmed_at / rework_pending 消費 / transparency_overrides / decision=skip decided_by=step21d) / 21e (generated_files [成功ごと増分] / excluded_slots append / step21e_completed_at / decision=skip decided_by=step21e) / 21f (generated_files[].file の正典パス更新 / step21f_completed_at / transparency_waived append / excluded_slots append / retry 時の generated_files entry 削除 + step21e_completed_at クリア / decision=skip decided_by=step21f) / 21g (却下時の generated_files entry 削除 + excluded_slots append + 全却下時 decision=skip decided_by=step21g + 却下 slot の upscale_accepted 除去 + 承認時の upscale_accepted 更新 [受諾の記録と失効]、writer 実体は commit-approval.mjs) / **Step 29 delta 再埋め込み (upscale_accepted のみ — key 分離。writer 実体は 21g の embed-graphics.mjs apply --delta。承認済みプロジェクトでは approve が E_ALREADY_APPROVED で閉じるため、delta で生じた受諾の記録と、拡大が解消した受諾の失効を書ける経路がここしかない)** / phase orchestrator (上流 skip の decision+decided_by=upstream_scope、21g 差し戻し routing の rework_pending + timestamp クリア — 実体は 21g の route-rework.mjs を phases/screens § Step 21g の指示で起動)。",
           "additionalProperties": false,
           "properties": {
             "decision": {
@@ -260,6 +260,63 @@
                   "raw_sha256": { "type": "string", "description": "受諾対象の raw 画像バイトの sha256 (バイト束縛 — findWaiver はこの一致まで要求する)" },
                   "reason": { "type": "string" },
                   "waived_at": { "type": "string" }
+                }
+              }
+            },
+            "transparency_overrides": {
+              "type": "array",
+              "description": "21d で user が graphic-plan.json の透過確定値 (21b 人間ゲート) を明示的に上書きした記録。**user 承認済みの上書きの台帳であり、21d 自身が読んで再承認の要否を決める** (読まないと plan が書き換わらない以上「差し戻しのたびに同じ上書きを再承認させる」棘車になり、面倒を避けた LLM が draft を plan 値へ戻す = user の決定が黙って消える経路に流れる)。writer は 21d commit-prompts のみ (1 slot 1 記録)。append は --allow-transparency-override 使用時、除去は毎 confirm (本 run で検査した slot が plan 値へ戻った場合) に起こる。記録と同内容の上書きを維持しているだけの slot は再承認 (flag / notes) を求めず、初回の overridden_at ごと記録を保持する。plan 値へ戻した slot は記録が消えるが、その run の warnings で「消える決定 + 当該 slot の再生成 (再課金)」を明示する。上書きは「透過を後で覆した」= 生成モデル・サイズ制約の変更であり、記録が無いと plan と prompts の食い違いだけが残り理由が追えなくなるため、reason (21d が prompts entry の notes に書いた差分理由) ごと残す。plan が透過を未指定 (本 field 導入前の旧 plan) の slot は**載せない** — 覆した人間の確定値が存在しないため (21d は warning で可視化する)。rework の逐語凍結 entry (差し戻し対象外かつ前回確定値と 1 byte 違わない) は再検査しないため記録も更新しない (前回 run の記録がそのまま有効)。",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["graphic_id", "plan_value", "confirmed_value", "reason", "overridden_at"],
+                "properties": {
+                  "graphic_id": { "type": "string" },
+                  "plan_value": { "type": "boolean", "description": "graphic-plan.json 側の透過確定値 (省略は false へ正規化した後の値)" },
+                  "confirmed_value": { "type": "boolean", "description": "21d で確定した値 (graphic-prompts.json 側)" },
+                  "reason": { "type": "string", "description": "当該 prompts entry の notes (上書き理由。commit が非空を必須検証する — 無言の上書きを記録なしで通さない)" },
+                  "overridden_at": { "type": "string" }
+                }
+              }
+            },
+            "upscale_ledger_at": {
+              "type": "string",
+              "description": "upscale_accepted[] 台帳の**権威印** (ISO 8601)。writer は 21g commit-approval approve のみ (全対象 slot の表示寸を機械検査した人間ゲートだけが権威を主張できる — Step 29 delta は --screens 範囲しか見ないため押さない)。**「台帳が空」と「台帳が無い」を区別する唯一の材料**: 本印が有るなら upscale_accepted[] の不在は「承認時に拡大は無かった」を意味し、Step 29 で検知した拡大は新たに生じたものと断定できる。無いなら承認時に表示寸は機械検査されていない (本機能より前に承認されたプロジェクト) ため、台帳の空を「保護対象なし」と読んで attrs を size_px 以内へ縮めると**人間が承認した表示寸を黙って変更する** (本台帳が塞ごうとしている silent shrink そのもの)。この場合 embed-graphics は ledger_authoritative: false を出力し、Step 29 は自動縮小せず user へ提示する (P4 — UNCERTAIN は補完せず問う)。"
+            },
+            "upscale_accepted": {
+              "type": "array",
+              "description": "21g 承認時に user が「表示寸 > 生成寸 (拡大表示でぼける)」を明示許容した受諾記録 (--allow-upscale の実体。transparency_waived と同型の「degrade 受諾はディスク状態に落とす」台帳)。**placement 単位で完全一致束縛** — graphic_id + file + display (表示寸) + size_px (生成寸) + object_fit のすべてが一致する場合のみ有効で、どれか 1 つでも変われば失効して人間ゲート (E_UPSCALE) に戻る (受諾した当の placement 以外へ旧受諾を自動適用しない)。writer は 2 つ: 21g commit-approval approve --allow-upscale (人間ゲート通過が受諾の成立条件) と embed-graphics apply --delta --allow-upscale (Step 29 で新たに生じた拡大の受諾 — 承認済みプロジェクトでは approve が E_ALREADY_APPROVED で閉じるため、delta の受諾を記録できる経路がここしかない。記録しないと次の delta 実行が同じ質問を再提示する [P4-07] か、Step 29 の「attrs を size_px 以内へ直す」指示で承認済みの表示寸が黙って縮む)。1 placement 1 記録で、**各 writer は「自分が表示寸を検査した placement 範囲」の記録を丸ごと置き換える** — 拡大が解消した placement の記録は除去 (失効) される。「現在の finding に一致する記録だけを置換する」形にすると、表示寸を size_px 以内へ直した後や承認フラグだけを落とす手動リセット (設計 §5) 後に等倍で承認し直した場合に旧記録が残り、それが現在の承認より優先されて --delta 経路が旧表示寸をぼけごと復元する (Step 29 は本 display を「承認済みの表示寸」の SoT として能動的に読み出すため残骸は必ず再現される)。受諾の成立条件は「その表示寸が現に使われていること」。失効は apply / approve の出力に upscale_accept_revoked[] として報告され、write-back 検証は記録漏れ (lost) と失効漏れ (not_revoked) の両方を照合する。reader は embed-graphics apply / verify と commit-approval specs で、**いずれも --delta (Step 29) のときだけ台帳を読む** — 21g 本流で一致する記録は前サイクルの残骸 (承認ゲートの手動リセット / 却下 slot の復活) であり、それを通すと新しい人間ゲートの目視を飛ばす。受諾済み placement は E_UPSCALE で止めず承認済みの表示寸を保持する (記録が無いと「承認済みの attrs に戻す」指示との板挟みで承認済みの絵が黙って縮められる)。per-slot 却下 (reject) は当該 graphic_id の記録を除去する。",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["graphic_id", "file", "display", "size_px", "ratio", "accepted_at"],
+                "properties": {
+                  "graphic_id": { "type": "string" },
+                  "file": { "type": "string", "description": "埋め込み先の app ルート相対パス (例: screens/web/01-home.html)。placement 単位束縛の一部。" },
+                  "display": {
+                    "type": "object",
+                    "description": "受諾した表示寸 (<img> の width/height 属性)。上限 100000 は拡大率判定の交差乗算を整数の厳密演算に保つための値域 (skills/21g-graphic-embed-review/scripts/preflight.mjs の MAX_DIM — 超える値は C-26 違反として block される)。",
+                    "required": ["width", "height"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "width": { "type": "integer", "minimum": 1, "maximum": 100000 },
+                      "height": { "type": "integer", "minimum": 1, "maximum": 100000 }
+                    }
+                  },
+                  "size_px": {
+                    "type": "object",
+                    "description": "受諾時点の生成寸 (graphic-prompts.json の size_px)。size_px が引き上げ再生成されたら受諾は失効する。",
+                    "required": ["width", "height"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "width": { "type": "integer", "minimum": 1, "maximum": 8192 },
+                      "height": { "type": "integer", "minimum": 1, "maximum": 8192 }
+                    }
+                  },
+                  "object_fit": { "type": "string", "pattern": "^(cover|contain)$", "description": "受諾時の object-fit (有効拡大率の式が変わるため束縛に含める)。無指定時は省略。" },
+                  "ratio": { "type": "number", "description": "受諾時の有効拡大率 (小数第 2 位まで、切り上げ)。監査・報告用の記録値 — 照合は display / size_px の一致で行う。" },
+                  "accepted_at": { "type": "string" },
+                  "accepted_via": { "type": "string", "pattern": "^(step21g|step29)$", "description": "受諾を記録したゲート (step21g = 21g 承認 / step29 = delta 再埋め込み時の明示許容)。照合には使わない監査用の由来記録 — 「この拡大はどのゲートで許容されたのか」を後から辿るため。" }
                 }
               }
             },
@@ -442,7 +499,20 @@
       "type": "object",
       "description": "Phase 5 (ayatori-delta) の実行履歴。runs[] に delta ごとのエントリを append していく。設計原則: 既存エントリは上書きしない。",
       "additionalProperties": false,
+      "dependentRequired": { "spec_backfill_declined_sections": ["spec_backfill_declined_at"] },
       "properties": {
+        "spec_backfill_declined_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "不足セクション (振る舞い詳細 / データ項目) の追記提案 (27c-spec-backfill) で「今後この提案を出さない」が最後に選ばれた時刻。抑制の対象セクションは spec_backfill_declined_sections が持つ (本キーは時刻のみ)。本キーの削除で抑制は完全に解除される。writer は phases/delta/SKILL.md の追記提案ブロックのみ。"
+        },
+        "spec_backfill_declined_sections": {
+          "type": "array",
+          "description": "「今後この提案を出さない」で抑制されたセクション名の集合。ここに無いセクションの不足が新たに検知されたら提案は再提示される (セクションが後から増えたときに提案経路が閉じないようにするため)。spec_backfill_declined_at が set でも本キーが欠落している場合は [\"振る舞い詳細\"] として扱う (本キー導入前に declined したプロジェクトの後方互換 — 当時はそのセクションしか存在しなかった)。**抑制の完全解除は spec_backfill_declined_at の削除で行う** — 本キーだけを消すと上記の後方互換フォールバックが効いて [\"振る舞い詳細\"] の抑制が残るため、部分解除の手段としては使えない。空配列も書かない (minItems 1 — 空配列は「全解除」と読めてしまい、正規の解除手段と二重になる)。本キーは spec_backfill_declined_at と必ず同時に存在する (dependentRequired — 時刻なしの本キーは reader が抑制なしとして無視するため、書くなら両方)。writer は phases/delta/SKILL.md の追記提案ブロックのみ。",
+          "items": { "type": "string", "enum": ["振る舞い詳細", "データ項目"] },
+          "minItems": 1,
+          "uniqueItems": true
+        },
         "runs": {
           "type": "array",
           "description": "delta 実行ごとのサマリー。27-change-detect / 27b-screen-edit-detect が初回エントリを作成し、28 / 29 / 29b / 30 が各承認時刻 (impact/screens/figma_approved_at) を追記する。score_total は 29b (screen-edit scoped scoring)、req_promotion は 29c (要件昇格の完了記録) のみが書く。",
