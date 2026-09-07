@@ -23,7 +23,7 @@ description: "Phase 3: Screen docs → main (default) HTML → 3-layer review lo
    実行手順 (a)-(g) と append 経路は `skills/_shared/preflight-gate.md` を Read して従う (本 Gate の SoT)。本 phase の入力契約値:
    - `next_step` = 4b (`ask[]` 0 件なら preamble step 4b = REVERSE_ENGINEERED ファストパス判定へ。`hold[]` の有無は問わない)
    - `gate_before_step` = 14 (Step 14 以降を走らせる前に gate)
-   - `target_artifacts` = `"requirements.json,screens/00-coverage-check.json"` — (b) の `--target-artifacts` にはこのリテラルをそのまま渡す (prose を渡すと path 形でない token として drop される)
+   - `target_artifacts` = `"requirements.json,screens/00-coverage-check.json,screens/*.md"` — (b) の `--target-artifacts` にはこのリテラルをそのまま渡す (prose を渡すと path 形でない token として drop される)。`screens/*.md` は前回 run の Step 17 が積んだ画面仕様の未確定 entry (振る舞い詳細 / データ項目) の再入時安全網 (初回 run では該当 entry が存在しないため無影響。主たる解消点は Step 21 Section 1-F)
    - `append_sources` = subagent (`ayatori-screen-state-builder`) が `assertion_failed: pending_question` を orchestrator (25b-state-pattern-gen) に return、または本 phase 内 skill
 4b. Determine REVERSE_ENGINEERED ファストパス mode (state source は `requirements.json.status` のみ。`session-handoff.md` は human-readable summary であり state SoT ではないため参照しない)。
     If `requirements.json.status == "REVERSE_ENGINEERED"`:
@@ -106,11 +106,20 @@ description: "Phase 3: Screen docs → main (default) HTML → 3-layer review lo
 
    - `screens_human_approved` and `design_save_count < 2` → resume from Step 15 (2nd Confluence save — adds screens/*.md)。※ graphics 判定が上流に入るため、この行に到達する = graphics 解決済み (decision == "skip"、または decision == "generate" かつ `graphics_human_approved`)
    - `design_save_count >= 2` and `figma-state.json.nodes.screens` is empty AND `step22_figma_status != "skipped_stub_mode"` → resume from Step 22
-   - (`figma-state.json.nodes.screens` populated OR `step22_figma_status == "skipped_stub_mode"`) and not `final_approved` → resume from Step 23
+   - (`figma-state.json.nodes.screens` populated OR `step22_figma_status == "skipped_stub_mode"`) and not `final_approved`:
+     - `figma-state.json.scope.status == "blocked"` → **Step 23 に直行させず、下記「blocked のまま最終承認に入るのを防ぐ確認」を先に通す**
+     - それ以外 → resume from Step 23
    - `final_approved` and `step24_completed_at` NOT set → resume from Step 24
    - `step24_completed_at` set and `step25_completed_at` NOT set → resume from Step 25
 
    > **disabled (スタブモード) 経路の resume**: `step22_figma_status = pipeline-state.screens.step22_figma_status` (Step 22 の disabled fallback が書く skip 記録)。disabled では Step 22 が `nodes.screens` を populate しないため、この条件が無いと Step 22 判定行が disabled 環境で永久にマッチし続け、後段の Step 23/24/25 判定に到達できない。disabled の初回 resume は Step 22 に入り fallback が skip 記録を書いて Step 23 へ進む — 以降の resume は記録により Step 23 判定へ抜ける (env `mode` を resume 判定に持ち込まず、artifact だけで決定的に判定できる)。Step 24 / 25 は各 skill 冒頭のスタブ手順 (skill 24 §Step -1 / skill 25 §Step 0) が `step24_completed_at` / `step25_completed_at` を書くため、disabled 経路でも本 resume 規則で Step 25a まで到達できる。
+
+   > **blocked のまま最終承認に入るのを防ぐ確認**。`nodes.screens` が非空 (= Step 22 判定行が既にマッチしない) 状態で `scope.status == "blocked"` の場合、この確認を通さないと `scope.status = "blocked"` と非空の `deferred_remaining` が**無検査で Step 23 (最終承認) を通過して Phase 4 に持ち込まれる** (Step 23 はこれを警告しない)。`docs/figma-plan-limits.md` の「運用手順 B」は人間にこれを読ませる prose だが、cascade 側にも同じゲートを置いて経路として塞ぐ。手順:
+   > 1. `scope` の `status` / `html_files_captured` / `deferred_remaining` / `layout_status` と root `notes` の `blocked_reason` を**そのまま表示**する (件数を丸めない — 「Phase 3 完了」表示だけを見て Figma 出力が揃っていると誤認するのを防ぐのが目的)
+   > 2. AskUserQuestion (`header: "Figma 出力が未完"`) で 2 択: (A) `"Figma 出力を諦めて最終承認へ進む"` — `docs/figma-plan-limits.md` 手順 B-2。選択時のみ Step 23 へ進む / (B) `"ここで停止して Figma を作り直す"` — cascade を止め、`blocked_reason` の種別に応じた手順 (quota なら同 doc 手順 B-0 / B) を案内して終了
+   > 3. ESC / 無応答は (B) 扱い (blocked を素通りさせない側に倒す)
+   >
+   > 判定は `blocked_reason` の種別を問わない (quota 以外の blocked も同じ事故形態)。`nodes.screens` が空の場合は Step 22 判定行が先にマッチし、`skills/22-figma-export/SKILL.md` Step 2.0a の blocked 行が Figma 呼び出し前に同等の確認を行う (二重に聞かない)。
 
    > **25c 採点スキップ防止 (二層防御)**。25b→25c→25d の順序は本 resume ロジック (prose) だけでなく機械的に強制される: (1) 25d/25e skill の Phase 0 に「25c が最新 25b 出力を採点済み」の hard assert、(2) PreToolUse hook `.claude/hooks/enforce-substate-scoring.sh` が `pipeline-state.json` への 25d 承認 / `completed_at_states` 書き込みを 25c 未採点時に exit 2 block。連続 1 セッションで 25b から人間確認へ直行しても 25c を飛ばせない。
 
@@ -142,7 +151,7 @@ description: "Phase 3: Screen docs → main (default) HTML → 3-layer review lo
 > - `screens/_shared/graphics/` (`{graphic_id}.png` グラフィック正典 — raw 無加工コピー、圧縮 ⑫ 非搭載) ← Step 21f が単一 writer (writer 実体は `postprocess-graphics.mjs`。29 は additive のみ)
 > - `graphics/postprocess-manifest.json` (後処理の監査台帳 — 透過検証 verdict / degrade ラベル) ← Step 21f が単一 writer
 > - `scores.json` ← Step 19 (採点、main 視点。`current.coverage_check` フィールドに L1〜L4 再評価結果を含む。sub-state 採点は state-pattern-scores.json に分離)
-> - `figma-state.json` ← Step 17 / 22 (default only) / 24 / 25 / 25e (sub-state append) (FIGMA_MCP_ENABLED=true 時のみ)
+> - `figma-state.json` ← Step 22 (初期化 + default capture) / 24 / 25 / 25e (sub-state append) / delta の 30。**Step 17 は writer ではない** (Figma を触らず、この時点ではファイル自体が未作成)。forward 経路では `FIGMA_MCP_ENABLED=true` のときだけ生成されるが、reverse 経路は P-18 bootstrap が env と無関係に stub を作る
 > - `pipeline-state.json` ← Step 16 / 21 / 22 (disabled fallback: `screens.step22_figma_status` のみ) / 23 / 24 / 25 (`screens.step24_completed_at` / `step25_completed_at` + disabled 時 `step24_figma_status` / `step25_figma_status`) / 25a / 25b / 25c / 25d / 25e (`approvals.*` + `screens.*` + `approvals.completed_at_states`) + Step 15 (`confluence.design.*`) + **21a / 21b / 21c / 21d / 21e / 21f / 21g (`screens.graphics.*` — 各 skill の key 分離に従う。21e は `generated_files[]` / `excluded_slots[]` / `step21e_completed_at` / 中止時 `decision`。21f は `generated_files[].file` の正典パス更新 / `step21f_completed_at` / `transparency_waived[]` / degrade 時の `excluded_slots[]` append・retry 時の entry 削除 + `step21e_completed_at` クリア / 中止時 `decision`。21g はさらに `approvals.graphics_human_approved` + `step21g_approved_at`、却下時の `generated_files`/`excluded_slots`/`decision=skip decided_by=step21g`) + orchestrator (上流 skip 時の `screens.graphics.decision`/`decided_by`、21g 差し戻し routing の `rework_pending` + timestamp クリア — 実体は 21g の `route-rework.mjs` を § Step 21g の指示で起動)** + **ベースライン承認ゲート (screens-lite Route A の lite-4c — `approvals.baseline_approved_at` + `baseline_approved_via` のみ。reverse 経路限定。冪等: `baseline_approved_at` が既 set なら両キーとも触らない)**
 > - `requirements.json` には書かない (INPUT 専用)
 
@@ -411,9 +420,9 @@ artifacts_to_review = [
 
 Read and execute `skills/00-figma-mode-detect/SKILL.md` to resolve `mode` ("enabled" or "disabled"). The skill checks the OS env var `FIGMA_MCP_ENABLED` via Bash (推測禁止). Any value other than `true` resolves to `disabled`; the unset case emits an explicit warn message guiding the user to set the env var.
 
-- `mode == "enabled"`: Steps 17 (Figma capture preparation), 18 (Vision-based review), 22 (Figma export), 24 (design system update), 25 (component build) use Figma MCP.
+- `mode == "enabled"`: Steps 18 (Vision-based review), 22 (Figma export), 24 (design system update), 25 (component build) use Figma MCP. Step 17 も mode を解決するが **Figma には書き込まない** (HTML 生成のみ・両 mode で同一挙動)。
 - `mode == "disabled"`: They operate as MD/HTML stubs or skip. 具体的には:
-  - Step 17 / 18: MD/HTML スタブ実装を実行 (各 skill 参照)
+  - Step 18: MD/HTML スタブ実装を実行 (各 skill 参照)。Step 17 は enabled と同一 (HTML 生成のみ — スタブへの degrade という概念がない)
   - Step 22: Figma 出力を skip、`pipeline-state.json` に `screens.step22_figma_status = "skipped_stub_mode"` を記録して Step 23 へ (`figma-state.json` は作成・更新しない)
   - Step 24 / 25: 各 skill 冒頭の mode 判定スタブ手順が `pipeline-state.json` に `screens.step24_figma_status` / `screens.step25_figma_status = "skipped_stub_mode"` + `step24_completed_at` / `step25_completed_at` を記録して次 step へ進む (Figma 構築 / バインドは実行しない)
   - Step 25e: 完全 skip、`screens.step25e.figma_status = "skipped_stub_mode"` を記録
@@ -484,7 +493,11 @@ Read and execute `skills/17-screen-gen/SKILL.md` をそのまま実行する（�
 > サブエージェントは HTML 文字列を生成して return するだけ。ファイル書き込み（Write）はメインコンテキストが行う。
 > これによりサブエージェントの Write 権限問題を回避する。
 
-`screens/00-screen-list.md` の各画面について、以下の 2 ステップを繰り返す:
+以下のステップを実行する (**Step B-0 は全画面一括で 1 回**、Step B-1 以降が `screens/00-screen-list.md` の画面ごとのループ):
+
+**Step B-0: 画面仕様書 (.md) をメインコンテキストで先に生成する（全画面一括、1 回）**
+
+サブエージェント起動前に、全画面の `screens/{slug}.md`（`{slug}` = `00-screen-list.md` の `画面ファイル` 列。以降のパス表記も同じ）を `skills/17-screen-gen/SKILL.md` の「仕様書（MD）のフォーマット」+「振る舞い詳細の記入規則」+「データ項目の記入規則」に従い**メインコンテキストが生成する**。仕様書生成は要件文書からの導出と `pending-questions.json` への append を伴うため並列化しない（single writer 原則）。これにより Step B-1 のサブエージェントは常に完成済みの .md を Read できる。
 
 **Step B-1: サブエージェントに HTML を生成させる（並列可）**
 
@@ -509,7 +522,7 @@ Agent({
 - skills/17-screen-gen/SKILL.md
 - artifacts/{app_name}/screens/_shared/root-variables.css
 - artifacts/{app_name}/screens/_shared/common-styles.css
-- artifacts/{app_name}/screens/{画面名}.md（存在する場合）
+- artifacts/{app_name}/screens/{slug}.md（Step B-0 で生成済み）
 - artifacts/{app_name}/icons/*.svg（必要なアイコンのみ Read）  ← pictogram のみ。非 pictogram は上記差し替え表に従い削除
 - artifacts/{app_name}/tokens.json
 
@@ -528,9 +541,9 @@ HTML 全文を 1 つのコードブロック（```html ... ```）で返すこと
 ```
 
 同じ画面の各 platform dir / テーマについてもそれぞれ Agent を起動する（出力は platform 別フォルダに分離、default 状態のみ。対象 dirs は上記「platform dirs 数」の展開結果に従う）:
-- `screens/web/{画面名}.html` — Web デスクトップ デフォルト（Figma キャプチャスクリプト付き、1440×900）※ `web_viewports ∋ desktop`（欠落時 desktop 扱い）
-- `screens/web-sm/{画面名}.html` — Web スマホ幅 デフォルト（390×844 固定 `.screen` ラッパー、ブラウザページ体裁 = フォンフレーム装飾 / BottomTab なし）※ `web_viewports ∋ sm`。Agent プロンプトの「body サイズ」行を「`.screen` サイズ: width: 390px; min-height: 844px;（body は全幅グレー背景ラッパー。詳細は skills/17-screen-gen/SKILL.md § Web スマホ幅画面のプレビュー構造）」に差し替える
-- `screens/mobile/{画面名}.html` — モバイル（390×844、BottomTab + フォンフレーム）※ 同様に「body サイズ」行を mobile プレビュー構造（`.screen` 390×844 + border-radius 40px）に差し替える
+- `screens/web/{slug}.html` — Web デスクトップ デフォルト（Figma キャプチャスクリプト付き、1440×900）※ `web_viewports ∋ desktop`（欠落時 desktop 扱い）
+- `screens/web-sm/{slug}.html` — Web スマホ幅 デフォルト（390×844 固定 `.screen` ラッパー、ブラウザページ体裁 = フォンフレーム装飾 / BottomTab なし）※ `web_viewports ∋ sm`。Agent プロンプトの「body サイズ」行を「`.screen` サイズ: width: 390px; min-height: 844px;（body は全幅グレー背景ラッパー。詳細は skills/17-screen-gen/SKILL.md § Web スマホ幅画面のプレビュー構造）」に差し替える
+- `screens/mobile/{slug}.html` — モバイル（390×844、BottomTab + フォンフレーム）※ 同様に「body サイズ」行を mobile プレビュー構造（`.screen` 390×844 + border-radius 40px）に差し替える
 - dual_theme_mode=true の場合: 上記に `--light` / `--dark` suffix を付けた 2 枚ずつ
 - **sub-state HTML (`--empty` / `--loading` / `--error` / 追加状態) は本 step では生成しない** — Step 25b で追加生成される
 
@@ -544,12 +557,12 @@ HTML 全文を 1 つのコードブロック（```html ... ```）で返すこと
 
 ```
 Write({
-  file_path: "artifacts/{app_name}/screens/{platform}/{画面名}.html",
+  file_path: "artifacts/{app_name}/screens/{platform}/{slug}.html",
   content: {Agent が return した HTML 文字列}
 })
 ```
 
-`{platform}` は `web` / `web-sm` / `mobile` のいずれか（Agent に渡したプロンプトと一致させる）。仕様書 `.md` のみ `screens/{画面名}.md`（root）に保存する。
+`{platform}` は `web` / `web-sm` / `mobile` のいずれか（Agent に渡したプロンプトと一致させる）。仕様書 `.md` は Step B-0 でメインコンテキストが `screens/{slug}.md`（root）へ生成済み — Agent の return から `.md` を作らない。
 
 Agent の return が HTML コードブロックを含まない場合（エラー・空応答）は feedback-log.md に Pattern B として記録し、当該ファイルをスキップして次へ進む。
 
@@ -601,7 +614,7 @@ Read and execute `skills/21a-graphic-recommend/SKILL.md`.
 ### Step 21b: グラフィック要否・箇所ヒアリング (Gate)
 Read and execute `skills/21b-graphic-hearing/SKILL.md`.
 
-- 21a の推奨レポート (存在すれば) を参考情報として提示し、要否 (Q1) → 箇所選択を人間ゲートで確定する。
+- 21a の推奨レポート (存在すれば) を参考情報として提示し、要否 (Q1) → 箇所選択 → **箇所ごとの背景透過 (切り抜き) の要否** を人間ゲートで確定する (透過は生成モデルと使える縦横比を決める上流制約のため AI が推測しない)。
 - **「必要」確定** → `graphics/graphic-plan.json` 生成 + `screens.graphics.decision = "generate"` → Step 21c へ。
 - **「不要」** → `decision = "skip"` (decided_by=step21b) → 21c-21g を skip して Step 15 (2nd Confluence save) へ。
 - **「保留」** → 何も書かない (次回 `/ayatori-screens` 再実行時に resume cascade が 21b を再起動)。
@@ -630,7 +643,7 @@ Read and execute `skills/21e-graphic-generate/SKILL.md`.
 Read and execute `skills/21f-graphic-postprocess/SKILL.md`.
 
 - 21e の生成物 `graphics/raw/{graphic_id}.png` を透過検証 (透過 slot のみ — 透過は 21e の生成段階で作られるため本 step は検証。I-3 の結論) して、raw バイト無加工で正典 `screens/_shared/graphics/{graphic_id}.png` に置く (圧縮 ⑫ は非搭載 — I-4 Skip + ユーザー判断でスコープ除外。再起票の受け皿は設計 §11)。人間ゲートなし — ローカル処理のみ (課金なし) で正常系は再質問しない (P4-07)。
-- 記録: 成功のたびに `screens.graphics.generated_files[].file` を正典パスへ更新 (21g/29 の埋め込みはこの正典参照を使う)。pending が空になったら `screens.graphics.step21f_completed_at` を set → **Step 21g へ**。監査台帳は `graphics/postprocess-manifest.json` (透過検証 verdict / degrade ラベル — 21g の配置判断材料)。
+- 記録: 成功のたびに `screens.graphics.generated_files[].file` を正典パスへ更新 (21g/29 の埋め込みはこの正典参照を使う)。pending が空になったら `screens.graphics.step21f_completed_at` を set → **Step 21g へ**。監査台帳は `graphics/postprocess-manifest.json` (透過検証 verdict / degrade ラベル — 21g/29 が仕様書「使用グラフィック」節の透過実値に使う)。
 - **透過検証 fail / 後処理失敗** → degrade 分岐 (設計 §8-4 と同型): **そのまま採用** (`transparency_waived[]` にラベル記録して不透明のまま正典化) / **リトライ** (当該 `generated_files[]` entry 削除 + `step21e_completed_at` クリア → 21e から再生成) / **slot 除外** (`excluded_slots[]` に理由付き記録) / **ブロック中止** → `decision = "skip"` (decided_by=step21f) で 21g を skip し Step 15 (2nd Confluence save) へ / **保留** → 何も書かない (`step21f_completed_at` 未 set = 次回 resume cascade が 21f を再起動する signal)。全 slot 除外はブロック中止と同義に扱う。
 
 ### Step 21g: グラフィック埋め込み + 承認 (Gate、POCTEAMA-190)
@@ -659,7 +672,7 @@ Read and execute `skills/21g-graphic-embed-review/SKILL.md`.
 #### 実行手順
 
 1. **Resume mode 判定 (P-15)** — main context で `figma-state.json.scope.status` を Read:
-   - `"partial_success"` / `"in_progress"` / `"blocked"` → Resume mode。Q1 と対象ファイル列挙をスキップし、`scope.user_selected` と `scope.deferred_remaining` を採用 (Q2 は廃止のため Resume でも質問なし)。サブエージェント呼び出しの prompt に `resume: true` を含める
+   - `"partial_success"` / `"in_progress"` / `"blocked"` → Resume mode。**ただし `"blocked"` で root `notes` に `blocked_reason=figma_plan_quota` がある場合は自動 Resume しない** — Starter / View・Collab シートでは月次累積のため retry は残量を焼くだけ (有料プラン + Dev/Full シートは日次/分次だが、いずれの帯でも自動 Resume はしない)、`skills/22-figma-export/SKILL.md` Step 2.0a の blocked 行 (quota 分岐) に従いユーザー確認を先に行う。それ以外は Q1 と対象ファイル列挙をスキップし、`scope.user_selected` と `scope.deferred_remaining` を採用 (Q2 は廃止のため Resume でも質問なし)。サブエージェント呼び出しの prompt に `resume: true` を含める
    - 未設定 or `"success"` → 通常フロー (下の手順 2 へ)
 
    **Resume 確定後、Layout 選択 Q を追加で 1 問 (P-15)**: 「完了後の grid layout で既存 {M} 件のフレーム位置を上書きする可能性があります」を AskUserQuestion で告知し、`full` / `new_only` / `skip` から選ばせる。結果を `resume_layout_mode` として agent prompt に渡し、同時に `figma-state.json.scope.resume_layout_mode` にも記録。詳細は `skills/22-figma-export/SKILL.md` Step 2.0a 手順 3 を参照。
@@ -680,6 +693,7 @@ Agent({
   prompt: """
 mode: orchestrator
 resume: {true|false}
+quota_confirmed: {true|false}   # quota blocked からの再開時のみ true (Step 2.0a で user 確認済)
 resume_layout_mode: {"full" | "new_only" | "skip" | null}
 app_name: {app_name}
 file_key: {figma-state.json.file_key}
@@ -691,7 +705,10 @@ target_files: {target_files JSON}   # default のみ
 })
 ```
 
-5. **Return 受信** — サブエージェントは `< 500 char` の summary (`stale_regenerated=N` 含む) を返す。main は内容をそのままユーザーに表示し、`figma-state.json` (サブエージェントが直接 Write 済み) を Read して結果を確認後、Step 23 へ進む。`stale_regenerated` が高い場合 (>10%) は離席かスリープ抑止失敗の兆候としてユーザーに通知。
+5. **Return 受信** — サブエージェントは `< 500 char` の summary (`stale_regenerated=N` 含む) を返す。main は内容をそのままユーザーに表示し、`figma-state.json` (サブエージェントが直接 Write 済み) を Read して結果を確認後、Step 23 へ進む。**ただし summary が `reason: figma_plan_quota` (status: blocked) の場合は Step 23 へ進まず停止する。案内する手順は `figma-state.json` の capture 件数で分岐させる** — 一律にスタブ運用を提案してはならない (`docs/figma-plan-limits.md` の状況判定表と同じ 3 分岐):
+   - **capture 0 件** (`nodes.screens` 空) → 手順 A: `FIGMA_MCP_ENABLED=false` でのスタブ運用への切り替えを提案する
+   - **全件 capture 済・grid layout のみ拒否** (`deferred_remaining` が `[]` で `layout_status = "pending"`。summary に `layout=blocked, not auto-resumable, manual layout re-run required` が付く) → 手順 B-0: **スタブ切替は不要**。frame 削除も再 capture も不要で、quota 回復後に grid layout だけ単独再実行すれば復旧すると案内する (summary の文言をそのまま user に伝える)
+   - **一部だけ capture 済** (`nodes.screens` 非空かつ全 target に足りない) → 手順 B: `scope` の実数値を提示し、諦めて完走 (B-2) / 作り直し (B-3) を user に選ばせる。**この状態で無条件にスタブ切替を提案すると、Figma が中途半端なまま最終承認に入る** (同 doc が明示的に警告している誤用)`stale_regenerated` が高い場合 (>10%) は離席かスリープ抑止失敗の兆候としてユーザーに通知。
 
 #### サブエージェントが内部で扱う詳細 (main context は知らなくて良い)
 
