@@ -13,12 +13,16 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { join, dirname, basename } from "node:path";
 import { tmpdir } from "node:os";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import {
   STATUS,
+  SPEC_REQUIRED_SECTIONS,
   DEFAULT_THRESHOLDS,
+  readThresholds,
   loadProject,
   detectPhase0b,
   detectPhase1a,
@@ -34,9 +38,76 @@ import {
   detectPhase6,
   buildStatus,
   recommendNextAction,
+  renderMarkdown,
 } from "./pipeline-status.mjs";
 
 const T = DEFAULT_THRESHOLDS;
+
+// ── readThresholds (共有 parser 経由 + fail-soft) ─────────────
+
+test("readThresholds: pipeline.yaml から dotted key で閾値を読む (行位置に依存しない)", () => {
+  const root = mkdtempSync(join(tmpdir(), "pipeline-status-test-"));
+  try {
+    // 旧 regex 実装が誤読していた形: 別 section の max_attempts が requirements より先に
+    // 現れ、per_axis_min と max_attempts が隣接しない
+    writeFileSync(
+      join(root, "pipeline.yaml"),
+      `screens:
+  loop:
+    control_step: 20-loop-design
+    max_attempts: 5
+design:
+  loop:
+    control_step: 11-wcag-mapping
+    max_attempts: 6
+requirements:
+  loop:
+    per_axis_min: 14
+    pass_condition: "attempts[-1].total >= 90 AND all axes >= per_axis_min"
+    max_attempts: 4
+`,
+      "utf8"
+    );
+    const t = readThresholds(root);
+    assert.equal(t.req_per_axis_min, 14);
+    assert.equal(t.req_pass_total, 90);
+    assert.equal(t.req_max_attempts, 4);
+    // WCAG loop (08↔11) と review loop (20) は別 loop — 閾値の bind 先も別 (誤 bind 回帰の固定)
+    assert.equal(t.wcag_max_attempts, 6);
+    assert.equal(t.design_max_attempts, 5);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("readThresholds: pipeline.yaml 不在 / subset 外 / key 不在は既定値に fail-soft", () => {
+  const missing = mkdtempSync(join(tmpdir(), "pipeline-status-test-"));
+  try {
+    assert.deepEqual(readThresholds(missing), DEFAULT_THRESHOLDS);
+    writeFileSync(join(missing, "pipeline.yaml"), "a: &anchor 1\n", "utf8"); // subset 外
+    assert.deepEqual(readThresholds(missing), DEFAULT_THRESHOLDS);
+    writeFileSync(join(missing, "pipeline.yaml"), "other: 1\n", "utf8"); // key 不在
+    assert.deepEqual(readThresholds(missing), DEFAULT_THRESHOLDS);
+  } finally {
+    rmSync(missing, { recursive: true, force: true });
+  }
+});
+
+test("readThresholds: fallback 発生時は stderr へ warning を出す (黙って縮退しない)", () => {
+  const root = mkdtempSync(join(tmpdir(), "pipeline-status-test-"));
+  const errors = [];
+  const orig = console.error;
+  console.error = (...a) => errors.push(a.join(" "));
+  try {
+    writeFileSync(join(root, "pipeline.yaml"), "a: &anchor 1\n", "utf8"); // subset 外
+    assert.deepEqual(readThresholds(root), DEFAULT_THRESHOLDS);
+  } finally {
+    console.error = orig;
+    rmSync(root, { recursive: true, force: true });
+  }
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /warning: pipeline\.yaml の閾値読取に失敗/);
+});
 
 // ── fixture ヘルパ ───────────────────────────────────────────
 // makeRepo() → { repoRoot, artifactsRoot, app(name, spec), cleanup() }
@@ -739,7 +810,7 @@ test("buildStatus E2E: 新規プロジェクトは /ayatori-question を、全�
     },
     "requirements/00-raw-input.md": "# raw",
     "screens/00-screen-list.md": "# 画面一覧",
-    "screens/01-home.md": "# ホーム",
+    "screens/01-home.md": "# ホーム\n\n## 振る舞い詳細\n\n## データ項目\n",
     "design-brief.yaml": "schema: draft:v1",
     "tokens.json": { color: {} },
     "scores.json": { app_name: "finished", current: { attempt: 1, total: 95, ai_improvable_deductions: 0 } },
@@ -751,6 +822,20 @@ test("buildStatus E2E: 新規プロジェクトは /ayatori-question を、全�
   assert.equal(byName.finished.next_action, null); // all complete (sub-state は user skip)
   // 存在しないプロジェクト指定はエラー
   assert.match(buildStatus(repoRoot, ["nope"]).error, /project not found/);
+  cleanup();
+});
+
+test("buildStatus: /ayatori-export-en の EN ミラー ({app}-en) をプロジェクトとして列挙しない", () => {
+  const { repoRoot, app, cleanup } = makeRepo();
+  app("myapp", { "feedback-log.md": "# log" });
+  // EN ミラー: requirements.json 等はあるが state 無し — 列挙すると Phase 1b 進行中と誤判定される
+  app("myapp-en", { "requirements.json": { app_name: "myapp-en" } });
+  // sibling (元プロジェクト) が無い "-en" 終わりは正規プロジェクトとして残す (誤除外しない)
+  app("solo-en", { "feedback-log.md": "# log" });
+  const names = buildStatus(repoRoot).projects.map((p) => p.app_name).sort();
+  assert.deepEqual(names, ["myapp", "solo-en"]);
+  // ミラーの明示指定もプロジェクト扱いしない
+  assert.match(buildStatus(repoRoot, ["myapp-en"]).error, /project not found/);
   cleanup();
 });
 
@@ -783,7 +868,7 @@ test("dispatcher: 完走後に未消費の手編集があれば /ayatori-delta �
     },
     "requirements/00-raw-input.md": "# raw",
     "screens/00-screen-list.md": "# 画面一覧",
-    "screens/01-home.md": "# ホーム",
+    "screens/01-home.md": "# ホーム\n\n## 振る舞い詳細\n\n## データ項目\n",
     "design-brief.yaml": "schema: draft:v1",
     "tokens.json": { color: {} },
     "scores.json": { current: { attempt: 1, total: 95, ai_improvable_deductions: 0 } },
@@ -805,6 +890,258 @@ test("dispatcher: 完走後に未消費の手編集があれば /ayatori-delta �
   const clean = buildStatus(repoRoot, ["clean"]).projects[0];
   assert.equal(clean.pending_screen_edits, 0);
   assert.equal(clean.next_action, null);
+  cleanup();
+});
+
+test("dispatcher: 完走後に不足セクションのある旧フォーマット仕様書があれば追記提案を案内する", () => {
+  const { repoRoot, app, cleanup } = makeRepo();
+  const doneFiles = (extraFiles = {}) => ({
+    "pipeline-state.json": {
+      ...completedStateBase,
+      approvals: { ...completedStateBase.approvals, retro_completed_at: "t" },
+      screens: { step24_completed_at: "t", step25_completed_at: "t", state_pattern_skipped: true },
+    },
+    "requirements/00-raw-input.md": "# raw",
+    "screens/00-screen-list.md": "# 画面一覧",
+    "design-brief.yaml": "schema: draft:v1",
+    "tokens.json": { color: {} },
+    "scores.json": { current: { attempt: 1, total: 95, ai_improvable_deductions: 0 } },
+    ...extraFiles,
+  });
+  // 旧フォーマット 2 件 (両セクションなし / データ項目だけなし) + 新フォーマット 1 件 →
+  // 旧のみ数え、追記提案を推奨する (00-* / _* は仕様書の母集団に入れない)
+  app("legacy", doneFiles({
+    "screens/01-home.md": "# ホーム",
+    "screens/02-list.md": "# 一覧\n\n## 振る舞い詳細\n",
+    "screens/03-detail.md": "# 詳細\n\n## 振る舞い詳細\n\n## データ項目\n",
+    "screens/_note.md": "# メモ",
+  }));
+  const legacy = buildStatus(repoRoot, ["legacy"]).projects[0];
+  assert.equal(legacy.legacy_spec_screens, 2);
+  assert.equal(legacy.next_action.command, "/ayatori-delta");
+  assert.match(legacy.next_action.reason, /不足セクション/);
+  // 未消費の手編集が併存する場合は手編集の案内が先勝ち (カウンタは両方出す)
+  app("both", doneFiles({
+    "screens/01-home.md": "# ホーム",
+    "delta/edited-screens.json": {
+      app_name: "x",
+      entries: [{ screen: "01-home", platform: "web", path: "screens/web/01-home.html", edited_at: "t", tool: "Edit", consumed_by_run: null }],
+    },
+  }));
+  const both = buildStatus(repoRoot, ["both"]).projects[0];
+  assert.match(both.next_action.reason, /手編集/);
+  assert.equal(both.legacy_spec_screens, 1);
+  // 未完走プロジェクトは案内対象にしない (Phase 3 のループが新フォーマットで生成し直すため)
+  app("inflight", {
+    "pipeline-state.json": { schema_version: "2026-05-22", app_name: "x", approvals: { step07_approved_at: "t" } },
+    "requirements/00-raw-input.md": "# raw",
+    "screens/00-screen-list.md": "# 画面一覧",
+    "screens/01-home.md": "# ホーム",
+  });
+  const inflight = buildStatus(repoRoot, ["inflight"]).projects[0];
+  assert.equal(inflight.legacy_spec_screens, 0);
+  cleanup();
+});
+
+test("dispatcher: 追記提案の抑制はセクション単位 — 抑制外の不足が残れば再提案する", () => {
+  const { repoRoot, app, cleanup } = makeRepo();
+  const declinedFiles = (delta, spec) => ({
+    "pipeline-state.json": {
+      ...completedStateBase,
+      approvals: { ...completedStateBase.approvals, retro_completed_at: "t" },
+      screens: { step24_completed_at: "t", step25_completed_at: "t", state_pattern_skipped: true },
+      delta,
+    },
+    "requirements/00-raw-input.md": "# raw",
+    "screens/00-screen-list.md": "# 画面一覧",
+    "design-brief.yaml": "schema: draft:v1",
+    "tokens.json": { color: {} },
+    "scores.json": { current: { attempt: 1, total: 95, ai_improvable_deductions: 0 } },
+    "screens/01-home.md": spec,
+  });
+  const DECLINED_AT = "2026-08-01T10:00:00+09:00";
+
+  // ① 抑制対象 == 不足セクション → 推奨は出さず、ℹ️ カウンタ表示だけ残す
+  app("declined-all", declinedFiles(
+    { spec_backfill_declined_at: DECLINED_AT, spec_backfill_declined_sections: ["振る舞い詳細", "データ項目"] },
+    "# ホーム"));
+  const all = buildStatus(repoRoot, ["declined-all"]).projects[0];
+  assert.equal(all.next_action, null);
+  assert.equal(all.legacy_spec_screens, 1);
+  const md = renderMarkdown({ projects: [all] });
+  assert.match(md, /ℹ️ 不足セクションのある画面仕様書 1 件 \(振る舞い詳細 \/ データ項目\)/);
+
+  // ② sections キー欠落 (本キー導入前の decline) → 振る舞い詳細 のみ抑制済みとみなす。
+  //    データ項目 も欠けているので提案経路は生きている → 推奨する
+  app("declined-legacy", declinedFiles({ spec_backfill_declined_at: DECLINED_AT }, "# ホーム"));
+  const legacy = buildStatus(repoRoot, ["declined-legacy"]).projects[0];
+  assert.equal(legacy.next_action.command, "/ayatori-delta");
+  assert.match(legacy.next_action.reason, /データ項目/);
+
+  // ③ sections キー欠落 + 不足は 振る舞い詳細 だけ → 抑制済みなので推奨しない
+  app("declined-legacy-only", declinedFiles(
+    { spec_backfill_declined_at: DECLINED_AT }, "# ホーム\n\n## データ項目\n"));
+  const only = buildStatus(repoRoot, ["declined-legacy-only"]).projects[0];
+  assert.equal(only.next_action, null);
+  assert.deepEqual(only.legacy_spec_sections, ["振る舞い詳細"]);
+  cleanup();
+});
+
+test("dispatcher: 部分抑制 — 推奨行の件数は提案できるセクションの母集団で数え、抑制中の不足は ℹ️ 行で残す", () => {
+  const { repoRoot, app, cleanup } = makeRepo();
+  const files = (delta, specs) => ({
+    "pipeline-state.json": {
+      ...completedStateBase,
+      approvals: { ...completedStateBase.approvals, retro_completed_at: "t" },
+      screens: { step24_completed_at: "t", step25_completed_at: "t", state_pattern_skipped: true },
+      delta,
+    },
+    "requirements/00-raw-input.md": "# raw",
+    "screens/00-screen-list.md": "# 画面一覧",
+    "design-brief.yaml": "schema: draft:v1",
+    "tokens.json": { color: {} },
+    "scores.json": { current: { attempt: 1, total: 95, ai_improvable_deductions: 0 } },
+    ...specs,
+  });
+  const DECLINED_AT = "2026-08-01T10:00:00+09:00";
+  // 振る舞い詳細 を抑制済み。01 = 振る舞い詳細 だけ欠け / 02 = データ項目 だけ欠け / 03 = 両方欠け
+  app("partial", files(
+    { spec_backfill_declined_at: DECLINED_AT, spec_backfill_declined_sections: ["振る舞い詳細"] },
+    {
+      "screens/01-a.md": "# A\n\n## データ項目\n",
+      "screens/02-b.md": "# B\n\n## 振る舞い詳細\n",
+      "screens/03-c.md": "# C\n",
+    }));
+  const p = buildStatus(repoRoot, ["partial"]).projects[0];
+  assert.equal(p.legacy_spec_screens, 3);                       // 全体の不足件数
+  assert.deepEqual(p.legacy_spec_sections, ["振る舞い詳細", "データ項目"]);
+  assert.deepEqual(p.legacy_spec_declined_sections, ["振る舞い詳細"]);
+  assert.equal(p.next_action.kind, "spec-backfill");
+  // 提案できるのは データ項目 が欠けた 02 / 03 の 2 件 — 01 (抑制中のセクションだけ欠け) は数えない
+  assert.match(p.next_action.reason, /画面仕様書 2 件 \(データ項目\)/);
+  const md = renderMarkdown({ projects: [p] });
+  assert.match(md, /ℹ️ 抑制中 \(再提案なし\) の不足セクション: 振る舞い詳細/);
+  assert.doesNotMatch(md, /ℹ️ 不足セクションのある画面仕様書/); // 推奨行と二重には出さない
+
+  // 抑制記録が配列でない (writer の書き崩れ) → 例外で全体を落とさず、後方互換 fallback と同じ扱い
+  app("malformed", files(
+    { spec_backfill_declined_at: DECLINED_AT, spec_backfill_declined_sections: { "振る舞い詳細": true } },
+    { "screens/01-a.md": "# A\n" }));
+  let m;
+  assert.doesNotThrow(() => { m = buildStatus(repoRoot, ["malformed"]).projects[0]; });
+  assert.deepEqual(m.legacy_spec_declined_sections, ["振る舞い詳細"]);
+  assert.match(m.next_action.reason, /1 件 \(データ項目\)/);
+
+  // 手編集の推奨も kind を持つ (ℹ️ 行の重複抑止は文面ではなく kind で判定する)
+  app("edits", files({}, {
+    "screens/01-a.md": "# A\n",
+    "delta/edited-screens.json": {
+      app_name: "x",
+      entries: [{ screen: "01-a", platform: "web", path: "screens/web/01-a.html", edited_at: "t", tool: "Edit", consumed_by_run: null }],
+    },
+  }));
+  const e = buildStatus(repoRoot, ["edits"]).projects[0];
+  assert.equal(e.next_action.kind, "screen-edit");
+  const emd = renderMarkdown({ projects: [e] });
+  assert.equal((emd.match(/手編集/g) || []).length, 1, "推奨行と ℹ️ 行で二重に出さない");
+  assert.match(emd, /ℹ️ 不足セクションのある画面仕様書 1 件/); // 手編集が先勝ちでも旧フォーマットの ℹ️ は出す
+  cleanup();
+});
+
+test("契約: bash 述語 (phases/delta / 27c) のセクション label == SPEC_REQUIRED_SECTIONS", () => {
+  // 同じ判定を bash で複製している 2 skill の `grep -LE '^##[[:space:]]*<label>'` から label を抜き、
+  // JS 側の定義と集合一致を機械で確認する。片方だけ直すと status と delta 提案の検知結果が食い違う。
+  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const expected = [...SPEC_REQUIRED_SECTIONS.map((s) => s.label)].sort();
+  for (const rel of ["phases/delta/SKILL.md", "skills/27c-spec-backfill/SKILL.md"]) {
+    const text = readFileSync(join(repoRoot, rel), "utf8");
+    const labels = [...text.matchAll(/grep -LE '\^##\[\[:space:\]\]\*([^']+)'/g)].map((m) => m[1]);
+    assert.deepEqual([...new Set(labels)].sort(), expected, `${rel} の bash 述語 label が JS 定義と一致しない`);
+  }
+});
+
+test("契約: SPEC_REQUIRED_SECTIONS の正規表現 == bash 述語 grep -LE '^##[[:space:]]*…' (実際に grep を走らせて突合)", () => {
+  // JS と bash が同じ文書を別々に判定すると、status / index の表示と delta の追記提案が食い違う。
+  // 特に `\s` は改行を含むため、素の `##` 行の次行が見出し語で始まる文書を JS だけが「記載あり」と
+  // 読んでいた。行単位で動く grep と同じ答えになることを、境界入力ごとに実行して確認する。
+  const dir = mkdtempSync(join(tmpdir(), "ayatori-sec-regex-"));
+  const cases = {
+    "plain.md": "# X\n\n## データ項目\n",                 // 素直な見出し → 記載あり
+    "no-space.md": "# X\n\n##データ項目\n",              // 空白 0 個 → 記載あり
+    "tab.md": "# X\n\n##\tデータ項目\n",                 // タブ → 記載あり
+    "fullwidth.md": "# X\n\n##　データ項目\n",           // 全角空白 → 記載あり (UTF-8 ロケール)
+    "newline.md": "# X\n\n##\nデータ項目\n",            // 見出し語が次行 → 記載なし (改行は跨がない)
+    "h3.md": "# X\n\n### データ項目\n",                  // レベル違い → 記載なし
+    "inline.md": "# X\n\n本文中の ## データ項目 の話\n",  // 行頭でない → 記載なし
+    "other.md": "# X\n\n## 振る舞い詳細\n",              // 別セクションのみ → 記載なし
+  };
+  for (const [name, body] of Object.entries(cases)) writeFileSync(join(dir, name), body, "utf8");
+  const sec = SPEC_REQUIRED_SECTIONS.find((s) => s.label === "データ項目");
+  const jsMissing = Object.entries(cases).filter(([, body]) => !sec.re.test(body)).map(([n]) => n).sort();
+  // bash 側と同じ形で実行 (phases/delta / 27c の述語をそのまま)。-L は「一致しないファイル」を列挙する
+  const r = spawnSync("grep", ["-LE", "^##[[:space:]]*データ項目", ...Object.keys(cases).map((n) => join(dir, n))],
+    { encoding: "utf8", env: { ...process.env, LC_ALL: "en_US.UTF-8" } });
+  const grepMissing = r.stdout.split("\n").filter(Boolean).map((p) => basename(p)).sort();
+  rmSync(dir, { recursive: true, force: true });
+  assert.deepEqual(jsMissing, ["h3.md", "inline.md", "newline.md", "other.md"], "JS 側の判定が期待と異なる");
+  assert.deepEqual(grepMissing, jsMissing, "bash 述語 (grep) と JS 正規表現の判定が一致しない");
+});
+
+test("契約: SPEC_REQUIRED_SECTIONS の label 集合 == schema の declined_sections enum", () => {
+  // 抑制記録 (delta.spec_backfill_declined_sections) は検知セクション名をそのまま値に持つ。
+  // schema の enum と実装の label がずれると、正当な値が schema 違反になる / 逆に
+  // 存在しないセクション名が通る。どちらも黙って壊れるので機械で突合する。
+  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const schema = JSON.parse(readFileSync(join(repoRoot, "schemas/pipeline-state.schema.json"), "utf8"));
+  const enumValues = schema.properties.delta.properties.spec_backfill_declined_sections.items.enum;
+  assert.deepEqual(
+    [...SPEC_REQUIRED_SECTIONS.map((s) => s.label)].sort(),
+    [...enumValues].sort(),
+  );
+});
+
+test("dispatcher: 旧フォーマット検知は 2 セクションを独立に見る (片方欠けも数える)", () => {
+  const { repoRoot, app, cleanup } = makeRepo();
+  const done = (specs) => ({
+    "pipeline-state.json": {
+      ...completedStateBase,
+      approvals: { ...completedStateBase.approvals, retro_completed_at: "t" },
+      screens: { step24_completed_at: "t", step25_completed_at: "t", state_pattern_skipped: true },
+    },
+    "requirements/00-raw-input.md": "# raw",
+    "screens/00-screen-list.md": "# 画面一覧",
+    "design-brief.yaml": "schema: draft:v1",
+    "tokens.json": { color: {} },
+    "scores.json": { current: { attempt: 1, total: 95, ai_improvable_deductions: 0 } },
+    ...specs,
+  });
+  // 振る舞い詳細 だけ欠ける / データ項目 だけ欠ける / 両方欠ける → いずれも 1 件と数える
+  app("only-behavior-missing", done({ "screens/01-home.md": "# ホーム\n\n## データ項目\n" }));
+  assert.equal(buildStatus(repoRoot, ["only-behavior-missing"]).projects[0].legacy_spec_screens, 1);
+  app("only-data-missing", done({ "screens/01-home.md": "# ホーム\n\n## 振る舞い詳細\n" }));
+  assert.equal(buildStatus(repoRoot, ["only-data-missing"]).projects[0].legacy_spec_screens, 1);
+  app("both-missing", done({ "screens/01-home.md": "# ホーム\n" }));
+  assert.equal(buildStatus(repoRoot, ["both-missing"]).projects[0].legacy_spec_screens, 1);
+  // 両方揃った新フォーマットは 0 件 (誤検知しない) → 推奨も出ない
+  app("new-format", done({ "screens/01-home.md": "# ホーム\n\n## 振る舞い詳細\n\n## データ項目\n" }));
+  const nf = buildStatus(repoRoot, ["new-format"]).projects[0];
+  assert.equal(nf.legacy_spec_screens, 0);
+  assert.equal(nf.next_action, null);
+  // 行頭アンカー: ### レベルの見出しは「記載あり」と誤認しない
+  app("h3-only", done({ "screens/01-home.md": "# ホーム\n\n### 振る舞い詳細\n\n### データ項目\n" }));
+  assert.equal(buildStatus(repoRoot, ["h3-only"]).projects[0].legacy_spec_screens, 1);
+  cleanup();
+});
+
+test("dispatcher: reverse 基線プロジェクトでも旧フォーマット仕様書を数える (legacy_spec_screens)", () => {
+  const { repoRoot, app, cleanup } = makeRepo();
+  // baselineFiles の screens/01-home.md は必須セクションを持たない → 1 件と数える
+  // (scanLegacySpecs の isBaselineOnly 分岐の回帰ガード)
+  app("bl-legacy", baselineFiles("bl-legacy", "screens-lite-gate"));
+  const proj = buildStatus(repoRoot, ["bl-legacy"]).projects[0];
+  assert.equal(proj.legacy_spec_screens, 1);
+  // 推奨は基線誘導 (/ayatori-add-feature) が先勝ちのまま変えない
+  assert.equal(proj.next_action.command, "/ayatori-add-feature");
   cleanup();
 });
 

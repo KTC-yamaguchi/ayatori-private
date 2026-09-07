@@ -1,0 +1,69 @@
+{
+  "_comment": "AYATORI プロジェクト共通設定。Step 08 デザインブレストは AYATORI 内部完結のため、必須プラグインはありません。Figma 等の追加プラグインは将来 scripts/setup.sh の PLUGINS 配列と本 enabledPlugins に追記する想定です。permissions.allow は subagent (figma-capture-runner / ayatori-sample-html-builder / ayatori-build-tokens-runner / ayatori-screen-state-builder) が main から継承できない Bash/Write 権限を明示的に許可するためのもの。ayatori-code-analysis-worker (tools: Read, Bash, Glob、Write 非保持) は既存の Bash 許可 (node/grep/cat/ls 等) の範囲内で動くため allow への追加なし (ayatori-requirements-auditor と同型)。ayatori-screen-state-builder Phase 2-1 の HTML 構造抽出 (sed/grep/awk/cat) と self-check (md5/wc/head/tail/diff) を追加。hooks (PreToolUse Write|Edit → schema-light-check.sh) を追加。matcher 'Write|Edit' は Claude Code 公式仕様で exact match (letters/digits/_/| のみ許容、anchored)、MultiEdit / NotebookEdit は意図的に非対象。command 値は ${CLAUDE_PROJECT_DIR} 接頭辞で repo root からの絶対パス展開 (公式推奨、subagent context / 別 cwd 起動でも堅牢)。schema-light-check.sh は fail-open 設計で、jq 不在 / parse 失敗 / 想定外エラーは exit 0 で素通り、明確に違反検出した場合のみ exit 2 で block。Step 07 監査用に ayatori-requirements-auditor (tools: Bash, Read、Write 非保持のため permissions.allow への追加なし) を投入し、schema-light-check.sh に R7 (generation-provenance.json の specifics 検証) を追加した (hooks matcher は既存 Write|Edit で発火、変更不要)。Steps 07/10/13/16/21/23/26 の人間ゲート preview 用に OS 同梱の opener を許可: macOS=open / Linux=xdg-open / Windows=cmd.exe (`cmd.exe /c start \"\" \"<file>\"` 形で起動、`start` は cmd.exe builtin で PATH に無いため単独許可しても機能しない)。auto-open は step ごとに 1 ファイルのみ、失敗時は link-only fallback。これらの opener entry は **Bash tool が直接 opener を叩く** 人間ゲート preview 用: scripts/setup-image-key.mjs (POCTEAMA-408 のキー設定 CLI) は opener を node から spawn するため本 entry を経由せず Bash(node:*) の範囲で動き、起動可否は script 側が spawnSync の status で判定して失敗時は同じく link-only fallback (パス提示) に degrade する。Bash(jq:*) を追加: Step 12 の semantic.icon 語彙検証 (generate-tokens.md の jq ワンライナー) を permission prompt なしで実行可能にするため (4ロールレビューで「prompt 拒否時に検証が無言で素通りする」リスクを指摘されたもの)。Write|Edit hook には schema-light-check.sh に加え backup-on-edit.sh も登録している。後者は人間ゲート確認対象成果物 (requirements/*.md / design-samples / style-guide.md / tokens.json / screens 配下の成果物 / figma-state.json / pipeline-improvements.md) を上書き・編集する直前に、現行内容を app ルート直下の _backup/ へ元の相対構造をミラーして時刻付きで複製する (artifacts/{app}/_backup/{相対dir}/{stem}.{時刻}.{ext})。deliverable ディレクトリ内に置くとパイプラインの再帰 grep / find が誤検出するため、scan 対象ツリーの外へ退避している。直前バックアップと md5 が同一ならスキップ、新規生成 (未存在) は対象外、fail-open のため複製失敗でも Write をブロックしない。対象成果物の正本は pipeline.yaml の artifact_backup セクション。バックアップの削除はユーザーが手動で行う。Write|Edit には PostToolUse hook lint-screen-html.sh も登録している。完成プロジェクト (final_approved / completed_at_states) の screens/{web,web-sm,mobile}/*.html をパイプライン外で編集した直後に lint-screen-colors.mjs --check を自動実行し、編集を artifacts/{app}/delta/edited-screens.json に記録する (fail-open、常に exit 0 で block しない。全画面 report の再生成は screen-edit delta の skill 側が担当)。PreToolUse Write|Edit に enforce-substate-scoring.sh を追加。Sub-state 生成フロー (Step 25b→25c→25d→25e) で採点 Step 25c を飛ばせないようにする機械ゲート。書き込み後の pipeline-state.json が未採点 (unscored) のとき、25d/25e territory キーをディスク現行値から新規導入 / 値変更する Write/Edit を exit 2 で block する (同値 carry-over は block しないため差し戻し→再生成の正規ループは詰まらない。時刻比較は epoch 換算で TZ 表記混在に安全)。判定仕様と territory キー一覧の SoT は pipeline.yaml の screens.state_pattern_gate_enforcement.layer2_hook を参照 (本コメントには一覧を重複記載しない)。fail-open (jq 不在 / parse 失敗 / Edit simulate 不能等は exit 0)。skill 側 Phase 0 assert (25d / 25e) が早期・明示の第 1 層、本 hook が機械強制の最後の砦 (二層防御)。Bash(npx:*) は Bash(npx style-dictionary:*) に絞っている: 正当な npx 利用は Step 12 の style-dictionary build (repo root node_modules 解決 = lockfile 固定) のみで、無制限 npx 許可は任意外部パッケージの即時実行 (サプライチェーンリスク) を許すため。",
+  "enabledPlugins": {},
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(rm -rf artifacts/*/build)",
+      "Bash(rm -rf artifacts/*/build/*)",
+      "Bash(rm artifacts/*/build/*)",
+      "Bash(ls:*)",
+      "Bash(npm:*)",
+      "Bash(npx style-dictionary:*)",
+      "Bash(node:*)",
+      "Bash(jq:*)",
+      "Bash(cat:*)",
+      "Bash(sed:*)",
+      "Bash(grep:*)",
+      "Bash(awk:*)",
+      "Bash(md5:*)",
+      "Bash(md5sum:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(diff:*)",
+      "Bash(open:*)",
+      "Bash(xdg-open:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(command -v:*)",
+      "Write(./artifacts/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/schema-light-check.sh",
+            "timeout": 8000
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/backup-on-edit.sh",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/enforce-substate-scoring.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/lint-screen-html.sh",
+            "timeout": 8000
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -291,7 +291,7 @@ screens:
     # sub-state (25b inherit_main) には main HTML 経由で自動継承。v1 は default 状態のみ対象。
 
     - 21a-graphic-recommend      # F-2A: 必要性分析 → graphics/graphic-recommend.md
-    - 21b-graphic-hearing        # F-2: 要否+箇所 (人間ゲート) → graphics/graphic-plan.json
+    - 21b-graphic-hearing        # F-2: 要否+箇所+透過 (人間ゲート) → graphics/graphic-plan.json
     - 21c-graphic-taste          # F-3: テイスト2段階 (人間ゲート) → plan.taste + samples/
     - 21d-graphic-prompts        # F-4: プロンプト確定 (人間ゲート) → graphics/graphic-prompts.json
     - 21e-graphic-generate       # F-5: 生成+サイズ自動調整 (透過 slot は tool_transparent へルーティング) → graphics/raw/
@@ -401,7 +401,7 @@ screens:
       description: "Approve main (default state) HTML set"
     21b-graphic-hearing:
       type: human
-      description: "Decide whether graphics are needed and where (informed by 21a recommend report)"
+      description: "Decide whether graphics are needed, where, and whether each needs a transparent (cut-out) background (informed by 21a recommend report)"
     21c-graphic-taste:
       type: human
       description: "Select graphic taste (words first, then sample A/B/C comparison)"
@@ -439,6 +439,8 @@ screens:
     embed_format: img_relative_ref     # <img src="../_shared/graphics/{graphic_id}.png"> — 正典への相対参照 (§7)。
                                        # Base64 data URI は不採用 (LLM context コストの根本回避)。
                                        # 相対参照も Base64 と同一 imageHash で完全動作を実測済。装飾背景のみ background-image 可
+                                       # 背景レイヤー slot (size_role=background) も <img> のまま — class + 注入 CSS で
+                                       # コンテンツ層の背後へ敷く (C-26 の例外形。background-image 経由の Container/CROP 劣化を避ける)
     alt_required: true                 # alt = graphic_id (Figma レイヤ名になる)。width/height 明示必須 (C-26)
     raster_formats: [png, webp]        # SVG 不可 (upload_assets 制約) / 正典は screens/_shared/graphics/
     state_scope: default_only          # v1: main (default) HTML のみ。sub-state 専用 slot は将来拡張 (plan.json の state field)
@@ -451,7 +453,7 @@ screens:
     degrade:
       recommend_failure: "21a の分析失敗/低信頼は fail-open — 21b は推奨レポートなしの素朴ヒアリングに degrade"
       generation_failure: "21e の生成失敗は AskUserQuestion (リトライ / 当該 slot を除外 → screens.graphics.excluded_slots[] に {graphic_id, reason, excluded_at} を記録 [記録なしの除外は禁止 — 設計 §9-2b の pending 定義に当該 slot が残り続け、resume ごとに再生成試行・再質問 (P4-07 抵触) を繰り返すため] / ブロック中止 → screens.graphics.decision='skip', decided_by='step21e' を記録)。除外の結果、全 slot が excluded になった場合はブロック中止と同義に扱い decision='skip', decided_by='step21e' を記録する (埋め込み対象 0 件の空 21g ゲートを回さない)"
-      postprocess_failure: "21f の透過検証 fail / 後処理失敗は AskUserQuestion (そのまま採用 → screens.graphics.transparency_waived[] に {graphic_id, source_digest, raw_sha256, reason, waived_at} をラベル記録して不透明のまま正典化 [受諾は digest + raw バイトの複合単位 — 別バイトの再生成には自動適用しない] [POCTEAMA-189 チケットの fallback 方針「ラベルをつけて代わりの方法を提案」の実体 — 21g は postprocess-manifest.json の transparency='waived' を配置判断に使う] / リトライ → 当該 generated_files entry 削除 + step21e_completed_at クリアで 21e から再生成 / 当該 slot を除外 → excluded_slots[] append [21e と同じ台帳] / ブロック中止 → decision='skip', decided_by='step21f' / 保留)。全 slot excluded はブロック中止と同義 (decided_by='step21f')"
+      postprocess_failure: "21f の透過検証 fail / 後処理失敗は AskUserQuestion (そのまま採用 → screens.graphics.transparency_waived[] に {graphic_id, source_digest, raw_sha256, reason, waived_at} をラベル記録して不透明のまま正典化 [受諾は digest + raw バイトの複合単位 — 別バイトの再生成には自動適用しない] [fallback 方針「ラベルをつけて代わりの方法を提案」の実体 — 21g・29 は postprocess-manifest.json の verdict を仕様書「使用グラフィック」節の透過実値に使い、waived は「なし (透過検証 fail を受諾済み)」と記録する] / リトライ → 当該 generated_files entry 削除 + step21e_completed_at クリアで 21e から再生成 / 当該 slot を除外 → excluded_slots[] append [21e と同じ台帳] / ブロック中止 → decision='skip', decided_by='step21f' / 保留)。全 slot excluded はブロック中止と同義 (decided_by='step21f')"
     # サイズ統制の専用 knob は置かない (YAGNI): HTML は相対参照のため肥大せず (設計 §7)、アセットの
     # ファイルサイズは生成時の size_px 指定 (21d 確定 → 21e が gpt-image-2 の size パラメタに使用) で
     # 上流から決まる。圧縮 (ユーザーフロー ⑫) は非搭載 — I-4 (POCTEAMA-183) Skip に加え、F-6
@@ -487,11 +489,17 @@ screens:
     poll_interval_sec: 5           # delay between polls
     poll_max_retries: 10           # max polls per captureId before re-open
     on_pending_after_max_polls: re_open_and_retry  # re_open_and_retry | abort
+                                   # 例外: 拒否理由が `Figma MCP tool call limit` のときは再 open しない
+                                   # (poll 不能な captureId でブラウザを開くと追跡不能 frame が残る。
+                                   #  docs/figma-plan-limits.md / figma-capture-runner Failure modes)
     require_full_scope_for_success: true  # status="success" requires ALL targeted files captured
 
     # P-15: 離席による session timeout 対策
     # Pre-flight で macOS スリープを抑止し、capture 中の captureId TTL 切れ・mcp.figma.com セッション切断を防ぐ。
     # 中断発生時は次セッションの Step 22 再実行で Resume mode が自動検出 → deferred のみ再キャプチャ。
+    # 例外: プラン上限による中断 (root notes の blocked_reason=figma_plan_quota) は自動 Resume しない —
+    # 再試行は残量を焼くだけのため、caller が user に確認して quota_confirmed を渡すまで agent §2a が
+    # capture せず返す。SoT: docs/figma-plan-limits.md
     captureid_ttl_sec: 300         # captureId 発行から N 秒経過したら stale 扱い → 再発行（agent retry 内で参照）
     estimate_sec_per_file: 6       # Pre-flight 所要時間見積もり (4 並列 batch + stagger 4s + poll で 1 件 ~6s 想定)
     system_sleep_prevention: auto  # auto (macOS なら caffeinate 起動) | disabled
@@ -593,10 +601,11 @@ add_feature:
 # Phase 5: Post-completion delta update (optional, repeatable)
 # Entry condition: 判定式の正本 (SoT) は CLAUDE.md § 完走後 Phase 共通 Entry Guard (F ∨ C ∨ baseline)。下の entry_condition: はその機械可読ミラー。
 delta:
-  description: "Single entry for post-completion changes without a full rebuild. Three entry modes — requirement-change (27→28→29→30) regenerates only affected/new screens; screen-edit (27b→29b→(29c)→30) reverse-propagates a hand-edited screen HTML into its spec/docs, audits the edit diff against the requirement docs, and promotes gate-approved deviations into requirements/*.md (requirements.json untouched); when Figma exists, only that frame is re-captured (skipped when Figma is absent); feature-add (27f) runs the 01b hearing then hands off to req-delta and the requirement-change mode. Design system and preserved screens are untouched."
+  description: "Single entry for post-completion changes without a full rebuild. Three entry modes — requirement-change (27→28→29→30) regenerates only affected/new screens; screen-edit (27b→29b→(29c)→30) reverse-propagates a hand-edited screen HTML into its spec/docs, audits the edit diff against the requirement docs, and promotes gate-approved deviations into requirements/*.md (requirements.json untouched); when Figma exists, only that frame is re-captured (skipped when Figma is absent); feature-add (27f) runs the 01b hearing then hands off to req-delta and the requirement-change mode. Before Mode Selection, screen specs lacking the 振る舞い詳細 / データ項目 sections are detected and a spec-only backfill (27c) is offered. Design system and preserved screens are untouched."
   steps:
     - 27-change-detect            # requirement モード起点
     - 27b-screen-edit-detect      # screen-edit モード起点 (27 の代替、git 非依存の編集検知)
+    - 27c-spec-backfill           # Mode Selection 前の追記提案で起動 (run 外の spec-only 追記: 旧フォーマット仕様書へ不足セクション [振る舞い詳細 / データ項目] を導出追記 + ※不明 一括確認ゲート)
     - 28-impact-analysis          # requirement モードのみ
     - 29-partial-screen-regen     # requirement モード
     - 29b-reverse-propagate       # screen-edit モード (29 の逆方向代替: HTML→spec 逆伝播 + scoped 採点 + 逆方向要件監査)
@@ -615,7 +624,7 @@ delta:
     - screens/00-screen-list.md  # impact analysis (Step 28)
     - screens/00-transition-map.mmd   # SSoT — Step 29 が部分修正 (29b は screen-edit の nav 変更時)
     - screens/00-transition-map.html  # derived from .mmd — Step 29 が template から再生成 (29b 同上)
-    - screens/*.md               # screen specs — read by 28, updated by 29 / 29b (screen-edit: 逆伝播先)
+    - screens/*.md               # screen specs — read by 28, updated by 29 / 29b (screen-edit: 逆伝播先) / 27c (不足セクションの追記)
     - figma-state.json           # preserved frame node_ids (Step 30)
     - delta/edited-screens.json  # screen-edit モード: 編集台帳 (PostToolUse hook が記録、27b が消費)
   output:
@@ -625,7 +634,7 @@ delta:
     - delta/snapshots/           # requirement: changed requirement docs / screen-edit: pre-edit screen HTML
     - delta/feature-add-brief.md # change_type == feature_addition のみ (Step 27)
     - delta/req-promotion/       # screen-edit 昇格時のみ (Step 29c): snapshots/ + change-manifest.json + cross-reference-integrity-report.md
-    - requirements/              # screen-edit 昇格時のみ (Step 29c が該当 NN-*.md を改訂。requirements.json は不変) / requirement モード feature_addition は Step 27 Step5b が 05-features.md へ追記
+    - requirements/              # screen-edit 昇格時のみ (Step 29c が該当 NN-*.md を改訂。requirements.json は不変) / requirement モード feature_addition は Step 27 Step5b が 05-features.md へ追記 / 27c Phase 1 が app 共通ポリシーを追記 (06-non-functional.md のエラーハンドリング方針 = 動作ポリシー / 07-data-definition.md の対応節 [無ければ `## データの出どころ` を新設] = データの出どころ)
     - pipeline-state.json        # delta.runs[] entries appended by Steps 27/27b–30 (+ 29c の req_promotion)
   design_system_freeze:
     - tokens.json
@@ -634,6 +643,9 @@ delta:
     - screens/_shared/common-styles.css
     - figma-state.json  # preserved-screen node_ids only — affected/new/removed entries are updated by Step 30
   gates:
+    27c-spec-backfill:
+      type: human
+      description: "Confirm items the backfill could not derive from the requirement docs (※不明) — shared procedure skills/_shared/behavior-pending-confirm.md"
     28-impact-analysis:
       type: human
       description: "Confirm which screens are affected before any regeneration"
@@ -788,7 +800,10 @@ artifact_backup:
   #   3. スクリプト経由の生成・patch (下記 targets の成果物を Bash で上書き / patch する経路) → **script 側での
   #      self-backup を義務とする** (hook は matcher が Write|Edit ツールのみで Bash は対象外のため。
   #      実装済み: scripts/derive-transition-map.mjs の --force 上書き / 21g の graphic 埋め込み script
-  #      [graphic_generation.html_transform_policy]。21f 側に self-backup 実装は無い)。規約は経路 1 と同一 — ミラー配置
+  #      [graphic_generation.html_transform_policy] / 21e の raw PNG 再生成上書き + 21f の正典 PNG
+  #      再正典化上書き [各 preflight.mjs の backupFile])。**削除も同義務** — targets の
+  #      成果物を script が rm する経路 (21e/21f commit-degrade の正典掃除・21f の旧仕様 webp 残骸掃除) は
+  #      削除前に同じ退避を行う (削除は上書きより復元可能性が低い)。規約は経路 1 と同一 — ミラー配置
   #      (_backup/{相対dir}/{stem}.{YYYYMMDD_HHMMSS}.{ext}) / 直前バックアップと md5 同一ならスキップ /
   #      複製失敗でも本処理を block しない fail-open。新規生成 (ファイル不在) は対象外。
   #      **targets に載っていない成果物 (例: screens/00-coverage-check.json) を書く script は対象外**
@@ -803,12 +818,14 @@ artifact_backup:
   #   色整合 grep、skill 28/29 の find、skill 00/21/23 の grep 等) がバックアップを誤検出する。
   #   scan 対象ツリーの外 (= app ルート直下) へ退避することで、これら既存 scan を一切変更せずに済む。
   naming: timestamp                    # `{stem}.{YYYYMMDD_HHMMSS}.{ext}` (例: 05-features.20260528_150000.md)
-  trigger: pre_overwrite               # 上書き / 編集の直前。新規生成 (ファイル未存在) は対象外
+  trigger: pre_overwrite               # 上書き / 編集の直前。新規生成 (ファイル未存在) は対象外。targets を script が rm する削除も経路 3 の同義務 (上記コメント参照)
   dedup: md5                           # 直前バックアップと内容が同一なら複製しない (no-op rewrite の増殖防止)
   # cooldown: 連続 Edit の増殖防止。1 回の修正指示を複数 Edit に分割しても、同一ファイルの直近バックアップが
   #   一定秒数以内なら退避を skip し、指示前の 1 件のみ残す。秒数は環境変数 AYATORI_BACKUP_COOLDOWN_SECONDS で
   #   調整 (既定 180、0 で無効)。hook (bash) が env を読むため、ここには数値フィールドを置かない (参照されない
-  #   dead field を避ける)。詳細は docs/artifact-backup.md。
+  #   dead field を避ける)。**バイナリ画像 (png/webp) は hook 側も cooldown 対象外** (Edit の分割編集が
+  #   成立しない + script 退避と _backup/ プールを共有するため)。経路 3 の script 側は
+  #   21g のみ cooldown を持ち、21e/21f は持たない (適用基準は docs/artifact-backup.md)。詳細は docs/artifact-backup.md。
   deletion: manual                     # 溜まったバックアップはユーザーが手動削除する (自動削除・容量上限は設けない)
   fail_open: true                      # 複製失敗でも Write / Edit をブロックしない (成果物保存を最優先)
   # 対象成果物 (artifacts/{app_name}/ からの相対パス。skills/_shared/human-gate-preview.md の
@@ -825,13 +842,19 @@ artifact_backup:
     - screens/web/*.html               # Step 21: 全画面 HTML (Web、状態パターン含む)
     - screens/web-sm/*.html            # Step 21: 全画面 HTML (Web スマホ幅、状態パターン含む)
     - screens/mobile/*.html            # Step 21: 全画面 HTML (Mobile、状態パターン含む)
+    - graphics/raw/*.png               # Step 21e: 生成グラフィック raw (再生成は同名上書き・課金済みで再生成不能 — 経路 3 の script self-backup)
+    - screens/_shared/graphics/*.png   # Step 21f: 正典グラフィック (同上。screens/_shared/ 配下は graphics/ のみ対象 — HTML バックアップ復元時に当時の見た目を再現するには正典側の退避が要る)
+    - screens/_shared/graphics/*.webp  # 旧仕様 (WebP 正典) run の legacy 残骸 — 現行 writer は無く、21f の残骸掃除 / degrade の削除経路が退避してから消す (旧仕様 run では課金済み世代の唯一の残存物になりうる)
     - figma-state.json                 # Step 23: Figma 出力関連
     - pipeline-improvements.md         # Step 26: 振り返りレポート (artifacts 直下 / app 配下どちらも対象)
   # 対象外 (許可リスト方式により自動的に除外される。誤解防止のため明示):
   #   requirements.json / design-brief.yaml (INPUT・machine state) /
   #   pipeline-state.json / pending-questions.json / requirement-deviations.json /
   #   generation-provenance.json / reverse-provenance.json / scores.json / *-history.json /
-  #   screens/00-coverage-check.json / screens/_shared/* / feedback-log.md / session-handoff.md
+  #   screens/00-coverage-check.json / feedback-log.md / session-handoff.md /
+  #   screens/_shared/* (ただし graphics/*.{png,webp} を除く — CSS 土台・components 等は tokens.json から
+  #   決定的に再生成できる派生物なので対象外のまま。生成グラフィックは課金済みで再生成不能のため targets 化) /
+  #   graphics/raw/generation-manifest.json / graphics/postprocess-manifest.json (監査台帳 = machine state)
 
 # ── Design Output Scope Defaults ────────────────
 # Step 01 (Axis 7) asks the user to choose; these values are used
@@ -927,6 +950,12 @@ file_topology:
       readers: "全 Phase preamble の Pre-flight Gate + 07-human-gate-req 要件トレース監査 (resolved entries を user 確定 input として突合) + 26-retro (Pattern D 集計)"
       lazy_init: true   # 初回 UNCERTAIN append 時に init stub {"app_name":"{app_name}","entries":[]} から生成
       note: "(D) UNCERTAIN 未確定キュー + resolved entries = confirmed-decisions ledger (Step07 要件トレース監査の突合先)。pipeline-state.json には派生 counter pending_questions_open のみ保持。schemas/pending-questions.schema.json 参照。"
+    - path: screens/{slug}.md   # {slug} = 00-screen-list.md の「画面ファイル」列 (ASCII kebab-case。SoT = skills/17-screen-gen)
+      role: screen_spec
+      primary_writer: 17-screen-gen   # 並列経路 (総 HTML 21 files 以上) では phases/screens/SKILL.md Step B-0 として main context が生成する
+      secondary_writers: [06-format-convert, 21-screen-human-review, 21g-graphic-embed-review, 27c-spec-backfill, 29-partial-screen-regen, 29b-reverse-propagate]   # 06=reverse E4 (リバース産プロジェクトの初期生成)。21=Section 1-F の ※不明 解消反映。21g=「## 使用グラフィック」節のみ (マーカー所有)。27c=旧フォーマット仕様書への不足セクション (振る舞い詳細 / データ項目) 追記のみ (既存セクション不変)。29/29b=delta 経路。ほかに reverse-verify V3 が対象限定訂正で編集する (V1 は範囲判定のために読むだけ — readers 側)
+      readers: [15-confluence-save-design, 18-design-review, 19-rubric-score, 21-screen-human-review, 21b-graphic-hearing, 21d-graphic-prompts, 21g-graphic-embed-review, 23-human-final-approval, 25a-state-pattern-plan, 25b-state-pattern-gen, 27c-spec-backfill, 28-impact-analysis, 29-partial-screen-regen, 29b-reverse-propagate, 35-md-export, 36-artifact-index]   # 21 / 27c は writer でもある (Section 1-F 反映 / 追記) が、事前 Read が前提のため readers にも載せる。reverse-verify V1 (01-target-scope) は範囲判定で読む
+      note: "画面仕様書 (platform 共通、画面ごとに root へ 1 つ)。目的 / レイアウト構成 / コンポーネント一覧 / 状態パターン / 振る舞い詳細 (操作イベント・入力チェック・操作制御・実装ノート — 根拠列で導出出典 [md リンク] と未確定 [※不明] を行単位に区別) / データ項目 (`# / 項目 / 表示・更新 / ソース / 共有 / 整形・計算 / 根拠` の固定 7 列。根拠列は同じ規律。ヘッダ リテラルの SoT は skills/17-screen-gen) / 画面遷移。フォーマット SoT は skills/17-screen-gen/SKILL.md「仕様書（MD）のフォーマット」+「振る舞い詳細の記入規則」+「データ項目の記入規則」(reverse 産は skills/reverse/06-format-convert/SKILL.md E4)。schema なし。"
     - path: screens/00-coverage-check.json
       role: coverage_check_result
       sections: [layers, summary, user_accepted_gaps, user_indicated_gaps]   # layers は l1〜l4 + l5_connectivity
@@ -1207,14 +1236,14 @@ file_topology:
       when: "21b で「必要」選択時"
       primary_writer: "21b-graphic-hearing (init + slots)"
       secondary_writers: [21c-graphic-taste]   # taste キーのみ (key 分離)
-      readers: [21d-graphic-prompts, 21e-graphic-generate, 21g-graphic-embed-review, 29-partial-screen-regen]
+      readers: [21c-graphic-taste, 21d-graphic-prompts, 21e-graphic-generate, 21f-graphic-postprocess, 21g-graphic-embed-review, 29-partial-screen-regen]
       schema: schemas/graphic-plan.schema.json
-      note: "slot = graphic_id/screen/platform/位置/サイズ用途/state (v1 は 'default' 固定・将来 sub-state 拡張点)。ファイルの存在はブロック有効のシグナルではない (有効判定の SoT は pipeline-state.screens.graphics.decision — 設計 §9-2b)。"
+      note: "slot = graphic_id/screen/platform/位置/サイズ用途/透過/state (v1 は 'default' 固定・将来 sub-state 拡張点)。ファイルの存在はブロック有効のシグナルではない (有効判定の SoT は pipeline-state.screens.graphics.decision — 設計 §9-2b)。"
     - path: graphics/graphic-prompts.json
       role: graphic_prompt_confirmed
       when: "21d 完了時"
       primary_writer: 21d-graphic-prompts
-      readers: [21e-graphic-generate, 21f-graphic-postprocess]   # 21f は透過 slot 判定 + digest 照合 (POCTEAMA-189)
+      readers: [21e-graphic-generate, 21f-graphic-postprocess, 21g-graphic-embed-review, 29-partial-screen-regen]   # 21f は透過 slot 判定 + digest 照合。21g・29 は鮮度判定の digest 再導出 + 仕様書「使用グラフィック」節の生成サイズ (size_px)
       schema: schemas/graphic-prompts.schema.json
     - path: graphics/graphic-embed-review.html
       role: graphic_embed_visual_report   # 派生ビュー (SoT = screens/{platform}/*.html の埋め込みタグ + graphic-plan.json)
@@ -1237,8 +1266,8 @@ file_topology:
       role: graphic_postprocess_ledger   # 後処理の監査台帳 (補助記録)
       when: "21f 実行時"
       primary_writer: 21f-graphic-postprocess
-      readers: [21g-graphic-embed-review]
-      note: "slot 別の透過検証 verdict (verified/waived/n/a + alpha 統計) / degrade ラベル。補助記録 — resume・埋め込み対象の SoT は pipeline-state 側 (設計 §9-2b)。21g は transparency='waived' ラベルを配置判断 (重ね置き回避) に使う。"
+      readers: [21g-graphic-embed-review, 29-partial-screen-regen]
+      note: "slot 別の透過検証 verdict (verified/waived/n/a + alpha 統計) / degrade ラベル。補助記録 — resume・埋め込み対象の SoT は pipeline-state 側 (設計 §9-2b)。21g・29 (specs) は verdict を仕様書「使用グラフィック」節の透過実値に使う (digest 束縛)。"
     - path: screens/_shared/graphics/   # {graphic_id}.png
       role: graphic_canonical           # 第 4 の正典系統 (root-variables / components / illustrations に続く)
       when: "21f 完了時"
@@ -1285,6 +1314,7 @@ command_policy:
     - ayatori-delta
     - ayatori-delta-mini
     - ayatori-export
+    - ayatori-export-en
     - ayatori-cm-consult
     - ayatori-index
     - ayatori-train
@@ -1294,6 +1324,9 @@ command_policy:
   on_unrecognized_command: halt_and_confirm
   # パイプラインの唯一の正規出力ルート。外部コマンドがこれを逸脱する別ツリー
   # (例: docs/design/{app_name}/) に出力しようとしたら衝突として停止する。
+  # 例外: /ayatori-export-en (英語版エクスポート) のみ sibling ツリー artifacts/{app_name}-en/ へ
+  # 出力する — 日本語版を上書きせず併存させるための一方通行ミラーで、パイプラインへ再入力しない
+  # 配布物 (詳細は docs/en-export.md)。それ以外のコマンドが -en ツリーへ書くのは衝突として扱う。
   output_root: artifacts/{app_name}/
 
 # ── Reverse Handoff ─────────────────────────────
@@ -1442,7 +1475,7 @@ constraints:
   # ── AI 生成グラフィックの埋め込み形式 (挿入位置設計 docs/graphic-generation-design.md §7) ──
   - id: C-26
     applies_to: [21g-graphic-embed-review, 29-partial-screen-regen]
-    rule: "AI 生成グラフィックは <img src='../_shared/graphics/{graphic_id}.(png|webp)' alt='{graphic_id}' width height> の正典相対参照で埋め込む (設計 §7)。Base64 data URI インラインは使わない (LLM context 保護)。alt 必須 (Figma レイヤ名)・width/height 明示必須。CSS background-image は装飾背景のみ可。SVG 形式のグラフィックは禁止 (ラスターのみ)。object-fit は cover(→FILL)/contain(→FIT) のみ使用。"
+    rule: "AI 生成グラフィックは <img src='../_shared/graphics/{graphic_id}.(png|webp)' alt='{graphic_id}' width height> の正典相対参照で埋め込む (設計 §7)。Base64 data URI インラインは使わない (LLM context 保護)。alt 必須 (Figma レイヤ名)・width/height 明示必須。CSS background-image は装飾背景のみ可。SVG 形式のグラフィックは禁止 (ラスターのみ)。object-fit は cover(→FILL)/contain(→FIT) のみ使用。表示寸 (width/height) が生成寸 (prompts の size_px) を超える埋め込み (有効拡大率 > 1 = 拡大表示のぼけ) は embed apply / 承認 commit が E_UPSCALE で停止する — user がぼけを明示許容した場合のみ --allow-upscale で続行できる (判定式・3 択の提示は skills/21g-graphic-embed-review/refs/embed-guide.md §2a)。検査点は 21g の埋め込み / 承認と Step 29 の再埋め込みで、screen-edit delta の lane (27b→29b→30) は非カバー (設計 §7 の既知の非カバー lane)。**背景レイヤー slot (graphic-plan.json の size_role='background') は例外形**: コンテンツ層の背後に敷くため定位が要るが <img> の style は object-fit のみ (上記) なので、`class='ayatori-screen-bg'` + `object-fit:cover` のタグと、embed script が `</style>` 直前へ 1 回だけ注入する固定 CSS (`{画面枠}{position:relative;isolation:isolate}` + `.ayatori-screen-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;pointer-events:none}`) の 2 点セットで実現する。画面枠セレクタは Step 22 のキャプチャ選択子と同一境界 (mobile/web-sm=.screen / web=body) で platform 別に注入する。注入 CSS は色を運ぶ property を 1 つも使わない (C-25 zero-literal に触れない) — 可読性のための半透明スクリムを 21g で現造するのは禁止 (スクリム色は tokens.json 経由のみ正当。可読性は 21d のプロンプト構図指示と人間ゲートで担保する)。背景 class の非背景 slot への流用禁止 / 背景 slot の却下時は注入 CSS も除去する。"
 
   # ── Operating Principle 4 ──
   # CLAUDE.md Operating Principle 4 (5 分類タクソノミー) の machine-readable enforcement spec。

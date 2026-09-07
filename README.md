@@ -56,6 +56,7 @@ Phase 完了 → 次の Phase へ（別会話で /ayatori-requirements → /ayat
 | **対象限定突合（Phase 0c）** | `/ayatori-reverse-verify` | リバースで起こした要件記述・画面仕様のうち、**改修対象として指定した機能・画面の関連範囲だけ**を実コード・文書アーカイブ・Figma capture と突き合わせ、食い違いを人間確認のうえ訂正する（任意・反復実行）。コードの読み違いによる誤りを改修着手前に潰すのが目的。全範囲の再突合・コード修正・要件変更はスコープ外 |
 | **要件レベル差分（Phase 1c）** | `/ayatori-req-delta` | Step 07 承認後に **UI 生成前** に要件変更を 8 ISO 29148 ドキュメント全体に伝播 || **完了後差分（Phase 5）** | `/ayatori-delta` | `final_approved == true`（または reverse 基線の `baseline_approved_at` + `requirements.json.status == "REVERSE_ENGINEERED"` の由来検査）後に要件変更を部分画面再生成 + Figma 部分更新で反映 |
 | **配布物生成（独立）** | `/ayatori-export` | 画面定義書 / 要件定義書の MD 群を結合し、画像を base64 inline 埋め込みした自己完結 HTML を出力。社外パートナー共有・ドキュメント納品向け |
+| **英語版エクスポート（独立）** | `/ayatori-export-en` | 日本語成果物を英語版ミラー `artifacts/{app_name}-en/` へ一方通行変換（enum/マーカーは決定論置換 + prose は LLM 翻訳）。日本語版は無変更で併存し、EN ミラーはパイプライン再入力不可の配布物（`docs/en-export.md` 参照） |
 | **個別スキルテスト** | `skills/NN-name/SKILL.md` を直接 Read して実行 | 担当スキルの単体テスト・開発 |
 
 **Phase の SKILL.md が skills/ 配下の SKILL.md を Read する。** skills/ 側の SKILL.md を更新すれば Phase 実行にも反映される。
@@ -206,20 +207,24 @@ skills/                  ← 共通ヘルパー + Step スキル (SKILL.md 実�
 | Claude Code CLI | 最新版（`claude --version` で確認） |
 | Claude モデル | **Claude 5 世代を推奨**（Opus 5 / Fable 5 / Sonnet 5）。CLAUDE.md は軽量・gotcha 中心・詳細は SoT ポインタ経由で参照する方針で最適化済みで、参照到達性の recall 検証（5 問）を Fable 5 / Opus 5 で実施。旧世代でも構造上は動作する設計だが未検証 |
 | Node.js | 22 以上（`node -v` で確認）。Style Dictionary v5（`engines.node: ">=22.0.0"`）の実行に必要 |
-| Figma アカウント | **Full seat 必須**（Dev seat では 22 / 24 / 25 の Write-to-Canvas が動作しない。Step 12 はコード生成のみで Figma を触らないため Full seat 不要） |
+| Figma シート | **Full seat 必須**（Dev seat では 22 / 24 / 25 の Write-to-Canvas が動作しない。Step 12 はコード生成のみで Figma を触らないため Full seat 不要） |
+| Figma プラン | **Professional 以上を推奨。Starter では Phase 3 後半（Step 22 以降）が完走できない** — Figma MCP の読み取り系呼び出しがプラン/シートごとに制限され、Starter は月 20 回。パイプラインの不具合ではなくユーザー側のプラン制約。Starter の場合は最初から `FIGMA_MCP_ENABLED=false`（スタブ運用）で回せば Phase 3 は完走できる → **[`docs/figma-plan-limits.md`](docs/figma-plan-limits.md)**（数値・Step 別消費・回避手順の SoT / POCTEAMA-411） |
 | Atlassian アカウント | Confluence への読み書き権限 |
 | Takumi Guard | パイプライン実行 PC に社内標準セキュリティツール **Takumi Guard** が導入済みであること（[導入手順（社内 Confluence）](https://kinto-dev.atlassian.net/wiki/spaces/ITKanri/pages/3807478775/Takumi+Guard)）。AYATORI は `npm ci` 等でネットワークから依存パッケージを取得するため、実行環境側のセキュリティ対策を前提とする |
+| jq（**optional**） | ガード hook 4 本（修正前バックアップ / schema 検査 / sub-state 採点順序の強制 / 手編集検知）で使用（CLAUDE.md Operating Principle 1 の例外はこの hook 4 本のみ）。加えて一部 skill 本文（Step 12 token 語彙検査 / Step 28 sub-state 完了判定値の取得 / reverse Step 01 アーカイブ自己検査）も `jq` を直接呼ぶが、これらは P1 例外ではなく**未解決 gap**（skill 側に不在分岐を足す別課題）。**無くてもパイプラインは動作する**が、不在時の挙動は経路で異なる: **hook 4 本は fail-open**（検査のみ無音スキップ — `/ayatori-delta` screen-edit モードの検知源が空になる等、保護が効かなくなる点に注意）、**skill 経路は fail-open 保証なし**（Step 28 は判定値が空になり誤分岐、Step 12 は検査コマンドが exit 127 で「修正して進む」指示に引っかかる、reverse 01 は検査が 0 件で素通り [false pass] しうる）。導入有無の判定は OS バージョンではなく **`command -v jq` を 1 回実行**して確認する（mac は近年の OS に同梱されているが境界は環境差があるため個別確認）。無ければ Windows と同じく optional 導入対象（mac は `brew install jq`、Windows は [docs/setup-windows.md](docs/setup-windows.md) §5）で、導入しない場合は上記の挙動を承知の上で fail-open 運用とする |
 
 ---
 
 ## セットアップ
+
+> **Windows で構築する場合**: 本節のコマンドは mac (zsh) 前提。[docs/setup-windows.md](docs/setup-windows.md) の読み替え手順を先に参照すること (プログラムの書き換えは不要で実行は可能だが、検査系のガード hook [修正前バックアップ・schema 検査等] は Windows では既定で非活性 — 同書 §5 参照)。
 
 ### 1. 環境変数
 
 `~/.zshrc` に追記して `source ~/.zshrc` を実行：
 
 ```bash
-# Figma（14 / 17 / 18 / 22 / 24 / 25 / 29 を Figma MCP で動かす場合のみ。Step 12 は対象外）
+# Figma（14 / 18 / 22 / 24 / 25 / 25e / 29 / 30 を Figma MCP で動かす場合のみ。Step 12 / 17 は対象外）
 # Step 14 / 29 は遷移図の FigJam 同期 — .mmd / .html 生成は MCP 無くても動作する
 export FIGMA_MCP_ENABLED=true
 export FIGMA_FILE_KEY="your-figma-file-key"   # Figma URL の figma.com/design/{ここ}/... から取得
@@ -227,11 +232,17 @@ export FIGMA_FILE_KEY="your-figma-file-key"   # Figma URL の figma.com/design/{
 
 > **⚠ 重要 — `FIGMA_MCP_ENABLED` は Figma MCP モードで動かすための必須スイッチです**
 >
-> このフラグが Claude Code プロセスに渡っていないと、Steps 17 / 18 / 22 / 24 / 25 は **すべてスタブモードに落ちます** (Figma への書き込み・キャプチャが行われない。Step 12 は Figma を触らない設計なので対象外)。Step 14 / 29 の遷移図 FigJam 同期も同フラグで制御 — false の場合は `.mmd` / `.html` 生成までは行い、FigJam 同期のみスキップする。よくあるハマりどころ:
+> このフラグが Claude Code プロセスに渡っていないと、Steps 18 / 22 / 24 / 25 は **すべてスタブモードに落ちます** (Figma への書き込み・キャプチャが行われない。Step 12 / 17 は Figma を触らない設計なので対象外 — 17 は mode を解決するだけで、enabled / disabled いずれでも挙動は HTML 生成のみ)。Step 14 / 29 の遷移図 FigJam 同期も同フラグで制御 — false の場合は `.mmd` / `.html` 生成までは行い、FigJam 同期のみスキップする。よくあるハマりどころ:
 >
 > 1. **`~/.zshrc` に追記したが、既存の Claude Code プロセスは古い env のまま** → Claude Code を完全終了して、新しい terminal から再起動
 > 2. **`/mcp` で Figma を `Connected` にしたから動くはず** → 接続状態と env var は別物。**両方** 必要
 > 3. **`!export FIGMA_MCP_ENABLED=true` を Claude セッション内で実行した** → 後続の Bash tool 呼び出しに継承されない。`~/.zshrc` か `.claude/settings.local.json` に永続化する必要あり
+
+> **⚠ その前に Figma プランを確認してください — `true` にしても Starter では Step 22 以降が通りません**
+>
+> Figma MCP の読み取り系呼び出しは**プラン・シート種別ごとに上限**があり、Starter は月 20 回。`FIGMA_MCP_ENABLED=true` を正しく渡せていても、Step 22 の grid layout や Step 24 / 25 が `Figma MCP tool call limit` を含むエラーで拒否されます。**Starter / View・Collab シートでは月次の累積上限なので待っても回復せず、retry は quota を溶かすだけ**です（有料プラン + Dev/Full シートは日次・分次のため待てば回復します）。
+>
+> Starter の場合は **`false`（スタブ運用）のまま回すのが正解** — Figma キャンバス上の frame / Variables / Component だけが作られず、画面 HTML・画面仕様書・tokens.json・Confluence 保存はすべて生成され、Phase 3 は Step 25a まで完走します。詳細・Step 別の消費本数・回避手順は **[`docs/figma-plan-limits.md`](docs/figma-plan-limits.md)**（POCTEAMA-411）。
 
 設定確認：
 
@@ -332,7 +343,7 @@ Step 08 デザインブレストは AYATORI 内部で完結するため、必須
 
 #### 2.1 Figma MCP（オプション / Phase 3 以降）
 
-Phase 3 以降（Step 14 / 17 / 18 / 22 / 24 / 25）と Phase 5 delta（Step 29 / 30）で Figma MCP を使う場合のみ、個別にインストール：
+Phase 3 以降（Step 14 / 18 / 22 / 24 / 25）と Phase 5 delta（Step 29 / 30）で Figma MCP を使う場合のみ、個別にインストール：
 
 ```bash
 claude plugin install figma@claude-plugins-official
@@ -361,7 +372,7 @@ CLAUDE.md を読んだ瞬間にパイプラインが開始される。
 
 | 変数名 | 必須 | 用途 |
 |---|---|---|
-| `FIGMA_MCP_ENABLED` | ⬜ | `true` にすると 14 / 17 / 18 / 22 / 24 / 25 / 29 / 30 が Figma 書き込みモードで動作（省略時はスタブ）。Step 14 / 29 は遷移図 FigJam 同期のみが本フラグの対象 (`.mmd` / `.html` 生成は常時実行)。Step 12 は Figma を触らない設計なので影響しない |
+| `FIGMA_MCP_ENABLED` | ⬜ | `true` にすると 14 / 18 / 22 / 24 / 25 / 25e / 29 / 30 が Figma 書き込みモードで動作（省略時はスタブ）。Step 14 / 29 は遷移図 FigJam 同期のみが本フラグの対象 (`.mmd` / `.html` 生成は常時実行)。Step 12 / 17 は Figma を触らない設計なので影響しない（17 は mode を解決するだけで挙動は両 mode 同一）。**Figma プランが Starter の場合は `true` にしても Step 22 以降が呼び出し上限で通らないため、`false` 運用を推奨** → [`docs/figma-plan-limits.md`](docs/figma-plan-limits.md) |
 | `FIGMA_FILE_KEY` | ⬜ | Figma ファイルキー（`FIGMA_MCP_ENABLED=true` 時のみ必要） |
 | `AYATORI_IMAGE_API_KEY` | ⬜ | グラフィック生成 API (OpenAI Images) のキー。21c テイストサンプル / 21e グラフィック生成で使用。**推奨設置場所は env ではなくキーファイル `~/.ayatori/image-api-key`**（`node scripts/setup-image-key.mjs` で作成 — 実行時直読のため再起動不要・案件横断・再クローン耐性あり）。解決の優先順は env `AYATORI_IMAGE_API_KEY` → キーファイル → env `OPENAI_API_KEY` で、どこにも無ければ各 skill が degrade 分岐で案内を出す（パイプラインは止まらない）。取得・設定は `docs/setup.md`「グラフィック生成 API キー」参照。**キーを repo 管理下のファイルに書かないこと** |
 | `AYATORI_IMAGE_API_BASE` / `AYATORI_IMAGE_MODEL` / `AYATORI_IMAGE_MODEL_TRANSPARENT` | ⬜ | 生成 API の任意上書き（エンドポイント / 非透過 slot モデル / 透過 slot モデル）。モデル既定値の SoT は `pipeline.yaml` `screens.graphic_generation.tool` / `tool_transparent`（gpt-image-2 / gpt-image-1.5）。モデル系 env は **21e の実行時呼び出し先のみ**を差し替える一時的な knob（21d が確定する `graphic-prompts.json` の `tool` / 鮮度判定 digest には影響しない — 恒久変更は pipeline.yaml 側を編集） |
@@ -503,6 +514,8 @@ ayatori/
 │   └── 33-req-revision/                              # [gate]
 ├── docs/
 │   ├── setup.md                      # 詳細セットアップ手順
+│   ├── setup-windows.md              # Windows 読み替え手順
+│   ├── figma-plan-limits.md          # Figma プラン上限（Step 22 以降の律速要因 / POCTEAMA-411）
 │   ├── interface-contracts.md        # ステップ間インターフェース契約
 │   ├── html-generation-rules.md      # Step 09 / 17 共通 HTML ルール (anti-slop / 16:9 / inline SVG)
 │   ├── screen-coverage-check.md      # 画面パターン網羅性チェック仕様
@@ -528,7 +541,7 @@ ayatori/
 │   ├── coverage-check.schema.json    # Phase 3 画面パターン coverage 結果
 │   ├── change-manifest.schema.json   # Phase 5 (delta) / Phase 1c (req-delta) / Phase 1d (add-feature) 変更マニフェスト
 │   ├── pipeline-state.schema.json    # クロスフェーズ状態（承認時刻 / 選択結果 / Confluence ID）
-│   ├── figma-state.schema.json       # Figma MCP feature state（FIGMA_MCP_ENABLED=true 時のみ）
+│   ├── figma-state.schema.json       # Figma MCP feature state（forward は true 時のみ / reverse は P-18 が stub 作成）
 │   ├── feedback-log.schema.md        # フィードバックログ形式規約
 │   ├── history-summary.schema.md     # クロスプロジェクト履歴形式規約
 │   └── templates/history/            # artifacts/history/ 初期化テンプレート
@@ -559,7 +572,7 @@ ayatori/
         ├── req-delta/                # Phase 1c 成果物（change-manifest / impact-analysis / run-history）
         ├── delta/                    # Phase 5 成果物（change-manifest / impact-analysis / snapshots）
         ├── reverse-engineered/       # Phase 0b 中間成果物（status=REVERSE_ENGINEERED 時のみ）
-        └── figma-state.json          # Figma MCP の node-id / variable-id 管理（FIGMA_MCP_ENABLED=true 時のみ）
+        └── figma-state.json          # Figma MCP の node-id / variable-id 管理（Step 22 が初期化。reverse は P-18 が stub 作成）
 ```
 
 `artifacts/{app_name}/` 配下のファイル責務マップは `docs/artifact-file-responsibility.md`、および `pipeline.yaml` の `file_topology` が SoT。
@@ -668,7 +681,7 @@ Step 1 で検証済みのプロンプト・スキルを Claude API 用に移植�
 | 品質管理エージェント | **Opus** | 03 / 04 | Atlassian MCP |
 | デザインコンセプトエージェント | Sonnet | 08 / 09 / 10 | なし |
 | デザインシステムエージェント | Sonnet | 12 / 24 / 25 | Style Dictionary v5 (12) / Figma MCP + Variables API (24 / 25) + Atlassian MCP |
-| 画面生成エージェント | Sonnet | 14 / 17 / 22 | Figma MCP |
+| 画面生成エージェント | Sonnet | 14 / 17 / 22 | Figma MCP (14 / 22 のみ — 17 は HTML 生成のみで Figma MCP を使わない) |
 | Confluence保存エージェント | Sonnet | 06 / 15 | Atlassian MCP |
 | デザイン評価エージェント | **Opus** | 18 / 19 | Figma MCP + REST API + Claude Vision |
 | 振り返りエージェント | **Opus** | 26 | Atlassian MCP |
@@ -701,13 +714,14 @@ Step 2 で上記エージェント構成に移植する。**Step 1 の成果な�
 
 | ステップ | フォールバック挙動 |
 |---|---|
-| **17 / 18 / 22 / 24 / 25** | MD / HTML 出力のスタブとして動作（Figma を触らずローカルファイルで成果物を継続生成） |
+| **18 / 22 / 24 / 25 / 25e** | MD / HTML 出力のスタブとして動作（Figma を触らずローカルファイルで成果物を継続生成）。22 / 24 / 25 / 25e は `skipped_stub_mode` を記録して次 step へ進む |
+| **17** | フォールバックは存在しない — enabled / disabled いずれでも挙動は HTML 生成のみで同一（Figma には書き込まない。`skills/17-screen-gen/SKILL.md`） |
 | **14 / 29**（遷移図 FigJam 同期） | `.mmd` (SSoT) と派生 `.html` の生成は常時実行。FigJam 同期 (`00-transition-figjam-sync`) のみスキップ |
 | **30**（delta Figma 部分更新） | Figma 書き込みのみをスキップ。`pipeline-state.json.delta.runs[-1].figma_status = "skipped_stub_mode"` を記録し、Step 5 gate へ直接遷移して承認時に Step 6 / 7 を完走させる |
 
 検証はまずスタブモードで動作確認してから Figma MCP を有効化すること。
 
-`FIGMA_MCP_ENABLED=true` の場合、上記 8 ステップ（14 / 17 / 18 / 22 / 24 / 25 / 29 / 30）が Figma MCP 経由で `{app_name}` ページ / FigJam ボードに書き込む。
+`FIGMA_MCP_ENABLED=true` の場合、上記 8 ステップ（14 / 18 / 22 / 24 / 25 / 25e / 29 / 30）が Figma MCP 経由で `{app_name}` ページ / FigJam ボードに書き込む。
 **方針**:
 - **Step 14 / 29**（遷移図 FigJam 同期）は `.mmd` SSoT から `generate_diagram` + `use_figma` (subgraph tint 後追い塗装) で FigJam に単方向反映。共通 skill `00-transition-figjam-sync` 経由で single writer 経路を強制。delta はクリーン上書き方式。
 - **Step 22**（画面出力）は `generate_figma_design`（HTML キャプチャ）を **第一選択**。subagent (`figma-capture-runner`) が並列キャプチャを実行し、verbose レスポンスを主 context から隔離する。
@@ -716,8 +730,19 @@ Step 2 で上記エージェント構成に移植する。**Step 1 の成果な�
 - **Step 30**（delta）は preserved frame の node_id を再利用し、affected/new のみ部分更新。
 - **Step 12** はコード生成のみで Figma を触らない（Variables 登録は 24 が担当）。
 
-モード判定の SoT は **Step 17 / 18 / 22 / 24 / 25** が対象で、`skills/00-figma-mode-detect/SKILL.md` が Bash 経由で OS env var を直接読み、判定結果を各 step に渡す。
+モード判定の SoT は **Step 17 / 18 / 22 / 24 / 25** が対象で（17 は判定のみで Figma を触らない）、`skills/00-figma-mode-detect/SKILL.md` が Bash 経由で OS env var を直接読み、判定結果を各 step に渡す。
 **Step 14 / 29**（遷移図 FigJam 同期）と **Step 30**（delta Figma 部分更新）は mode-detect の対象外で、自身の手順内で `FIGMA_MCP_ENABLED` を確認して fallback（同期 / 書き込みスキップ）を定義する。
+
+### プラン上限（レート制限）— Step 22 以降の律速要因
+
+`FIGMA_MCP_ENABLED=true` にしても、**実際に Figma 出力が通るかどうかは実行するユーザー自身の Figma プラン / シート種別で決まる**（POCTEAMA-411）。読み取り系 MCP tool に上限があり、超えると `Figma MCP tool call limit on the <plan> plan` で拒否される（`<plan>` には実行ユーザーのプラン名が入るため、Starter でないことを「上限ではない」根拠にしないこと — 有料プランでも View / Collab シートは月 6 回で同種の拒否が出る）。**AYATORI の不具合ではなく、パイプライン側の設定変更で回避することもできない。**
+
+- **月 20 回は「1 パイプライン実行分」の予算であって step ごとの予算ではない** — 同じ月の先行消費（reverse Step 01・Step 14・再試行、2 周目以降のループでは 18 / 24 も）が先に食い切るため、**Step 22 に到達した時点で残量ゼロになっているのが典型**。しかも残量を照会する手段が無い。レート制限を緩めるには Professional 以上 + Dev/Full シートが必要だが、**キャンバスへの書き込みには Full seat が必須** — Dev seat ではレート上限を満たしても 22 / 24 / 25 が動かない（上記「前提条件」表）
+- **Starter / View・Collab シートでは月次の累積上限であって分単位のローリングウィンドウではない** — 待っても回復せず、retry は quota を溶かすだけ（有料プラン + Dev/Full シートは日次/分次のため待てば回復する）
+- 消費が重いのは **reverse Step 01（Figma capture / frame 数に比例）・18・22・24**（14 / 29 は「中」。Step 別の消費表は SoT 参照）。Step 12 / 17 は Figma を触らないため影響を受けない
+- Starter の場合は `FIGMA_MCP_ENABLED=false` のスタブ運用で回せば Phase 3 は Step 25a まで完走する（失われるのは Figma キャンバス上の frame / Variables / Component と Step 14 / 29 の遷移図 FigJam 同期）
+
+→ **プラン × シートの上限マトリクス・上限対象外の tool・Step 別消費表・回避手順・既知の設計穴の SoT は [`docs/figma-plan-limits.md`](docs/figma-plan-limits.md)**（数値の正本はそちら 1 箇所。本節は結論のみを持つ）
 
 ---
 

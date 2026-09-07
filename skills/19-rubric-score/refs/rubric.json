@@ -94,6 +94,18 @@
               },
               "input": "artifacts/{app_name}/screens/00-coverage-check.json (Step 14 早期チェック結果) + Step 17 生成 HTML",
               "deduction_tag": "screen_coverage"
+            },
+            "behavior_spec": {
+              "ref": "skills/17-screen-gen/SKILL.md (振る舞い詳細の記入規則)",
+              "check": "仕様書 (.md) の「振る舞い詳細」に操作イベント・入力チェック・操作制御が記述され、各行の根拠列が出典リンク / 確認済 / ※不明 のいずれかで埋まっているか。根拠列が空欄・出典 ID が実在しない行は減点対象。※不明 行は宣言された未確定として減点しない (解消は Step 21 Section 1-F)",
+              "input": "artifacts/{app_name}/screens/{画面名}.md",
+              "deduction_tag": "behavior_spec"
+            },
+            "data_spec": {
+              "ref": "skills/17-screen-gen/SKILL.md (データ項目の記入規則)",
+              "check": "仕様書 (.md) の「データ項目」が固定 7 列 (# / 項目 / 表示・更新 / ソース / 共有 / 整形・計算 / 根拠) で存在し、画面に表示・更新されるデータ項目が 1 行 = 1 項目 × 1 ソースで列挙されているか (複数ソースを持つ項目は行を分けるのが正 — 1 項目が複数行でも減点しない)。セクションが無い / 表が空 (ヘッダのみ。ただし「静的文言のみ」を理由に `該当なし` と書いている場合は減点しない。未確定・要件未記載を理由にした `該当なし` は (D) UNCERTAIN の隠蔽なので減点) / 表示・更新 と ソース が埋まっていない行 / ソース が 6 種の分類語彙 (API / DB / 計算 / マスタ・列挙 / 外部 / 画面入力) 以外の行 / 根拠列が空欄・出典 ID が実在しない行は減点対象。更新行の EV-NN が同じ仕様書の操作イベントに実在しない場合も減点 (ただし `更新 (EV 未記載, …)` + 根拠列 ※不明 の行は、結べる EV が無いことを宣言した正規表記なので減点しない)。`ソース` が `※不明 (unknown)` かつ 根拠列が `※不明 … → ask:` の行、`更新 (EV 未記載, …)` + 根拠列 `※不明 … → EV 未解決` の行、静的文言のみを理由にした `該当なし` は宣言された未確定 / 該当なしとして減点しない (解消は Step 21 Section 1-F)。`共有` 列の相互性 (共有先に同名行があるか) は画面をまたぐ照合なので本サブ基準の対象外 — Step 18 の全件マップが担う。減点上限・差し引き順の SoT は SKILL.md「減点判定」(data_spec は全画面合計で最大 -2pt、順序 data_spec → behavior_spec → screen_coverage)",
+              "input": "artifacts/{app_name}/screens/{画面名}.md",
+              "deduction_tag": "data_spec"
             }
           }
         }

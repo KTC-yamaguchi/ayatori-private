@@ -55,10 +55,16 @@ Claude が requirements/05-features.md を上書きしようとする (Write)
 3. **スクリプト経由の生成・patch** — パイプライン同梱スクリプトが対象成果物を上書き / patch する経路
    (`scripts/derive-transition-map.mjs` の `--force` による遷移図 SSoT 再生成、21g の graphic 埋め込み
    `html_transform_policy: deterministic_script` — 実装は `skills/21g-graphic-embed-review/scripts/preflight.mjs`
-   の `backupFile`。21f 側に self-backup 実装は無い)。**Bash 起動なので hook は発火しない**。
+   の `backupFile`、21e の raw PNG 再生成上書きと 21f の正典 PNG 再正典化上書き — 実装は
+   `skills/21e-graphic-generate/scripts/preflight.mjs` / `skills/21f-graphic-postprocess/scripts/preflight.mjs`
+   の `backupFile`)。**Bash 起動なので hook は発火しない**。
    → **script 側の self-backup を義務**とする。規約は経路 1 と同一: ミラー配置
    (`_backup/{相対dir}/{stem}.{YYYYMMDD_HHMMSS}.{ext}`) / 直前バックアップと md5 同一ならスキップ /
    複製失敗でも本処理を block しない fail-open / 新規生成 (ファイル不在) は対象外。
+   → **上書きだけでなく削除も同義務** — targets の成果物を script が `rm` する経路 (21e/21f
+   `commit-degrade.mjs` の正典残骸掃除・retry `--canonical` の正典削除、21f の旧仕様 webp 残骸掃除)
+   も削除前に同じ退避を行う。削除は上書きより復元可能性が低く、特に手動差し替えされた正典は
+   削除前退避が唯一の保全点になる (レビューで検出)。
    → `derive-transition-map.mjs` の `--force` 経路は **repo 内の正規呼び出しがまだ無い**
    (skills/reverse/06 / skills/14 のファストパス / 14-lite の 3 箇所すべてが「`--force` は渡さない」と明記)。
    実装を先に置いているのは、手動再導出 (人間が `--force` を付けて叩く運用) と将来の delta 配線で
@@ -77,6 +83,12 @@ machine state / 中間ファイルを退避対象に広げない。
 > 書く script には該当しない（md5 dedup があれば no-op 再実行の増殖は防げる）。逆に **1 つの人間ゲートの中で
 > 何度も再実行され得る script**（21g の `backupFile` — 埋め込み → 差し戻し → 再埋め込みで同じ HTML を
 > 繰り返し書き換える）は、経路 1 とまったく同じ理由で cooldown を持つ。
+> 21e / 21f の `backupFile`（生成グラフィック PNG）はこの基準どおり **cooldown を持たない** — 各実行は
+> 同一ファイルを 1 度しか書かず、cooldown があると 180 秒以内のリトライ再生成で**課金済みの旧世代を
+> 黙って取り逃す**（過去に起きた事故の再発）。md5 dedup は持つ（内容が同一なら退避しない）。
+> **hook 側もバイナリ画像 (png/webp) には cooldown を適用しない** — Edit ツールはバイナリを分割編集
+> できず「1 指示複数 Edit」の前提が成立しない上、script 退避と `_backup/` プールを共有するため、
+> 適用すると script 退避直後の 180 秒間だけ Write 誤操作の安全網に穴が開く（同チケットレビューで検出）。
 
 ---
 
@@ -92,14 +104,22 @@ machine state / 中間ファイルを退避対象に広げない。
 | Step 13 | スタイルガイド / デザインシステム | `style-guide.md` / `screens/style-guide-view.html` / `tokens.json` |
 | Step 16 | 画面一覧 / 画面遷移図 | `screens/*.md` / `screens/00-transition-map.{mmd,html}` |
 | Step 21 | 全画面 HTML + 状態パターン | `screens/{web,web-sm,mobile}/*.html` |
+| Step 21e / 21f (21g ゲートで確認) | 生成グラフィック (raw 中間物 / 正典) | `graphics/raw/*.png` / `screens/_shared/graphics/*.{png,webp}` (webp は旧仕様 run の legacy 正典のみ — 現行 writer は無く、掃除・削除経路が退避してから消す) |
 | Step 23 | Figma 出力関連 | `figma-state.json` |
 | Step 26 | 振り返りレポート | `pipeline-improvements.md` |
 
 **対象外** (許可リスト方式のため上記 glob に一致しないものは自動的に除外される):
 中間ファイル・ループ用 history (`scores.json` / `*-history.json` / `screens/00-coverage-check.json`)、
 machine state / INPUT (`pipeline-state.json` / `requirements.json` / `design-brief.yaml` /
-`pending-questions.json` / `requirement-deviations.json` / `generation-provenance.json`)、
-共通部品 (`screens/_shared/*`)、`feedback-log.md` / `session-handoff.md`。
+`pending-questions.json` / `requirement-deviations.json` / `generation-provenance.json` /
+`graphics/raw/generation-manifest.json` / `graphics/postprocess-manifest.json`)、
+共通部品 (`screens/_shared/*` — **ただし `graphics/*.{png,webp}` は除く**: CSS 土台・components 等は
+`tokens.json` から決定的に再生成できる派生物なので対象外のまま、生成グラフィックは課金済みで
+再生成不能のため対象)、`feedback-log.md` / `session-handoff.md`。
+
+> **生成グラフィック PNG の退避は経路 3 (script self-backup)**: 正規 writer の 21e / 21f は Bash 起動
+> script のため hook は発火しない。hook 側の許可 glob にも載せているのは pipeline.yaml `targets` との
+> 同期維持 + 万一 `Write` ツールで PNG パスを潰す誤操作が起きた場合の安全網。
 
 ---
 
@@ -137,6 +157,8 @@ artifacts/myapp/
 - **新規生成時**: 元バージョンが無いので複製しない。
 - **内容が直前バックアップと同一**: 意味のない重複なので skip (md5 で判定)。
 - **cooldown 中 (同一ファイルの直近バックアップが一定秒数以内)**: skip (下記参照)。
+  ただし **バイナリ画像 (png/webp) には cooldown を適用しない** (上記の
+  cooldown 適用基準の項を参照)。
 
 つまり「実際に内容が変わる上書き」かつ「直近の退避から一定時間が経過している」ときだけ積み上がる。
 
@@ -178,6 +200,31 @@ hook は `Write` / `Edit` ごとに発火するため、素朴には Edit の回
   rm -rf artifacts/myapp/_backup
   ```
 
+### HTML と画像の対応づけ — 「ある時点の見た目」を再現する
+
+画面 HTML は正典グラフィックを `<img src>` の相対パスで参照するため、HTML バックアップを復元しても
+参照先の画像が当時のものでなければ見た目は再現できない。専用の snapshot 機構は持たず、両者の
+バックアップが**同じタイムスタンプ命名・同じミラー配置**であることを使って手順で対応づける:
+
+- バックアップは「上書きの**直前**」に取られる。つまり `{stem}.{時刻}.{ext}` は
+  **その時刻まで生きていた内容** を保持している。
+- 時点 T のファイル内容 = 「`時刻 > T` のバックアップのうち**最古**のもの。無ければ現行ファイル」。
+- **HTML 側は画像側より粗いことがある**: HTML の退避 (経路 1 hook / 21g) は cooldown を持つため、
+  180 秒以内に複数回書き換えられた場合の中間世代は退避されていない。画像 (png/webp) は hook /
+  script とも cooldown なしで、この規則が正確に成り立つ。
+
+```bash
+# 例: 2026-08-18 12:00 時点の 01-home (web) の見た目を再現する
+#   1) HTML:  _backup/screens/web/01-home.*.html のうち 20260818_1200 より後で最古のもの
+#      (無ければ現行 screens/web/01-home.html) を screens/web/01-home.html へ
+#   2) 画像:  参照している graphic_id ごとに _backup/screens/_shared/graphics/{id}.*.png を
+#      同じ規則で選び screens/_shared/graphics/{id}.png へ
+```
+
+raw (`graphics/raw/`) と正典 (`screens/_shared/graphics/`) は両方退避される — 正典は raw の
+バイト無加工コピーだが、正典が手動差し替えされていた場合は raw 側の退避だけでは戻せず、
+HTML 復元時の対応づけにも raw→正典の読み替えが要るため、正典側も独立に退避する。
+
 `artifacts/` は `.gitignore` 対象のため `_backup/` も Git には含まれない (ローカル専用)。
 
 ---
@@ -198,4 +245,4 @@ hook は `Write` / `Edit` ごとに発火するため、素朴には Edit の回
 `bash` + OS 標準コマンド (`cat` / `cp` / `mkdir` / `dirname` / `basename` / `date` / `ls` / `grep` / `awk` / `head` / `stat`) のみ。
 stdin JSON の parse に `jq`、内容比較に `md5sum` (Linux) / `md5` (macOS)、cooldown の mtime 取得に `stat` (`-f %m` macOS / `-c %Y` Linux) を使う。
 いずれかが不在でも hook は `exit 0` で素通りする (fail-open) ため、外部 CLI の導入は不要
-(CLAUDE.md Operating Principle 1 準拠)。
+(CLAUDE.md Operating Principle 1 準拠)。`jq` の導入有無・案内は **README「前提条件」の optional 宣言が SoT** (本書は依存の説明のみで導入可否を定めない)。

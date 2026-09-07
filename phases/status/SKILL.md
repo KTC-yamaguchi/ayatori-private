@@ -157,6 +157,20 @@ Phase 5 (Delta — Steps 27~30 + 27b/29b):  [only shown if pipeline-state.json.d
     screen_edit: Step 29b/30 の該当)
   - 完走後に delta/edited-screens.json の未消費 (consumed_by_run == null) が N>0 →
     手編集 N 件未反映を表示し /ayatori-delta (screen-edit モード) を推奨
+  - 完走 / reverse 基線プロジェクトで screens/*.md (00-* / _* 以外) に「## 振る舞い詳細」
+    「## データ項目」のいずれかを持たないものが N>0 → 不足セクションのある仕様書 N 件を
+    ℹ️ カウンタで表示する (セクションごとに独立判定し、和集合の件数を数える)。
+    ℹ️ 行には不足セクション名も併記する。next_action としての推奨 (/ayatori-delta 起動時の
+    追記提案 27c-spec-backfill の案内) は **完走プロジェクトのみ・他の推奨が無いときのみ・
+    抑制対象 (`delta.spec_backfill_declined_sections`) に入っていない不足セクションが 1 つ以上
+    あるときのみ** (基線プロジェクトは基線誘導が先勝ちのためカウンタ表示のみ。抑制済みセクション
+    しか残っていなければ /ayatori-delta 側でも提案されないため推奨も抑制する。`declined_at` が
+    set で sections が欠落している / 配列でない state は `["振る舞い詳細"]` として扱う)。
+    推奨行の件数は「提案できるセクションが欠けている仕様書」だけを数え、セクション名もその
+    提案できる分だけを載せる (phases/delta の `{N}` と同じ母集団)。推奨行が出ているときは
+    通常の ℹ️ 行を重ねず、抑制中のセクションの不足があれば「ℹ️ 抑制中 (再提案なし) の不足
+    セクション: …」の 1 行で別に見せる (検知表示は抑制セクションにも残す)。
+    実装 SoT = scripts/pipeline-status.mjs、判定式の SoT = phases/delta/SKILL.md の追記提案ブロック
 
 Phase 6 (Delta-mini — Step 34):  [only shown if delta.runs[] or req_delta.runs[] has at least one entry]
   CHECK: pipeline-state.json has delta.runs[] or req_delta.runs[] with at least one entry?

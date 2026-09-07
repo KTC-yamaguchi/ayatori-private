@@ -26,6 +26,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadPipelineConfig, resolveGet } from "./ayatori/config.mjs";
 
 // ── fail-soft ヘルパ (scripts/build-artifact-index.mjs と同パターン) ──────────
 const isDir = (p) => {
@@ -46,26 +47,43 @@ const listDir = (p) => {
   try { return readdirSync(p); } catch { return []; }
 };
 
-// ── pipeline.yaml ループ閾値 (regex 抽出、失敗時は既定値に fallback) ──────────
+// ── pipeline.yaml ループ閾値 (共有 parser 経由、失敗時は既定値に fallback) ──────
+// 読み込みは scripts/ayatori/config.mjs の loadPipelineConfig / resolveGet を使う —
+// 行 regex の独自解析を併存させると、pipeline.yaml の並べ替えで `ayatori config get` は
+// 正しく読めるのに本スクリプトだけ誤った閾値を黙って返す split-brain が起きるため。
+// fail-soft 契約 (pipeline.yaml 不在・subset 外でも既定値で動く) は try/catch で維持する。
 export const DEFAULT_THRESHOLDS = {
   req_pass_total: 80,   // requirements.loop.pass_condition "total >= 80"
   req_per_axis_min: 12, // requirements.loop.per_axis_min
   req_max_attempts: 3,  // requirements.loop.max_attempts
-  design_max_attempts: 3, // screens.loop (control_step: 20-loop-design) max_attempts
+  wcag_max_attempts: 3,   // design.loop (control_step: 11-wcag-mapping — 08↔11 WCAG loop) の max_attempts
+  design_max_attempts: 3, // screens.loop (control_step: 20-loop-design) の max_attempts
 };
 export const readThresholds = (repoRoot) => {
   const t = { ...DEFAULT_THRESHOLDS };
-  const yaml = readText(join(repoRoot, "pipeline.yaml"));
-  if (!yaml) return t;
-  let m = yaml.match(/per_axis_min:\s*(\d+)/);
-  if (m) t.req_per_axis_min = Number(m[1]);
-  m = yaml.match(/pass_condition:\s*"[^"]*total\s*>=\s*(\d+)/);
-  if (m) t.req_pass_total = Number(m[1]);
-  // requirements loop の max_attempts は per_axis_min 直後に宣言されている
-  m = yaml.match(/per_axis_min:\s*\d+\s*\n\s*max_attempts:\s*(\d+)/);
-  if (m) t.req_max_attempts = Number(m[1]);
-  m = yaml.match(/control_step:\s*20-loop-design[\s\S]*?max_attempts:\s*(\d+)/);
-  if (m) t.design_max_attempts = Number(m[1]);
+  let doc;
+  try {
+    doc = loadPipelineConfig(repoRoot).doc;
+  } catch (e) {
+    // 不在 / subset 外 — 既定値で fail-soft。ただし黙らない: 旧 regex 実装は YAML
+    // 妥当性と無関係に抽出できたため、subset 外の編集が入ると本スクリプトだけ
+    // 「attempt N/M」等を既定値で誤表示して診断不能になる。stderr 1 行で可視化する
+    console.error(`warning: pipeline.yaml の閾値読取に失敗 — 既定値に fallback する (${e.message})`);
+    return t;
+  }
+  const num = (key) => {
+    const r = resolveGet(doc, key);
+    return r.ok && typeof r.value === "number" ? r.value : null;
+  };
+  t.req_per_axis_min = num("requirements.loop.per_axis_min") ?? t.req_per_axis_min;
+  t.req_max_attempts = num("requirements.loop.max_attempts") ?? t.req_max_attempts;
+  t.wcag_max_attempts = num("design.loop.max_attempts") ?? t.wcag_max_attempts;
+  t.design_max_attempts = num("screens.loop.max_attempts") ?? t.design_max_attempts;
+  const pass = resolveGet(doc, "requirements.loop.pass_condition");
+  if (pass.ok && typeof pass.value === "string") {
+    const m = pass.value.match(/total\s*>=\s*(\d+)/);
+    if (m) t.req_pass_total = Number(m[1]);
+  }
   return t;
 };
 
@@ -174,6 +192,60 @@ const countUnconsumedScreenEdits = (ctx) => {
   const entries = ctx.editedScreens?.entries;
   if (!Array.isArray(entries)) return 0;
   return entries.filter((e) => e.consumed_by_run == null).length;
+};
+// 画面仕様書 md の母集団 (00-* / _* を除く screens/*.md)。scanLegacySpecs と
+// detectPhase3Main が同じ集合を見る必要があるため 1 か所に集約する (複製ドリフト防止)。
+const listScreenSpecs = (ctx) =>
+  ctx.listRel("screens").filter((f) => f.endsWith(".md") && !f.startsWith("00-") && !f.startsWith("_"));
+// 画面仕様書テンプレートの必須セクション。27c-spec-backfill が追記できる単位であり、
+// 1 つでも欠けている仕様書が「旧フォーマット」。行頭アンカーで判定する
+// (### や文中引用を「記載あり」と誤認しない)。
+// 判定式の定義は本配列が唯一の JS 実装 — scripts/build-artifact-index.mjs はここから import する
+// (再定義しない)。同じ判定を bash で持つのは phases/delta/SKILL.md と
+// skills/27c-spec-backfill/SKILL.md の述語 (`grep -LE '^##[[:space:]]*…'`)、prose で持つのは
+// skills/28-impact-analysis/SKILL.md (Spec Format 節)。セクション増減時に直す箇所の一覧は
+// docs/interface-contracts.md § 破壊的変更ルール の該当行を SoT とし、ここに個数は書かない
+// (個数リテラル自体がドリフト源になるため)。
+// 空白は **行内** の空白 (`[^\S\r\n]` = 半角 / タブ / 全角空白。改行は含まない) に限る —
+// `\s` だと素の `##` 行の次行が「データ項目」で始まる文書を JS だけが「記載あり」と読み、
+// 行単位の grep 述語 (`[[:space:]]` は改行を跨がない) と食い違う。等価性と label の一致は
+// 契約テストが実際に grep を走らせて突合する (UTF-8 ロケール前提 — LC_ALL=C では全角空白の
+// 扱いが乖離しうる)。
+// label は schemas/pipeline-state.schema.json の
+// delta.spec_backfill_declined_sections.items.enum と一致していること (契約テストが突合)。
+export const SPEC_REQUIRED_SECTIONS = [
+  { label: "振る舞い詳細", re: /^##[^\S\r\n]*振る舞い詳細/m },
+  { label: "データ項目", re: /^##[^\S\r\n]*データ項目/m },
+];
+// 必須セクションのいずれかを欠く旧フォーマット画面仕様書のスキャン。
+// 追記済みかどうかの状態はセクションの有無そのもの (別 ledger なし・冪等)。
+// 読めないファイルは数えない (fail-soft — 検知できないものを旧フォーマットと断定しない)。
+// 返すもの: count = 件数 (ファイル単位・重複なし) / sections = 1 件以上の仕様書に欠けている
+// セクション名の集合 / missing_by_file = 仕様書ごとの不足集合 (抑制セクションを除いた
+// 「提案できる件数」を後で数え直すための材料)。bash 側の述語は 2 本を別々に流すため、
+// 和集合を取るときはファイル単位で dedupe しないと両方欠けている仕様書を 2 回数えてしまう。
+const scanLegacySpecs = (ctx) => {
+  const texts = listScreenSpecs(ctx)
+    .map((f) => readText(join(ctx.root, "screens", f)))
+    .filter((t) => t != null);
+  const missingByFile = texts
+    .map((t) => SPEC_REQUIRED_SECTIONS.filter((sec) => !sec.re.test(t)).map((sec) => sec.label))
+    .filter((m) => m.length > 0);
+  return {
+    count: missingByFile.length,
+    sections: SPEC_REQUIRED_SECTIONS.map((sec) => sec.label).filter((label) => missingByFile.some((m) => m.includes(label))),
+    missing_by_file: missingByFile,
+  };
+};
+// 「今後この提案を出さない」で抑制済みのセクション集合。
+// declined_at が set なのに sections が無い state は本キー導入前の decline なので、
+// 当時存在した唯一のセクションとして扱う (phases/delta/SKILL.md の判定式と同一)。
+// 配列でない値 (LLM writer の書き崩れ — schema は Write 時に hook 検証されない) も同じ
+// 後方互換 fallback に吸収する: この 1 キーの型崩れで全プロジェクトの表示を落とさない (fail-soft)。
+const declinedSections = (ctx) => {
+  if (ctx.state.delta?.spec_backfill_declined_at == null) return [];
+  const raw = ctx.state.delta.spec_backfill_declined_sections;
+  return Array.isArray(raw) ? raw : ["振る舞い詳細"];
 };
 
 // ── Phase 0b: Reverse (Steps 01~06) ──────────────────────────────
@@ -372,7 +444,7 @@ export const detectPhase2 = (ctx, thresholds) => {
   const wcagAttempts = (ctx.wcagHistory && Array.isArray(ctx.wcagHistory.attempts)) ? ctx.wcagHistory.attempts : [];
   const lastViolations = wcagAttempts.length ? (wcagAttempts[wcagAttempts.length - 1].violations || []) : [];
   if (lastViolations.length > 0)
-    return mk(STATUS.IN_PROGRESS, `WCAG correction loop (08↔11, attempt ${wcagAttempts.length}/${thresholds.design_max_attempts})`);
+    return mk(STATUS.IN_PROGRESS, `WCAG correction loop (08↔11, attempt ${wcagAttempts.length}/${thresholds.wcag_max_attempts})`);
   if (!tokensPopulated) return mk(STATUS.IN_PROGRESS, "token generation (12)");
   return mk(STATUS.WAITING_APPROVAL, "style guide review (13)");
 };
@@ -393,7 +465,7 @@ export const detectPhase3Main = (ctx, thresholds) => {
   if (ap.step16_approved_at == null) return mk(STATUS.WAITING_APPROVAL, "design doc review (16)");
   const saveCount = ctx.state.confluence?.design?.save_count ?? 0;
   if (saveCount === 0) return mk(STATUS.IN_PROGRESS, "awaiting 1st Confluence save (15)");
-  const screenMds = ctx.listRel("screens").filter((f) => f.endsWith(".md") && !f.startsWith("00-") && !f.startsWith("_"));
+  const screenMds = listScreenSpecs(ctx);
   if (screenMds.length === 0) return mk(STATUS.IN_PROGRESS, "screen gen (17)");
   if (ctx.scores == null || ctx.scores.current == null) return mk(STATUS.IN_PROGRESS, "screen review + scoring (18~19)");
   const cur = ctx.scores.current;
@@ -606,10 +678,51 @@ export const detectProject = (artifactsRoot, appName, thresholds) => {
     nextAction = {
       phase: "5",
       command: "/ayatori-delta",
+      kind: "screen-edit",
       reason: `未反映の手編集 ${pendingScreenEdits} 件 — screen-edit モードで反映してください`,
     };
   }
-  return { app_name: appName, phases, next_action: nextAction, pending_screen_edits: pendingScreenEdits };
+  // 完走 / reverse 基線プロジェクトの旧フォーマット仕様書 (必須セクションが欠けているもの) は
+  // /ayatori-delta 起動時の追記提案 (27c-spec-backfill) で追記できる。カウンタは
+  // 追記が可能な状態 (完走 or 基線) のときのみ数える — 進行中プロジェクトの仕様書は
+  // Phase 3 のループが新フォーマットで生成し直すため案内対象にしない。
+  const legacyScan = (isProjectCompleted(ctx) || isBaselineOnly(ctx))
+    ? scanLegacySpecs(ctx) : { count: 0, sections: [], missing_by_file: [] };
+  const legacySpecScreens = legacyScan.count;
+  // 「今後この提案を出さない」(delta.spec_backfill_declined_at) を選んだプロジェクトには
+  // next_action として推奨しない (/ayatori-delta 側では二度と提案されないため、推奨が
+  // 永久に達成不能になる)。ℹ️ カウンタ表示 (legacy_spec_screens) は残す — delta skill の
+  // 選択肢説明「/ayatori-status の検知表示は残る」と整合。
+  // 抑制は「セクション単位」— 抑制対象に入っていない不足セクションが 1 つでもあれば
+  // 提案は生きているので推奨する (セクションが後から増えたときに推奨が閉じないため)。
+  const missingSections = legacyScan.sections;
+  const declined = declinedSections(ctx);
+  // 推奨文面に載せるのは「まだ提案できる」セクションだけ — 抑制済みセクションを挙げると、
+  // 人間が /ayatori-delta で提案されない項目を探すことになる。
+  const proposableSections = missingSections.filter((sec) => !declined.includes(sec));
+  const declinedMissingSections = missingSections.filter((sec) => declined.includes(sec));
+  // 件数もセクション名と同じ母集団で数える — 「提案できるセクションが 1 つ以上欠けている
+  // 仕様書」の数。全体の不足件数 (legacySpecScreens) を並べると、抑制中のセクションだけが
+  // 欠けた仕様書まで含んだ数字に、抑制外のセクション名が付いて読み手を誤らせる。
+  const proposableScreens = legacyScan.missing_by_file
+    .filter((m) => m.some((sec) => proposableSections.includes(sec))).length;
+  if (nextAction == null && isProjectCompleted(ctx) && proposableScreens > 0) {
+    nextAction = {
+      phase: "5",
+      command: "/ayatori-delta",
+      kind: "spec-backfill",
+      reason: `不足セクションのある画面仕様書 ${proposableScreens} 件 (${proposableSections.join(" / ")}) — 起動時の追記提案 (27c) で追記できます`,
+    };
+  }
+  return {
+    app_name: appName, phases, next_action: nextAction,
+    pending_screen_edits: pendingScreenEdits,
+    legacy_spec_screens: legacySpecScreens,
+    legacy_spec_sections: missingSections,
+    // 抑制中 (再提案されない) の不足セクション。推奨行が提案可能分だけを載せるため、
+    // こちらは ℹ️ 行で別に見せる — 「検知表示は残る」の約束を抑制セクションにも守る。
+    legacy_spec_declined_sections: declinedMissingSections,
+  };
 };
 
 // ── 推奨アクション ────────────────────────────────────────────
@@ -658,9 +771,17 @@ export const renderMarkdown = (result) => {
       lines.push(`> **Pipeline complete!** All phases finished.`, "");
       lines.push(`> 変更が必要になったら \`/ayatori-delta\` から入れます（要件変更 / 画面手修正 / 機能追加）。`, "");
     }
-    if (proj.pending_screen_edits > 0 &&
-        !(proj.next_action && proj.next_action.command === "/ayatori-delta" && /手編集/.test(proj.next_action.reason)))
+    // next_action が同じ案内を出しているなら ℹ️ 行は重ねない。判別は文面正規表現ではなく
+    // kind フィールドで行う (文面を 1 字直しただけで二重表示に戻らないようにする)。
+    const nextKind = proj.next_action?.kind;
+    if (proj.pending_screen_edits > 0 && nextKind !== "screen-edit")
       lines.push(`> ℹ️ 未反映の手編集 ${proj.pending_screen_edits} 件（\`/ayatori-delta\` の screen-edit 対象）`, "");
+    if (proj.legacy_spec_screens > 0 && nextKind !== "spec-backfill")
+      lines.push(`> ℹ️ 不足セクションのある画面仕様書 ${proj.legacy_spec_screens} 件${proj.legacy_spec_sections?.length ? ` (${proj.legacy_spec_sections.join(" / ")})` : ""}（\`/ayatori-delta\` 起動時の追記提案で追記可能）`, "");
+    // 推奨行は提案できるセクションだけを載せる。抑制中のセクションの不足はここで別に見せる —
+    // 消すと「/ayatori-status の検知表示は残る」(delta の選択肢説明) が破られる。
+    if (nextKind === "spec-backfill" && proj.legacy_spec_declined_sections?.length)
+      lines.push(`> ℹ️ 抑制中 (再提案なし) の不足セクション: ${proj.legacy_spec_declined_sections.join(" / ")}（解除は \`delta.spec_backfill_declined_at\` の削除）`, "");
   }
   return lines.join("\n");
 };
@@ -668,9 +789,15 @@ export const renderMarkdown = (result) => {
 export const buildStatus = (repoRoot, appNames = null) => {
   const artifactsRoot = join(repoRoot, "artifacts");
   if (!isDir(artifactsRoot)) return { error: `artifacts directory not found: ${artifactsRoot}` };
-  const all = listDir(artifactsRoot)
+  const dirs = listDir(artifactsRoot)
     .filter((d) => !d.startsWith(".") && !d.startsWith("_") && isDir(join(artifactsRoot, d)))
     .sort();
+  // /ayatori-export-en の EN ミラー ({app}-en) はプロジェクトではなく配布物 (パイプライン
+  // 再入力不可・pipeline-state.json 非複製) のため列挙から除外する。requirements.json 等は
+  // あるのに approvals が無いため「Phase 1b 進行中」と誤判定され、推奨アクションに従うと
+  // 配布ミラーへパイプラインが書き込んでしまう。判定は sibling ルール — `X-en` かつ `X` が
+  // 存在する場合のみミラーとみなす (単に `-en` で終わるだけの正規プロジェクト名を誤除外しない)。
+  const all = dirs.filter((d) => !(d.endsWith("-en") && dirs.includes(d.slice(0, -3))));
   const targets = appNames && appNames.length ? appNames : all;
   const missing = targets.filter((a) => !all.includes(a));
   if (missing.length) return { error: `project not found under artifacts/: ${missing.join(", ")}` };

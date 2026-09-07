@@ -90,6 +90,8 @@ Section 1-A の AskUserQuestion（二択）を出す直前に、AI 機械検出�
 
 defect が 0 件なら本ブロックは「入口/出口の自動検出に問題は見つかりませんでした（目視確認は継続してください）」とだけ表示する。`mmd_edge` / `wire_new_screen`（`.mmd` 構造系）が未解消で user が修正を選んだ場合は、Section 2 の「やり直し（14）」または「修正」経路で `skills/14-screen-list-transition/SKILL.md` を Read して `.mmd` を補完してから再生成する。
 
+あわせて、画面仕様書の「振る舞い詳細」で遷移先未解決とマークされた行を `grep -n "遷移先未解決" artifacts/{app_name}/screens/*.md` で数え、1 件以上あれば同じ一覧に「振る舞い詳細の遷移先未解決: {N} 件（{screen}: {宛先} …）」として含める（操作イベントの行き先が画面一覧に無い = 不足画面の候補。画面追加を指示する場合は Section 1-B の経路で `00-screen-list.md` へ追記 → Step 17 追加生成に乗る）。同じく「データ項目」の `→ EV 未解決` 行を `grep -n "EV 未解決" artifacts/{app_name}/screens/*.md` で数え、1 件以上あれば「データ項目の EV 未解決: {N} 件（{screen}: {項目} …）— 振る舞い詳細の追記で解消」として含める（結べる操作イベントが無い更新行。ledger には載らず Step 18 / 19 も免除するため、ここで見せないと誰も数えない）。
+
 #### Section 1-B: Yes 選択時のみ — 自由記述での詳細指摘
 
 Section 1-A で **Yes** が選択された場合のみ、続けて AskUserQuestion で**自由記述（テキスト入力）**として「どの画面が漏れているか」を受領する（選択肢ではない）。
@@ -165,6 +167,14 @@ main session が `resolved_at` / `resolution` + `resolution_mode` (§5.5.3: per-
 **修正が必要 → 詳細受領後の処理**: 指摘を `feedback-log.md` に追記（パターンA、件名 `state_colors_contrast`）。state color の hex は `design-brief.yaml` → `tokens.json` 由来のため、画面側だけの修正では再発する — Section 1-D 昇格候補と同様に「tokens.json への反映（Phase 2 差し戻し or Step 24）+ Step 17 ループでの画面反映」を指示する。
 
 > 本 Section は `phases/design/SKILL.md`「Phase 3 への引き継ぎ (B-3)」が Step 21 に義務付けていた表示の実装（従来は宣言のみで skill 側に実装が無く、warn-only が「沈黙の隠蔽」になっていた）。
+
+#### Section 1-F: 画面仕様の未確定（※不明）の一括確認
+
+`skills/_shared/behavior-pending-confirm.md` を Read し、以下の契約値で実行する（グループ化・提示フォーマット・回答処理の SoT はそちら。主対象は Step 17 の「振る舞い詳細」「データ項目」で `※不明 (unknown)` とマークされた項目 — 抽出条件は `reflect_to` ベースのため両セクションが同じ経路で拾われる）:
+
+- `{section_label}` = 抽出された entry が実際に由来するセクション名（両方あれば `振る舞い詳細 / データ項目`、片方だけなら その 1 つ）。判別は **仕様書側の該当行**で行う — entry の `target` を `grep -n "ask: {target}" screens/{slug}.md` で探し、ヒット行が `## 振る舞い詳細` と `## データ項目` のどちらの見出し配下にあるかで決める（target の `{key}` にセクションの名前空間は無いので、key の字面から推測しない）。仕様書に該当行が無い entry（29b 等の別 writer が `reflect_to: screens/*.md` で積んだもの）は section_label の判別材料にせず、質問はそのまま同じ画面グループに載せる。
+- `{gate_label}` = `確認済 (Step 21 ゲート)`
+- `{html_reflection}` = 確定内容が HTML の見た目・挙動に影響する場合（例: 送信中 disabled の追加）は、Section 2 承認前に Step 17 ループで該当画面へ反映する
 
 ### Section 2: 全画面HTML 承認ゲート
 

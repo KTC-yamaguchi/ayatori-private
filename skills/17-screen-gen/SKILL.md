@@ -69,7 +69,7 @@ OK: 「ユーザーがテキスト原稿を入力し、アバターと音声を�
 
 ### CTAとフィードバックは必ず定義する
 
-全画面で以下を **仕様書 (`{画面名}.md`) に必ず記述**すること:
+全画面で以下を **仕様書 (`{slug}.md`) に必ず記述**すること:
 - 主要CTA（ユーザーが次に何をするか）
 - ローディング状態（API呼び出し中など）— 仕様記述のみ。HTML 生成は Step 25b
 - エラー状態（失敗時のメッセージ・リカバリー手段）— 同上
@@ -99,14 +99,14 @@ WCAG 関連の判定ルールは `docs/wcag-standards.md` に集約されてい�
 
 Read and execute `skills/00-figma-mode-detect/SKILL.md` to resolve `mode`:
 - `mode == "enabled"` の場合も、**このステップでは Figma 書き込みは行わない**。Figma への出力は 22（Figma 出力）が担当する。HTML 生成のみ実行。
-- `mode == "disabled"` の場合もまずスタブ実装（HTML 生成）を行い、22 でそれを読み込んで Figma に書き込む。
-- いずれの mode でも 17 の挙動は実質同一 (HTML 生成のみ)。判定結果は figma-state.json の audit trail として記録される。
+- `mode == "disabled"` の場合も同じく HTML 生成を行う。生成した HTML を読み込んで Figma に書き込むのは **22 が enabled で動くときのみ** — disabled では 22 は Figma 出力を skip して `skipped_stub_mode` を記録する (`phases/screens/SKILL.md`)。いずれにせよ 17 側の成果物は変わらない。
+- いずれの mode でも 17 の挙動は実質同一 (HTML 生成のみ)。
 
 ---
 
-## 実行指示（スタブ実装）
+## 実行指示（HTML 生成）
 
-`artifacts/{app_name}/requirements.json`・`tokens.json`・`style-guide.md` を読み込む。
+`artifacts/{app_name}/requirements.json`・`tokens.json`・`style-guide.md` を読み込む。仕様書 (.md) の導出元として `requirements/03-user-flow.md`・`04-use-cases.md`・`05-features.md`・`06-non-functional.md`（振る舞い詳細）と `requirements/07-data-definition.md`・`05-features.md`（データ項目）も Read する — 「データ項目の記入規則」は書く前に対象文書の実在見出し・ID を確認することを要求するため、Read せずに根拠列は書けない。
 `artifacts/{app_name}/scores.json` の `attempt_count` を確認する。
 
 **ループ再実行時（attempt_count > 0）の場合:**
@@ -139,6 +139,7 @@ Read and execute `skills/00-figma-mode-detect/SKILL.md` to resolve `mode`:
    - **本経路で `illustration-*` を追加するのは禁止**: 装飾色の追加は必ず昇格ゲート経由（08 Phase 3-illust の床 or 未解決 var → report 昇格キュー → Step 24 A-2b）。P-15 は rgba オーバーレイ等の UI トークン補完専用であり、ゲート無しで装飾色を自己定義する bypass にしない
 6. `tokens.json` を更新した場合は `_shared/root-variables.css` も同期更新すること。SoT の階層は単方向フロー:
    `tokens.json`（唯一の SoT）→ `_shared/root-variables.css`（staging）→ 各 HTML `<style>`（derived output）
+   staging へ書く変数名は tokens.json キーの長形式をそのまま使わず、`skills/12-design-system/refs/generate-style-guide.md` の対応表（実装正本は同 `refs/build-tokens.md` の `canonicalName`）で短形式（`--fs-*` / `--lh-*` 等）へ変換する
    `_shared/root-variables.css` が残っている理由は 4 つ: (1) subagent 並列実行時に全 HTML の `:root` をビット単位で一致させる決定性確保、(2) ヒューマンレビュアー用 reference、(3) Step 23 の cross-check 基準、(4) Step 29 (delta) の READ-ONLY 参照。
    ただし HTML ファイルからこのファイルを `<link>` **しないこと** — 各 HTML の `<style>` ブロックに値を展開してインラインコピーすること（下記「CSS 自己完結ルール」参照）
 
@@ -167,13 +168,13 @@ artifacts/{app_name}/screens/
 │   ├── common-styles.css       ← 共通スタイル (Phase A)
 │   ├── components.html         ← 共通部品 chrome マークアップ正典 (Step 0b)
 │   └── components.css          ← 共通部品 chrome CSS 正典 (Step 0b)
-├── {画面名}.md
+├── {slug}.md
 ├── web/
-│   └── {画面名}.html       ← Step 17 はここまで (default のみ)
+│   └── {slug}.html       ← Step 17 はここまで (default のみ)
 ├── web-sm/                  ← web_viewports ∋ sm のときのみ
-│   └── {画面名}.html       ← Step 17 はここまで (default のみ)
+│   └── {slug}.html       ← Step 17 はここまで (default のみ)
 └── mobile/
-    └── {画面名}.html       ← Step 17 はここまで (default のみ)
+    └── {slug}.html       ← Step 17 はここまで (default のみ)
 ```
 
 > `{画面名}--{state}.html` (empty / loading / error / 追加状態) は **Step 17 では生成しない**。Step 25b (state-pattern-gen) で同じ `screens/{platform}/` ディレクトリに追加生成される。Step 17 は default のみで完結する。
@@ -184,10 +185,10 @@ artifacts/{app_name}/screens/
 | `00-transition-map.mmd` | 画面遷移図 SSoT (純 Mermaid) | Step 14（platform 共通） |
 | `00-transition-map.html` | 画面遷移図 派生 (template + .mmd で機械生成) | Step 14（platform 共通） |
 | `_shared/` | 共有 CSS + 共通部品正典（参照・管理用。HTML から `<link>` しない — 値を各 HTML にインライン展開する）。`root-variables.css` / `common-styles.css` に加え、`components.html`（chrome マークアップ正典）と `components.css`（chrome CSS 正典）を生成。Step 25b も READ-ONLY で参照するため Step 17 で必ず生成する | Step 17 Phase A / Step 0b |
-| `{画面名}.md` | 画面仕様書（画面ごとに 1 つ、root 配置）。全状態の振る舞いを記述する | platform 非依存 |
-| `web/{画面名}.html` | Web デスクトップ デフォルト（1440×900） | `platform_combo ∋ web` **かつ** `web_viewports ∋ desktop`（欠落時は `["desktop"]` 扱い） |
-| `web-sm/{画面名}.html` | Web スマホ幅 デフォルト（390×844 固定 `.screen` ラッパー、ブラウザページ体裁 — フォンフレーム装飾 / BottomTab なし） | `platform_combo ∋ web` **かつ** `web_viewports ∋ sm` |
-| `mobile/{画面名}.html` | モバイル デフォルト（390×844、BottomTab + フォンフレーム） | `platform_combo ∋ mobile` |
+| `{slug}.md` | 画面仕様書（画面ごとに 1 つ、root 配置）。全状態の振る舞いを記述する | platform 非依存 |
+| `web/{slug}.html` | Web デスクトップ デフォルト（1440×900） | `platform_combo ∋ web` **かつ** `web_viewports ∋ desktop`（欠落時は `["desktop"]` 扱い） |
+| `web-sm/{slug}.html` | Web スマホ幅 デフォルト（390×844 固定 `.screen` ラッパー、ブラウザページ体裁 — フォンフレーム装飾 / BottomTab なし） | `platform_combo ∋ web` **かつ** `web_viewports ∋ sm` |
+| `mobile/{slug}.html` | モバイル デフォルト（390×844、BottomTab + フォンフレーム） | `platform_combo ∋ mobile` |
 
 `mobile-` 接頭辞によるファイル名分離は廃止し、フォルダ階層で platform を表現する。仕様書（`.md`）は platform に依存しないため `screens/` 直下に 1 つだけ置く。
 
@@ -205,6 +206,7 @@ artifacts/{app_name}/screens/
 > コンテキスト上限が懸念される場合は、画面グループ（カテゴリ）単位で分割し、グループごとに subagent を起動する形にすること（1〜2画面の単発生成ではなく）。
 
 14 の `artifacts/{app_name}/screens/00-screen-list.md` を正として、そこに載っている全画面を生成する。
+ファイル名 slug（`screens/{slug}.md` / `screens/{platform}/{slug}.html` の `{slug}`）は同表の `画面ファイル` 列を正とする（列が無い legacy プロジェクトでは `{番号}-{英語 kebab-case}` を決定論的に付与し、以降の再生成でも同じ slug を使い続ける）。
 `requirements/02-scope.md` のスコープアウトと明記された機能の画面は対象外。
 01 の「デザイン出力範囲」（`requirements.json.design_output_scope.platform_combo`）を尊重する。
 **未設定の場合は `pipeline.yaml` の `default_design_output_scope.platform_combo` をフォールバックとして使用する。**
@@ -224,19 +226,19 @@ if platform_combo ∋ mobile:   platforms += ["mobile"]   # 390×844 固定 (ネ
 ```
 
 platform_combo に応じた生成ルール (Step 17 は default のみ):
-- `mobile_only` → `screens/mobile/{画面名}.html` のみ生成
+- `mobile_only` → `screens/mobile/{slug}.html` のみ生成
 - `web_only` → 上記展開に従い `screens/web/` / `screens/web-sm/` を生成（既定 = web のみ）
 - `mobile_and_web` → 上記展開に従い **各フォルダに生成**（既定 = `screens/web/` + `screens/mobile/`）
 - 「全 Phase の Must+Should」→ 詳細未確定の Phase 2/3 画面は仮内容 / Coming Soon で表現してよい
 
-**web-sm の内容規約**: `web-sm/{画面名}.html` は **同一画面の web desktop 版と同じ機能・同じ情報**をスマホ幅にリフローしたものであり、mobile（ネイティブアプリ）版の複製ではない:
+**web-sm の内容規約**: `web-sm/{slug}.html` は **同一画面の web desktop 版と同じ機能・同じ情報**をスマホ幅にリフローしたものであり、mobile（ネイティブアプリ）版の複製ではない:
 - ナビゲーションは web の慣習に従う（ヘッダー + ハンバーガー / ドロワー等）。**BottomTab は使わない**（BottomTab は mobile ネイティブ専用 chrome）。
 - web desktop 版と同一の token 変数（`_shared/root-variables.css` の inline copy）・同一のコンテンツを使い、レイアウトのみ 390px 幅向けに再構成する（カラム落とし・テーブルのカード化等）。
 - `web_viewports = ["sm"]`（desktop なし）の場合も同規約で生成する（web の慣習・ブラウザページ体裁は維持）。
 
 sub-state HTML (`--empty` / `--loading` / `--error` 等) は **Step 17 では生成しない** — Step 25b に移管。
 
-仕様書（`{画面名}.md`）は platform に関わらず `screens/` 直下に 1 つだけ生成する（重複させない）。
+仕様書（`{slug}.md`）は platform に関わらず `screens/` 直下に 1 つだけ生成する（重複させない）。
 
 注: HTML 生成は `mobile_framework` の値に依存しない（Flutter / KMP / Native のいずれでもモバイル HTML プレビューは同一）。
 
@@ -246,7 +248,7 @@ sub-state HTML (`--empty` / `--loading` / `--error` 等) は **Step 17 では生
 
 | dual_theme_mode | テーマ軸 | 命名 |
 |---|---|---|
-| `false` or 未設定 | 単一テーマのみ | `{画面名}.html`（テーマ suffix なし、default 状態のみ） |
+| `false` or 未設定 | 単一テーマのみ | `{slug}.html`（テーマ suffix なし、default 状態のみ） |
 | `true` | **light + dark の両方を必ず別ファイル化（対称命名）** | `{画面名}--light.html` と `{画面名}--dark.html` の両方を必ず生成 |
 
 `true` の場合の追加ルール（厳守）:
@@ -254,7 +256,7 @@ sub-state HTML (`--empty` / `--loading` / `--error` 等) は **Step 17 では生
 - 各 dark HTML は `<html data-theme="dark" lang="ja">` を明示すること。`prefers-color-scheme` のメディアクエリのみに依存しない（Figma キャプチャと静的レビュー時に必ず dark で描画させるため）
 - 各 light HTML は `<html data-theme="light" lang="ja">` を明示すること（OS preference 上書きを抑止）
 - **Step 17 における生成枚数** = 画面数 × platform dirs 数（web / web-sm / mobile の展開結果）× **2 (light + dark)**。例: 2 画面 × 2 platform dirs × 2 theme = 8 HTML (default のみ)
-- 仕様書 (`{画面名}.md`) は theme で分割しない（platform 同様、`screens/` 直下に 1 つ）。MD 内の画面間リンクは拡張子付きのファイル名ではなく **論理 screen 名で表現**（例: 「`result` 画面へ遷移」とし `result.html` のような実 path を書かない。consumer 側で theme に応じて resolve する）
+- 仕様書 (`{slug}.md`) は theme で分割しない（platform 同様、`screens/` 直下に 1 つ）。MD 内の画面間リンクは拡張子付きのファイル名ではなく **論理 screen 名で表現**（例: 「`result` 画面へ遷移」とし `result.html` のような実 path を書かない。consumer 側で theme に応じて resolve する）
 
 > **sub-state × theme の組合せは Step 25b の責務**: `{画面名}--{state}--light.html` / `{画面名}--{state}--dark.html` の生成は Step 25b が同じ命名規約で行う。Step 17 では theme × default の 2 軸のみ。
 
@@ -305,6 +307,7 @@ body {
 - `body`: グレー背景 + flex中央揃え（ブラウザ全幅に対してスマホを中央に置く）
 - `.screen`: 390×844px の実体（Figmaキャプチャ時は `figmaselector=.screen` でこの要素だけ取得）
 - `border-radius: 40px` でiPhoneのような角丸フレームに見える
+- **ノッチ / Dynamic Island / ステータスバー / ホームインジケータは含めない** — 本構造（グレー背景 + `.screen` + 角丸・影）が Step 17 mobile の正本。デバイス装飾つきのフレームは Step 09 サンプル専用（`skills/09-sample-html-gen/refs/platform-frames.css`）であり、`.screen` ラッパーを持たない構造のためフレーム lint を通らず、ベゼルの色リテラルも zero-literal の例外に含まれない（`docs/html-generation-rules.md` §4 プラットフォーム別フレーム装飾）
 
 #### Web スマホ幅画面のプレビュー構造（必須）
 
@@ -326,12 +329,12 @@ body {
   background: var(--color-bg);
   border-radius: 8px;            /* ブラウザウィンドウ程度の控えめな角丸（40px のフォンフレームにしない） */
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
 }
 ```
 
 mobile 構造との差分（厳守）:
-- `border-radius: 40px` の iPhone 風フレーム・ノッチ / ステータスバー / ホームインジケータ等の**デバイス装飾を入れない**（`.screen` はブラウザの表示領域を表す）
+- `border-radius: 40px` の iPhone 風フレームにしない（`.screen` はブラウザの表示領域を表すため 8px 角丸）。ノッチ / ステータスバー / ホームインジケータ等の**デバイス装飾は Step 09 サンプル専用**で、Step 17 は mobile / web-sm ともに入れない
 - **BottomTab を使わない** — ナビゲーションは web の慣習に従い、Step 0b-1 で正典化する **web-sm 専用ヘッダー（`web-sm-header-home` / `web-sm-header-sub`）** を逐語ペーストで使う。`_shared/components.html` の mobile chrome（`.mobile-header` / `.mobile-bottom-nav`）も 1440px 用 `web-header-*` も web-sm には流用しない（chrome の画面ごと再発明禁止は web-sm にも適用 — byte-check 対象）
 - コンテンツ・機能・token 変数は同一画面の `web/` 版と一致させる（レイアウトのみ 390px にリフロー）
 
@@ -384,7 +387,7 @@ mobile 構造との差分（厳守）:
 root-variables / chrome の self-check と**同型**の fail-closed 検証。各画面 HTML を Write した直後に orchestrator が実行する（lint はファイルを読む script のため、Write 後に走らせる）:
 
 ```bash
-node scripts/lint-screen-colors.mjs --check artifacts/{app_name}/screens/{platform}/{画面名}.html
+node scripts/lint-screen-colors.mjs --check artifacts/{app_name}/screens/{platform}/{slug}.html
 ```
 
 - 検出対象（L1 = `hard`）: 色リテラル（zero-literal 違反）／未解決 `var(--…)`（typo・外部依存）／SVG presentation 属性への `var()` 直書き／イラスト正典との不一致／外部 stylesheet（`<link>` / `@import`）／`:root` 完全性（`root_vars_incomplete` — root-variables.css の全変数名が定義済か。P-15 丸ごと copy の機械強制）。stdout JSON は (type, value) で dedup + 出現 cap 済（修正ヒント付き）。
@@ -401,7 +404,7 @@ node scripts/lint-screen-colors.mjs --check artifacts/{app_name}/screens/{platfo
 色トークン適合 self-check と**同型**の fail-closed 検証。各画面 HTML を Write した直後に色 lint と併せて実行する:
 
 ```bash
-node scripts/lint-screen-frame.mjs --check artifacts/{app_name}/screens/{platform}/{画面名}.html
+node scripts/lint-screen-frame.mjs --check artifacts/{app_name}/screens/{platform}/{slug}.html
 ```
 
 - 検出対象（hard・exit 1）: `fixed_frame_missing`（web = `body { width: 1440px }` 欠落 / web-sm・mobile = `.screen { width: 390px }` ルール or `<body>` 配下の `class="screen"` 要素の欠落）／ `width_media_query`（`min-width` / `max-width` の media query — `prefers-*` 系は許容）。
@@ -655,7 +658,7 @@ WebFetch が失敗した場合は「取得失敗: {URL}」と記録し、アイ�
 画面 content には**色リテラルを一切書かない**。hex / `rgb()` / `hsl()` / CSS 色名（`white` 等）のすべてが対象で、出現場所も **CSS プロパティ・inline `style=`・SVG presentation 属性（`fill=` / `stroke=` / `stop-color=`）・`var()` の fallback 値** の全部を含む。色は `var(--token)` / `currentColor`（+ `none` / `transparent` / `inherit`）のみで表現する。
 
 - **定義済み token と同じ値の生書きも NG**。`fill="#121820"`（= `--color-on-surface` の値）は light では同じに見えるが、(a) テーマ切替で追従できず dark で破綻する、(b) 後から token を変えても取り残され**画面間ドリフトの主形態**になる（実測: 観測された直書きの大半がこの型だった）。
-- **除外（リテラルを書いてよい場所）**: `:root` 系の定義ブロック（`:root` / `:root[data-theme=…]` / `@media(prefers-color-scheme){ :root… }`）＝ token 定義そのもの／raster `<img>`／プレビュー足場定数（`#E8E4DF` と `.screen` フレーム影 `rgba(0,0,0,0.15)` `rgba(0,0,0,0.05)` の完全一致値のみ）。
+- **除外（リテラルを書いてよい場所）**: `:root` 系の定義ブロック（`:root` / `:root[data-theme=…]` / `@media(prefers-color-scheme){ :root… }`）＝ token 定義そのもの／raster `<img>`／プレビュー足場定数（`#E8E4DF` と `.screen` フレーム影の完全一致値のみ。**値の正本は `scripts/lint-screen-colors.mjs` の `SCAFFOLD_ALLOW`** — 改訂は script 側で行い本文は値を列挙しない。mobile と web-sm の見えの差は色 (alpha) ではなく offset / blur と角丸で付ける（許可リストを増やさないため））。
 - **検証**: `scripts/lint-screen-colors.mjs` が機械判定する（完全一致のみ・近似マッチなし）。生成後の self-check（後述「色トークン適合 self-check」）で fail-closed。
 
 以下の rgba 分類は、この大原則の運用詳細（「token 化してから参照する」の token 化先の決め方）。`rgba()` の使い方は **用途によって2つに分類**して扱うこと。
@@ -747,7 +750,7 @@ style-guide-view.html（12 で生成）のアイコンも同じルールで生�
 
 ### 画面パターン生成ルール（Step 17 では default のみ）
 
-`docs/screen-coverage-check.md` の §2 判定 3 分類・§3 コンテンツ差し替え原則・§4-1〜4-4 (L1〜L4 判定基準) を読み込み、各画面に該当するパターンを **仕様書 (`{画面名}.md`) に列挙**する (§4-5 L5 connectivity と §6 出力フォーマットは本 step の責務外のため使わない — 担当 step は同文書 §7 統合表を参照)。Step 17 で HTML として生成するのは **default 状態 1 枚のみ**。empty / loading / error / 追加状態の HTML 生成は **Step 25b (state-pattern-gen) に移管された**。
+`docs/screen-coverage-check.md` の §2 判定 3 分類・§3 コンテンツ差し替え原則・§4-1〜4-4 (L1〜L4 判定基準) を読み込み、各画面に該当するパターンを **仕様書 (`{slug}.md`) に列挙**する (§4-5 L5 connectivity と §6 出力フォーマットは本 step の責務外のため使わない — 担当 step は同文書 §7 統合表を参照)。Step 17 で HTML として生成するのは **default 状態 1 枚のみ**。empty / loading / error / 追加状態の HTML 生成は **Step 25b (state-pattern-gen) に移管された**。
 
 > **移管詳細**: 旧版では本 step で 1 画面につき default + empty + loading + error + 追加状態の HTML を一気に生成していたが、(1) トークン消費過大、(2) 人間承認体験悪化、(3) main 修正が sub-state に伝搬しない、の 3 問題があった。新フローでは Step 17 は default 1 枚に絞り、Step 25 後の Step 25a で user に sub-state 要否を確認、proceed 時のみ Step 25b で追加生成する。命名規約 (`{画面名}--{state}.html` / dual_theme 時 `--{state}--{theme}.html`) は Step 25b でそのまま引き継がれる。
 
@@ -755,13 +758,13 @@ style-guide-view.html（12 で生成）のアイコンも同じルールで生�
 
 | platform_combo (+ web_viewports 展開後の platform dirs) | dual_theme_mode=false | dual_theme_mode=true |
 |---|---|---|
-| `web_only` (既定 = web のみ) | `web/{画面名}.html` (1 枚) | `web/{画面名}--light.html` + `web/{画面名}--dark.html` (2 枚) |
-| `mobile_only` | `mobile/{画面名}.html` (1 枚) | `mobile/{画面名}--light.html` + `mobile/{画面名}--dark.html` (2 枚) |
+| `web_only` (既定 = web のみ) | `web/{slug}.html` (1 枚) | `web/{slug}--light.html` + `web/{slug}--dark.html` (2 枚) |
+| `mobile_only` | `mobile/{slug}.html` (1 枚) | `mobile/{slug}--light.html` + `mobile/{slug}--dark.html` (2 枚) |
 | `mobile_and_web` (既定 = web + mobile) | 2 枚 (web/ + mobile/) | 4 枚 (web/light + web/dark + mobile/light + mobile/dark) |
 
 > **web_viewports ∋ sm の場合**: 上表の platform dirs に `web-sm/` が加わる (同じ theme 規則を適用)。例: `web_only` + `web_viewports=["desktop","sm"]` + dual_theme=false → `web/` + `web-sm/` の 2 枚。`web_viewports=["sm"]` なら `web-sm/` のみ。枚数式は常に「画面数 × platform dirs 数 × theme 数」。
 
-**仕様書 (`{画面名}.md`) には全状態の振る舞いを記述する** (default / empty / loading / error / 追加状態 すべて)。Step 25a が本 .md と `requirements.json.design_output_scope.state_pattern` を読んで生成計画を立てる。
+**仕様書 (`{slug}.md`) には全状態の振る舞いを記述する** (default / empty / loading / error / 追加状態 すべて)。Step 25a が本 .md と `requirements.json.design_output_scope.state_pattern` を読んで生成計画を立てる。状態の一覧・見え方は `## 状態パターン` に、状態や画面を切り替えるトリガー・条件・操作制御は `## 振る舞い詳細` に、画面が扱うデータ項目とその出どころ・更新契機は `## データ項目` に書き分ける（境界の定義は「振る舞い詳細の記入規則」「データ項目の記入規則」参照）。
 
 > **インタラクション状態の扱い**: hover / active 等は default HTML 内で必要な箇所のみ CSS で対応する。状態違いとして独立した HTML ファイルにはしない (それは Step 25b の責務)。Figma キャプチャ時 (Step 22) も default 状態のみキャプチャされる (sub-state Figma は Step 25e で追加 capture)。
 
@@ -779,7 +782,8 @@ HTMLのフォーム要素（textarea・input[type=text]等）には value 属性
 
 ### CSS変数の命名規約（必須）
 
-全HTMLファイルの `:root` で宣言するCSS変数は、以下の命名規約に従うこと。
+全HTMLファイルの `:root` で宣言するCSS変数は、以下の命名規約に従うこと（正本は
+`docs/html-generation-rules.md` §1 — 本表は参照用の再掲）。
 **同じ値に対して複数の変数名を定義してはならない**（二重定義禁止）。
 
 ```
@@ -788,13 +792,23 @@ HTMLのフォーム要素（textarea・input[type=text]等）には value 属性
 色           --color-      --color-primary, --color-on-surface
 フォント      --font-       --font-base, --font-display, --font-numeric
 文字サイズ    --fs-         --fs-base, --fs-sm, --fs-xs
+フォントウェイト --fw-      --fw-regular, --fw-bold
+行間         --lh-         --lh-tight, --lh-base, --lh-relaxed
 間隔         --sp-         --sp-md, --sp-lg, --sp-touch
 角丸         --radius-     --radius-md, --radius-lg
 影           --shadow-     --shadow-sm, --shadow-md
+アニメ時間    --dur-        --dur-fast, --dur-base, --dur-slow
+イージング    --ease-       --ease-out, --ease-in-out
 ```
 
-NG: `--font-size-xxl: 32px` (旧長形式、廃止) を使う、または旧長形式と `--fs-xxl: 32px` を併記する
+NG: `--font-size-xxl: 32px` (長形式を CSS 変数名に持ち込む) を使う、または長形式と `--fs-xxl: 32px` を併記する
 OK: `--fs-xxl: 32px` のみ定義する（短い接頭辞に統一、上の対応表どおり）
+
+`tokens.json` のキーは長形式（`font-size-base` / `line-height-tight` 等 — トークン層の命名）で正しい。
+CSS 変数名へは `skills/12-design-system/refs/generate-style-guide.md` の対応表（実装正本は
+同 `refs/build-tokens.md` の `canonicalName`）で短形式へ変換する — 長形式キーを見ても改名しない。
+なお `--dur-` / `--ease-` はトークン由来ではなく (tokens.json に motion 階層は無い)、`--semantic-*` /
+`--component-*` は HTML contract の範囲外でそのまま使う — 詳細は `docs/html-generation-rules.md` §1 の注記。
 
 新しいHTMLを生成する際は既存画面の `:root` と一致させること。変数名のブレが発生すると、デザインシステムとの紐づけ（24）が壊れる。
 
@@ -805,10 +819,10 @@ OK: `--fs-xxl: 32px` のみ定義する（短い接頭辞に統一、上の対�
 
 > **前提（全画面生成前に 1 回）**: `_shared/components.html` / `_shared/components.css`（共通部品 chrome 正典、Step 0b）と `_shared/root-variables.css`、および該当案件では `_shared/illustrations/{name}.svg`（イラスト正典、Step 0c）を先に生成しておくこと。各画面はこれらを逐語インライン / ペーストして自己完結 HTML にする。
 
-1. `artifacts/{app_name}/screens/{画面名}.md` — 画面仕様書（下記フォーマット、root に 1 つだけ、全状態の振る舞いを記述）
-2. `artifacts/{app_name}/screens/web/{画面名}.html` — Web デスクトップ版 default プレビュー（1440×900）※ `platform_combo ∋ web` かつ `web_viewports ∋ desktop`（欠落時 desktop 扱い）の場合
-3. `artifacts/{app_name}/screens/web-sm/{画面名}.html` — Web スマホ幅版 default プレビュー（390×844、ブラウザページ体裁）※ `platform_combo ∋ web` かつ `web_viewports ∋ sm` の場合
-4. `artifacts/{app_name}/screens/mobile/{画面名}.html` — モバイル版 default プレビュー（390×844、BottomTab ナビ、フォンフレーム付き）※ `platform_combo ∋ mobile` の場合
+1. `artifacts/{app_name}/screens/{slug}.md` — 画面仕様書（下記フォーマット、root に 1 つだけ、全状態の振る舞いを記述）
+2. `artifacts/{app_name}/screens/web/{slug}.html` — Web デスクトップ版 default プレビュー（1440×900）※ `platform_combo ∋ web` かつ `web_viewports ∋ desktop`（欠落時 desktop 扱い）の場合
+3. `artifacts/{app_name}/screens/web-sm/{slug}.html` — Web スマホ幅版 default プレビュー（390×844、ブラウザページ体裁）※ `platform_combo ∋ web` かつ `web_viewports ∋ sm` の場合
+4. `artifacts/{app_name}/screens/mobile/{slug}.html` — モバイル版 default プレビュー（390×844、BottomTab ナビ、フォンフレーム付き）※ `platform_combo ∋ mobile` の場合
 5. dual_theme_mode=true の場合、上記 2 / 3 / 4 に `--light` / `--dark` suffix を付けた 2 枚ずつ
 
 > **sub-state HTML は生成しない**: `{画面名}--empty.html` / `--loading.html` / `--error.html` / 画面性質追加 (`--modal.html` / `--validation-error.html` / `--delete.html` 等) は **Step 25b で生成される**。Step 17 では仕様書 (.md) に振る舞いを記述するに留める。
@@ -818,7 +832,7 @@ tokens.json の変数を直接値（例: `#0D1117`）で上書きしてはいけ
 
 ### 仕様書（MD）のフォーマット
 
-`artifacts/{app_name}/screens/{画面名}.md` として保存：
+`artifacts/{app_name}/screens/{slug}.md` として保存：
 
 ```markdown
 # {画面名} 画面仕様
@@ -849,9 +863,89 @@ tokens.json の変数を直接値（例: `#0D1117`）で上書きしてはいけ
 - error — エラーメッセージ + リカバリー手段 (HTML は Step 25b)
 - {画面性質に応じた追加状態 (modal / validation-error / delete dialog 等)} — HTML は Step 25b
 
+## 振る舞い詳細
+
+### 操作イベント
+| # | トリガー (要素・操作) | 配置 (画面内の位置) | 事前条件・分岐 | 反応 (画面内変化 / 遷移) | 異常・境界時 | 根拠 |
+|---|---|---|---|---|---|---|
+| EV-01 | {要素}を{操作} | {CTA / ヘッダー 等} | {条件 or —} | {画面内変化・遷移先} | {挙動 or —} | [UC-XX 基本N](../requirements/04-use-cases.md) |
+
+### 入力チェック (フォーム要素がある画面のみ)
+| 対象 | ルール | タイミング | エラー表示 | 根拠 |
+|---|---|---|---|---|
+| {項目} | {ルール} | {入力中 / フォーカス離脱時 / 送信時} | {表示位置・文言} | [F-XX 入力](../requirements/05-features.md) |
+
+### 操作制御 (送信中・多重操作)
+- {CTA名}: 送信中 {disabled 等の制御} / 多重タップ {防止方式} — 根拠: {リンク or ※不明 (unknown) → ask: {target}}
+
+### 実装ノート (推測禁止・業務制約・受け入れ観点)
+- 推測禁止: {実装時に推測してほしくない点と、正とする出典}
+- 業務制約: {業務上の制約・例外ルール}
+- 受け入れ観点: {受け入れで特に重視する点}
+- 優先度: {優先ユースケース / 後回し可のケース}
+
+## データ項目
+
+| # | 項目 | 表示・更新 | ソース | 共有 | 整形・計算 | 根拠 |
+|---|---|---|---|---|---|---|
+| DT-01 | {データ項目名} | 表示 / 更新 ({更新契機の EV-NN}, {タイミング}) | API ({エンドポイント}) / DB ({エンティティ.フィールド}) / 計算 ({算出元}) / マスタ・列挙 ({出典}) / 外部 ({連携先名}) / 画面入力 | 画面固有 / 共通 ({共有先 slug 列挙}) | {整形・計算ルール or —} | [{07 の実在見出し} {項目名}](../requirements/07-data-definition.md) / [F-XX 出力](../requirements/05-features.md) / 本書「振る舞い詳細」EV-NN |
+
 ## 画面遷移
 - {アクション} → {遷移先画面}
 ```
+
+### 振る舞い詳細の記入規則（必須）
+
+- **導出元と根拠リンク**: 各行は既存成果物から導出し、根拠列に**出典への md リンク**を書く — `[UC-004 代替6a](../requirements/04-use-cases.md)` / `[F-005 処理2](../requirements/05-features.md)` / `[E-DAY-01](../requirements/03-user-flow.md)` 形式（リンクテキスト = 既存 ID + 行位置、リンク先 = `screens/` からの相対パス）。同一文書内の参照は `本書「画面遷移」` と書きリンク不要。導出元の対応:
+  - タップ→反応の系列・条件分岐 → `requirements/04-use-cases.md` 基本フロー / 代替フロー
+  - 入力チェックのルール・エラーメッセージ → `requirements/05-features.md` 入力・出力
+  - 異常系・境界の期待挙動 → `requirements/03-user-flow.md` エラーケース表 (E-XX)
+  - 画面をまたぐトリガー → `screens/00-screen-nav.json` の via ラベル
+  - 共通エラー・リトライ・送信中制御の既定 → `requirements/06-non-functional.md` エラーハンドリング方針
+- **導出できない項目は補完しない**: 仕様値バインドルールと同様に `{要件未定義}` / `※不明 (unknown) → ask: screens[{slug}].{key}` を記載し、`artifacts/{app_name}/pending-questions.json` へ append する（`reflect_to: "screens/{slug}.md"` [具体パス] または `"screens/*.md"` [glob]。必須 field は hook R3 準拠: `target` / `question` / `raised_by_step: "17-screen-gen"` / `raised_at` [ISO 8601]。**`target` は md 本文マーカーの `ask:` 以降と同一リテラル**にする — `screens[{slug}].{key}` 形。`{slug}` は `00-screen-list.md` の `画面ファイル` 列 (ASCII kebab-case)、`{key}` は snake_case。日本語画面名・`/` 区切りは target に使えない (hook R5b の target 文法 `screens[01-login].validation_timing` 型のみ通過し、違反は Write が exit 2 で block される)。可能なら `options[]` [2〜4 件] と `header` [≤12字] も併記するとゲートの確認が選択式になる）。**`context` (1〜2 文) も必ず併記する** — 「画面のどの要素に関する未確定か」+「なぜ要件から導出できなかったか」を書く（例: `アカウント登録画面のメール入力フォームに関する項目。形式チェックをいつ行うかが要件文書に記載されていないため確認が必要`）。Step 21 ゲートはこれを画面別グループ表示の説明文に使うため、target のパスだけでは人間が判断材料を持てない。未確定は Step 21 ゲート（Section 1-F）の一括確認に委ねる — 本 step では AskUserQuestion しない。ゲートで確定した項目は `※不明` が確定値へ置換され根拠列が `確認済 (Step 21 ゲート)` になる（マーカー解除は人間確認経由のみ）。
+- **ゲート確定値の保存（再生成時の必須規則）**: ループ再実行・修正指示による仕様書の再生成では、既存 `screens/{slug}.md` の根拠列が `確認済 (…)` の行を**逐語で保存**する（人間ゲートで確定した値を AI 再生成で巻き戻さない — 21g の `## 使用グラフィック` マーカー所有と同じ規律）。加えて `pending-questions.json` に `resolved_at` set かつ `reflect_to` が当該仕様書を指す entry がある項目は、`※不明` に戻さず `resolved_answer` の確定値 + 元の確認済ラベルで書く（同 target の再 append も禁止 — P4-07。ledger が resolved なのに仕様書だけ ※不明 に戻ると、Step 23 の残件カウンタは 0 のまま確定値の消失が人間に見えなくなる）。
+- **遷移先未解決の検出**: 操作イベントの「反応 / 遷移」が `00-screen-list.md` に存在しない画面・ダイアログを指す場合、その行の根拠列を `※不明 (unknown) → 遷移先未解決: {宛先}` とマークする（不足画面の信号として Step 21 の網羅性確認に流れる）。
+- **`ask:` マーカーと ledger の突合（必須 self-check・両セクション共通）**: 仕様書を書き出したら、その仕様書の**全**セクション（振る舞い詳細 / データ項目）の `→ ask: ` マーカーを対象に「データ項目の記入規則」の同名項目の手順で ledger と突合する。規則本文はそちらに 1 度だけ書く（複製しない）— 振る舞い詳細だけを書く run でも省略不可。
+- **`配置` 列はレイアウト構成の領域語彙で書く**: 同文書 `## レイアウト構成` の領域名（ナビゲーション / ヘッダー / メインコンテンツ / CTA / フッター）をそのまま使い、必要なら括弧で詳細（例: `メインコンテンツ（実施中セクション）`）。画面表示・アプリ再起動等の要素を持たないトリガーは `画面全体`、メール内リンク等は `画面外（メール）`、UI 要素を伴わない仕様行は `—`。CSS セレクタ等の実装詳細は書かない（HTML 再生成で揺れるため）。
+- **セクションの責務境界**: `コンポーネント一覧` = 画面に置く UI 部品・トークン参照・WCAG 要件（データを載せる器）/ `データ項目` = その器に載るデータの中身と出どころ・更新契機（表示・更新 / ソース / 共有）/ `状態パターン` = どんな状態があるか・各状態の見え方（Step 25b の入力）/ `振る舞い詳細` = 何がその状態・画面を変えるか（トリガー・条件・チェック・制御。**入力値の形式・桁数・必須の検証規則は「入力チェック」に書き、`データ項目` には書かない**）/ `画面遷移` = 画面間移動の要約（遷移図 SoT は `00-transition-map.mmd` のまま）。同じ内容を 2 セクションに重複して書かない。
+- **app 共通の内容は複写しない**: 共通エラー方針・受け入れ条件全般は `requirements/06-non-functional.md` / `requirements/08-constraints.md` への 1 行参照で済ませ、画面固有の分のみ書く。
+- EV 番号は画面ローカルの連番（F/UC/NFR 等の全文書横断 ID レジストリには追加しない）。
+
+### データ項目の記入規則（必須）
+
+`## データ項目` は「この画面に何のデータが出て、それはどこから来て、いつ変わるのか」を設計工程が読み取れる形で 1 行 1 項目に落とすセクション。位置は `## 振る舞い詳細` の直後・`## 画面遷移` の前（`## 振る舞い詳細` を持たない旧フォーマットへ追記する場合は両セクションをこの順序でまとめて挿入する）。
+
+- **7 列は固定**（`# / 項目 / 表示・更新 / ソース / 共有 / 整形・計算 / 根拠`）: この列構成そのものが下流の読み取り契約であり、画面ごとに列を足したり名前を変えたりしない。**列構成・セクション構成を変えるときに同時に直す箇所の一覧は `docs/interface-contracts.md` § 破壊的変更ルール の `screens/{slug}.md` 行が唯一のインベントリ** — ここには複製しない (2 か所に持つと片方が古びる。本規則の改訂で新たな読み手・複製箇所を作ったら、そのインベントリ行に追加すること)。
+  （`skills/25a-state-pattern-plan` は本セクションを**判定材料から除外**する側なので、列構成には依存しない）
+  - **現時点の機械検証はセクションの有無までである**（`scripts/pipeline-status.mjs` の `SPEC_REQUIRED_SECTIONS` [`scripts/build-artifact-index.mjs` はこれを import] と `phases/delta` / `skills/27c-spec-backfill` の bash 述語が `^## データ項目` を見るだけ。`skills/28-impact-analysis` も prose で同じ有無を報告する）。列名・ソース語彙・`EV-NN` の実在・根拠列は **Step 19 の採点 (`data_spec`) が判定する**ため、列がずれても script は落ちない — 列の規律は書き手側で守る。**`共有` の相互性は Step 19 の対象外**で、画面をまたぐ照合は Step 18 の全件マップが担う (下記「`共有` 列」参照)。表の構造検証 script 化は本規則を SoT として別途行う。
+- **導出元と根拠リンク**: 各行は既存成果物から導出し、根拠列に**出典への md リンク**を書く（リンク先は `screens/` からの相対パス）。導出元の対応:
+  - データ項目そのもの・エンティティ・永続化フィールド → `requirements/07-data-definition.md`（エンティティ定義）
+  - 外部システム連携・API の入出力 → `requirements/07-data-definition.md`（外部連携一覧 / API I/O 定義）
+  - 機能別の入力・処理・出力（計算値の算出元を含む） → `requirements/05-features.md`
+  - どの機能のデータがこの画面に出るか（画面↔機能の結合） → `screens/00-screen-list.md` の機能 ID 列（forward 生成は `対応Must機能ID`、reverse 生成は `対応機能ID`。列名は当該ファイルの実際のヘッダに合わせる）
+  - 更新契機（何をしたら再取得・再描画されるか） → 本書 `## 振る舞い詳細` の操作イベント（`EV-NN` で参照）
+- **ID を発明しない（既存の ID 体系をそのまま引く）**: 根拠列のリンクテキストは **既存文書に実在するもの** に限る。導出元ごとの正規表記:
+  - **エンティティ・永続化フィールド由来** → **その文書の実在見出し + 項目名**を引く（例: `[エンティティ定義 User](../requirements/07-data-definition.md)`。見出しに節番号があるプロジェクトならそれを含める）。**`Entity N` が振られている文書ではその正規形を優先する**（例: `[Entity 3 契約](…)`）— `Entity N` は `F-NN` / `UC-NN` / `NFR-NN` / `S-NN` / `AC-NN` / `E-NN` と並ぶ全文書横断 ID の 1 種で、append-only 規則と `scripts/check-req-crossrefs.mjs` の相互参照検証の対象（採番規則は `skills/33-req-revision/SKILL.md`）。ただし **`Entity N` は Step 02 / reverse Step 03 の既定生成物には振られない** — 実際に付くのは req-delta で採番されたプロジェクトなので、**無い文書に発明して書いてはならない**。なお相互参照検証が走る範囲は `requirements/` 内部までで、`screens/*.md` の根拠列は機械検証の対象外（表記を ID 網に揃えることが目的）。
+  - **外部連携由来** → その文書が外部連携に ID を振っていれば **その ID**、無ければ **見出し + 連携先名**（例: `[外部連携一覧 LLM API](../requirements/07-data-definition.md)`）。**Step 02 / reverse Step 03 の既定生成物は外部連携に ID を振らない**（`07-data-definition.md` の外部連携一覧は名前の表）ので、通常はこの後者の形になる。
+  - **API I/O 由来** → 当該文書に **実在する行 ID があればそれ**、無ければ **実在する見出し + 項目名**（例: `[API I/O定義（主要エンドポイント） 相談送信（F-01）](../requirements/07-data-definition.md)`）。行 ID・節番号は文書ローカルでよい（全文書横断 ID である必要はない）が、**その文書に実在すること**が条件 — Step 02 / reverse Step 03 の既定生成物は API 表に行 ID も節番号も振らないので、あると仮定して書かない。
+  - **計算値・算出ロジック由来** → 算出ロジックの節が独立していればその見出し（例: `[社長発言データの出どころ・保管方針](../requirements/07-data-definition.md)`）、機能側に書かれていれば `05-features.md` の実在 ID。
+  - **機能の入力・処理・出力由来** → `05-features.md` の実在 ID（例: `[F-005 出力](../requirements/05-features.md)`）。
+  - **画面↔機能の結合由来** → `[{画面ファイル}行](00-screen-list.md)`（機能 ID 列 = forward 生成は `対応Must機能ID` / reverse 生成は `対応機能ID`。実際のヘッダに合わせる。`画面ファイル` 列を持たない画面一覧では仕様書のファイル名 stem をリンクテキストにする。`screens/` 内の参照なのでパスに `../` を付けない）。
+  - **本書内の参照**（更新契機など） → `本書「振る舞い詳細」EV-NN` と書きリンク不要（振る舞い詳細の記入規則と同じ扱い）。
+  **原則は 1 つ — 引くのは「その文書に実際に書かれている見出し・ID」だけで、体系を自分で作らない**。`07-data-definition.md` の既定の形は forward / reverse とも **節番号も行 ID も無い自由見出し**（`## エンティティ定義` / `## 外部連携一覧` / `## API I/O定義（主要エンドポイント）` 等）であり、`Entity N` / 外部連携 ID / 節番号は req-delta 等で後から採番されたプロジェクトにしか無い。文書によって形が違いうるため、**書く前に対象文書の実際の見出し・ID を確認する**こと（無い ID を「あるはず」と仮定して書くのが最も多い失敗）。特に `E-NN` は `03-user-flow.md` のエラーケース ID として既に使われているため、エンティティ ID として流用してはならない。Step 18 / 19 は実在しない出典 ID を持つ行を要件外候補・減点対象として扱うため、発明した ID は全行が不整合として扱われる。
+- **出どころ自体が未確定な行の書き方**: どの分類にも確定できない場合は `ソース` 列に `※不明 (unknown)` と書き、`根拠` 列を `※不明 (unknown) → ask: screens[{slug}].{key}` にする（この 2 セルの組み合わせだけが許容形。分類語彙の 1 つを推測で選んで埋めない）。この組み合わせは「宣言された未確定」として Step 18 の deviation append と Step 19 の語彙検査から除外される — 分類語彙違反として減点されるのは、6 種のどれでもない**独自の分類名を書いた**行である。
+- **`ソース` 列の分類語彙は 6 種で固定**: `API` / `DB` / `計算` / `マスタ・列挙` / `外部` / `画面入力`。分類名のうしろの括弧に具体（エンドポイント名 / `エンティティ.フィールド` / 算出元 / 出典 / 連携先は文書に ID があればその ID、無ければ連携先名）を書く。1 項目が複数のソースを持つ場合は 1 セルに併記せず**行を分ける**（1 行 = 1 項目 × 1 ソース — 出どころ単位で設計判断が変わるため）。
+- **`表示・更新` 列**: 読むだけなら `表示`（初回取得のみなら `表示 (画面表示時)`。初回取得の契機が操作イベントとして書かれているなら `表示 (EV-01, 画面表示時)` のように `EV-NN` を併記してよい — 更新行と同じく実在する EV 番号に限る）、この画面から書き換えるなら `更新 ({EV-NN}, {タイミング})` と書き、更新契機を `## 振る舞い詳細` の操作イベント行へ `EV-NN` で結ぶ（表示と更新の両方なら `表示 / 更新 (EV-NN, ...)`）。参照する `EV-NN` は同じ仕様書内に実在する行に限る。
+  - **結べる `EV-NN` が存在しない場合**（`## 振る舞い詳細` が未記載、または操作イベント表が空の仕様書）は **EV 番号を発明せず** `更新 (EV 未記載, {タイミング})` と書き、根拠列を `※不明 (unknown) → EV 未解決` にする。**`ask:` 文法は使わない** — 人間に問える質問ではなく「振る舞い詳細が入れば自動的に埋まる」保留であり、`ask:` にすると答えようのない項目が Step 21 ゲートに並ぶ（`→ 遷移先未解決:` と同じ扱い方: ledger には append せず、件数を報告に出すだけ）。**件数を出す担い手**は `遷移先未解決` と同じ 2 か所 — Step 21 Section 1 の一覧（`skills/21-screen-human-review/SKILL.md`）と Step 23 の残件表示（`skills/23-human-final-approval/SKILL.md`）が `grep` で数える（27c 経路は 27c 自身の完了報告）。この行は Step 18 の deviation append と Step 19 の減点から除外される。**解消の担い手**: 同じ仕様書に `## 振る舞い詳細` を追記する run（Step 17 の再生成 / 27c の同一 run 追記）が、その場で `EV-NN` へ置換する。
+- **`共有` 列**: この画面だけで使う項目は `画面固有`、他画面と同じ項目を扱う場合は `共通 ({共有先 slug 列挙})`。slug は `00-screen-list.md` の `画面ファイル` 列（同列を持たない旧い画面一覧では **仕様書のファイル名 stem** を使う。いずれの場合も日本語画面名では書かない）。**項目名の正本は最初に登場した仕様書のもの**とし、共有先では同じ項目名を使う（`00-screen-list.md` の画面順で先に来る仕様書が正本。同じ実体を `実施中フラグ` / `挑戦中フラグ` のように別名で書くと共有関係が追えなくなる）。`共有先 slug` は `00-screen-list.md` に実在する画面を指すこと（実在しない slug は書かない）。
+  - **相互性は 1 パスでは閉じない前提で扱う**: 全画面を一度に書くため、共有先に対応行が無い / 名前が揺れる状態は生成直後に起こりうる。これは **Step 18 の全件マップ**が画面をまたいで照合する対象であり、Step 19 の `data_spec` は 1 画面内の形式だけを見る（相互性で減点しない）。不一致が見つかったら項目名を正本へ寄せる。
+- **`整形・計算` 列**: 表示のための整形（日付書式・単位・丸め・並び順）と計算式を書く。どちらも無いなら `—`。値そのもの（文言・数値しきい値）は仕様値バインドルールと同じ規律で `requirements/05-features.md` から引用し、モデルが「それらしい値」で埋めない。
+- **導出できない項目は補完しない**: 「振る舞い詳細の記入規則」と**同一文法**で `※不明 (unknown) → ask: screens[{slug}].{key}` を記載し、`artifacts/{app_name}/pending-questions.json` へ append する（必須 field / `context` / target 文法 / `options[]` の規約はすべて同規則を参照 — 本セクションに複製しない）。本 step では AskUserQuestion しない。Step 21 ゲート（Section 1-F）の一括確認が振る舞い詳細と同じ経路で拾う（抽出条件が `reflect_to` ベースのため、対象セクションが増えても機構は変わらない）。
+- **`ask:` マーカーと ledger の対応を書き出し後に必ず突合する（必須 self-check）**: 仕様書を書いたら、その仕様書の `→ ask: ` マーカーの target 集合を抽出し、`pending-questions.json` の `entries[].target` 集合に**全件含まれていること**を確認する（例: `grep -o '→ ask: [^ |]*' artifacts/{app_name}/screens/{slug}.md` の結果を ledger の target と突合）。**1 件でも欠けていたら append を完了させるまで次 step へ進まない**。理由: 下流はこの対応関係を前提に動く — Step 21 Section 1-F の抽出も Step 23 の残件カウンタも **ledger 側**を数え、Step 18 / 19 は**仕様書側のマーカー**を見て deviation append と減点を免除する。ledger に無いマーカーは「誰も聞かないのに減点もされない未確定」として全ゲートを無言で通過し、人間は残件 0 と信じて最終承認してしまう。
+- **ゲート確定値の保存**: 根拠列が `確認済 (…)` の行を再生成で巻き戻さない規則は「振る舞い詳細の記入規則」の「ゲート確定値の保存（再生成時の必須規則）」と同一 — 根拠列を判定に使う規則のため本セクションの行にもそのまま適用される。
+- **app 共通の内容は複写しない**: 全画面に共通するデータ方針（保管先・通信方式・キャッシュ方針）は `requirements/07-data-definition.md` / `06-non-functional.md` への 1 行参照で済ませ、画面固有の分のみ書く。
+- **データ項目を持たない画面の書き方**: 画面内の静的文言 (ロゴ・キャッチコピー・価値訴求文 等) だけで構成され、6 種のソースのいずれにも当たる項目が無い画面は、表を空ヘッダで置かず **`該当なし（理由）`** の 1 行で書く（例: `該当なし（アプリロゴ・キャッチコピーはいずれも画面内の静的文言であり、API / DB / 計算 / マスタ / 外部 / 画面入力のいずれの出どころも持たない参照専用画面）`）。静的文言を無理に 6 分類へ押し込まない。**`該当なし` の理由は「静的文言のみ」の主張に限る** — 「方式が未確定で項目を定義できない」「要件に記載が無い」は (D) UNCERTAIN であり、`該当なし` ではなく DT 行 1 本を `ソース` = `※不明 (unknown)`、根拠 = `※不明 (unknown) → ask: screens[{slug}].{key}` で書いて ledger へ append する（例: 認証方式未確定のログイン画面 → `DT-01 | 本人確認の入力項目 | 更新 (EV-01, 送信時) | ※不明 (unknown) | 画面固有 | — | ※不明 (unknown) → ask: screens[01-login].auth_input_fields`）。未確定を `該当なし` で包むと、ledger にも Step 18 の列挙にも載らず Step 19 も免除するため、全ゲートを無言で通過する。Step 19 の `data_spec` はこの区別を採点する（未確定を理由にした `該当なし` は減点）。
+- DT 番号は画面ローカルの連番（`EV-NN` と同型。F/UC/NFR 等の全文書横断 ID レジストリには追加しない）。
 
 ---
 

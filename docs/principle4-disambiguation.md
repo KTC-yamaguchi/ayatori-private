@@ -160,6 +160,8 @@ Pre-flight Gate で batch propose する際の指針 (memory `feedback_design_by
 | `31-req-change-detect` | (a) | 変更記述の `type` (added/modified/removed) / `dependency_category` 分類 / impact_hint |
 | `27-change-detect` | (a) | 変更記述の解釈 / 影響画面の特定 |
 | `00-feedback-protocol` | (a) | review 修正指示のスコープ (「色だけ」vs「全体」等) |
+| `21b-graphic-hearing` | (a) | 透過選択の返信解釈 (番号 / 全選択 / 「なし」— §4 の「不要」と §4b の「全部非透過」で意味が反転) / 画像の使い回し (同一 graphic_id) のグルーピング |
+| `21d-graphic-prompts` | (b) | `transparent_background` が plan (21b 人間ゲート) 由来か AI 推測か / 旧 plan で未指定の slot の扱い (false へ丸めず UNCERTAIN として user に確認) |
 | `14-screen-list-transition` | (b) | 画面数の必要性 / 状態違いと別画面の分界 / Mermaid node 分類の根拠 |
 | `17-screen-gen` | (b) | token 補完 / platform 判定 / theme 処理が CONFIRMED・DERIVED 由来か |
 | `19-rubric-score` | (b) | AI改善可否の分界 / NFR の automated-vs-deferred 分類の根拠 |
@@ -244,10 +246,13 @@ Pre-flight Gate で batch propose する際の指針 (memory `feedback_design_by
 
 1. **列挙 (機械)**: 成果物が既に持つ **構造化リスト** を列挙源にする (生 HTML の fuzzy parse はしない):
    **requirements = `requirements/*.md` の load-bearing specifics (定量値・式・閾値・外部依存 API/lib・データ enum/field) + 機能 capability / use-case の挙動ステップ / 新規 content・data 前提** (例:「回答後に解説を表示」= 解説コンテンツという content/data を要する /「前回の続きから再開」= resume state+挙動を要する) /
-   **screens = 画面仕様書 (.md) の component 一覧 + 挙動 / インタラクション / 状態** (UI 生成フェーズで AI が要件外に足した
-   element/behavior を拾う = 元課題「UI生成フェーズでの要件にない要素の追加」。component だけでなく
-   「この画面が要件にない挙動/状態を持っていないか」も全件マップする) / design = design-brief の case・token・dial /
-   delta = 再生成画面の component **+ 挙動** / sub-state = 各 state の主要要素 **+ 挙動**。
+   **screens = 画面仕様書 (.md) の component 一覧 + 挙動 / インタラクション / 状態 + データ項目** (UI 生成フェーズで AI が要件外に足した
+   element/behavior/data 前提を拾う = 元課題「UI生成フェーズでの要件にない要素の追加」。component だけでなく
+   「この画面が要件にない挙動/状態を持っていないか」「要件のどこにも無いデータ項目 (要件外のデータ前提) を表示・更新していないか」
+   も全件マップする。データ項目の根拠列が有効な出典を持つ行は充足済みとみなす — 出典の有効性は
+   `skills/17-screen-gen/SKILL.md`「データ項目の記入規則」が SoT) / design = design-brief の case・token・dial /
+   delta = 再生成画面の component **+ 挙動 + データ項目** (screens と同じ単位 — forward だけ見て delta で見ないと、
+   再生成で入った要件外のデータ前提を誰も拾わない) / sub-state = 各 state の主要要素 **+ 挙動**。
    > requirements の粒度は **F-ID / NFR-ID 単位で止めず「中の具体値」まで降りる**: E2E 検証の I-2 は確定機能 F-01 の
    > "中" に発明されたスコアリング式であり、機能カテゴリ粒度の gap-check (02 の flavor-b) では素通りした。よって specifics 粒度が必須。
    > **全件列挙が原則** (本ステップの目的 = スキップの自由を奪う。over-flag は gate で却下できるが silent skip は検出不能なので、一覧は長い方が安全)。

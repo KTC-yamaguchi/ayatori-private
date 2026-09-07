@@ -38,6 +38,7 @@
 | 画面 HTML をパイプライン外で手修正した → 画面仕様へ反映したい（要件と食い違う変更はゲートで「要件に昇格」を選ぶと要件定義書まで反映される） | `/ayatori-delta`（screen-edit モード） |
 | 完成済みプロジェクトに機能を追加したい（ヒアリングから）      | `/ayatori-add-feature`（または `/ayatori-delta` の機能追加モード） |
 | 社外共有・納品用の自己完結ドキュメントが欲しい           | `/ayatori-export`      |
+| 日本語成果物の英語版を作りたい（社外パートナー・英語話者向け）  | `/ayatori-export-en`   |
 | 全成果物を 1 画面でまとめて確認したい（要件・画面・デザイン・採点）  | `/ayatori-index`       |
 | 行動変容・ナッジ設計の相談をしたい（ChargeMinder）   | `/ayatori-cm-consult`  |
 | 今どこまで進んだか分からない / 次に何をすべきか         | `/ayatori-status`      |
@@ -112,6 +113,7 @@ flowchart TD
 |-----------------------|-----------------------------|
 | `/ayatori-status`     | 進捗ダッシュボード・次アクション推奨          |
 | `/ayatori-export`     | 配布用の自己完結 HTML 生成 (35・任意)    |
+| `/ayatori-export-en`  | 英語版ミラー生成 (`artifacts/{app}-en/`・37・任意。日本語版は無変更で併存) |
 | `/ayatori-index`      | 全成果物を 1 つの index.html に集約（左目次+右プレビュー・任意） |
 | `/ayatori-cm-consult` | ChargeMinder コンサル（独立・本流へ合流） |
 | `/ayatori-idea`       | アイデアブラッシュアップ（独立・idea-brief.md を生成して同一会話で Phase 1a へ合流） |
@@ -135,6 +137,7 @@ flowchart TD
 | 本流完了後の振り返り             | Phase 4  | `/ayatori-retro`       | `final_approved` または `completed_at_states`                               |
 | 差分/要件差分実行の振り返り         | Phase 6  | `/ayatori-delta-mini`  | 完了済み（または `baseline_approved_at`）＋未振り返りの delta/req-delta run あり              |
 | 配布物（自己完結 HTML）を作る      | 独立       | `/ayatori-export`      | Phase 3 最終承認後（任意・いつでも）                                                   |
+| 英語版の成果物一式を作る          | 独立       | `/ayatori-export-en`   | `artifacts/{app_name}/` があればいつでも（通常は最終承認後の配布用途）                       |
 | 全成果物を 1 画面で確認したい        | 独立       | `/ayatori-index`       | `artifacts/{app_name}/` があればいつでも（部分実行でも可）                              |
 | 進捗確認・現在地の把握            | —        | `/ayatori-status`      | なし（いつでも）                                                                 |
 
@@ -156,6 +159,7 @@ flowchart TD
 | `/ayatori-delta`        | 5         | 27〜30           | 完了後の要件変更を、変更画面だけ部分再生成＋該当 Figma フレームだけ更新                | 入口: `final_approved` / `completed_at_states` / `baseline_approved_at` |
 | `/ayatori-delta-mini`   | 6         | 34              | delta / req-delta 実行に対する軽量振り返り                         | 入口: 完了済み（または `baseline_approved_at`）＋未振り返りの delta/req-delta run あり |
 | `/ayatori-export`       | —         | 35              | 画面/要件を画像 base64 埋め込みの自己完結 HTML に結合（社外共有・納品用）           | 入口: Phase 3 完了後・任意                           |
+| `/ayatori-export-en`    | —         | 37              | 日本語成果物を英語版ミラー `artifacts/{app}-en/` へ一方通行変換（enum/マーカーは決定論置換＋prose は LLM 翻訳。EN ミラーはパイプライン再入力不可の配布物） | 入口: `artifacts/{app_name}/` があればいつでも・任意 |
 | `/ayatori-index`        | —         | index           | 全成果物（要件・画面・デザイン・採点・監査）を 1 つの index.html に集約（左目次+右iframe/MD）  | 入口: `artifacts/{app_name}/` があればいつでも      |
 | `/ayatori-status`       | —         | —               | 全 AYATORI プロジェクトの進捗ダッシュボード＋次アクション推奨                    | 入口: いつでも                                     |
 | `/ayatori-cm-consult`   | —         | —               | 行動変容ゴールからナッジ理論ベースの打ち手提案＋検証設計＋要件の種を生成 → 本流へ合流           | 入口: 明示起動のみ（phase_order 非搭載）                  |
@@ -246,6 +250,17 @@ A. AYATORI はパイプライン外コマンドを検知して停止し確認し
 
 **Q. 完成後に仕様を変えたくなった**
 A. 完成後の変更は `/ayatori-delta` が単一入口です。入口で起点（要件変更 / 画面 HTML を手修正した / 機能追加）を選ぶと、それぞれのモードに進みます。まだ UI を作っていない段階で要件だけを変えたいときは `/ayatori-req-delta` を使います。
+
+**Q. Figma への書き出し（Step 22 以降）が `Figma MCP tool call limit on the Starter plan` で止まった**
+A. **AYATORI の不具合ではなく、あなたの Figma プランの呼び出し上限です。** Figma の読み取り系 MCP tool はプラン・シート種別ごとに上限があり、Starter は月 20 回しか使えません（エラー文言のプラン名部分は環境で変わります — 有料プランでも View / Collab シートは月 6 回で同種の拒否が出ます）。**これはパイプライン 1 周で使い切ってしまう量**です（同じ月に Figma を読む工程が複数あり、Step 22 に着く前に残量が尽きるのが典型です）。**Starter / View・Collab シートでは月次の累積上限なので、待っても回復せず、再実行は残量を溶かすだけ**です（有料プラン + Dev/Full シートは日次・分次のため、待てば回復します）。
+
+切り替えの前に `artifacts/{app_name}/figma-state.json` の `nodes.screens` を確認してください — **1 件でも capture 済みの node があるままこの手順を使うと、Figma 側が不完全なまま最終承認を通過してしまいます**（Step 23 はこれを警告しません）。その場合は先に [`figma-plan-limits.md`](figma-plan-limits.md) の「手順 B-0 / B」を読んでから進めてください。capture 0 件ならこのまま:
+
+当面は **`FIGMA_MCP_ENABLED=false` に切り替えて Claude Code を再起動し、そのまま `/ayatori-screens` を続けてください**。Figma キャンバス上の frame・Variables・コンポーネントだけが作られませんが、**画面 HTML・画面仕様書・デザイントークン・Confluence 保存はすべて生成され、Phase 3 は最後（Step 25a）まで完走します**。Figma 出力は Professional 以上のプラン **かつ Full シート** を用意できたあとに回してください（シートはプランと同じくらい重要です — View / Collab シートは有料プランでも同じ上限に当たり、キャンバスへの書き込み自体に Full シートが必要です）。
+
+なお既存アプリの資料として **Figma URL を渡す reverse（Phase 0b）は上限の消費が最も重い**ため（対象フレーム数に比例）、Starter ではコードと文書だけで回すか、突合するフレームを絞ってください。**絞り込みは渡す URL の側で行うのが確実です** — Step 01 が収集前に範囲確定ゲートを出すのは **ファイル全体の URL を渡したときだけ**で、`node-id` 付きの URL ではゲートは出ずにそのフレームを直接取得します。またファイル全体を渡した場合、ゲート表示の前に候補フレームの列挙で読み取りをファイルごとに 1 回消費します（つまりゲートに到達する前に拒否されることもあります）。
+
+→ 上限の詳細・Step ごとの消費量・回避手順: [`figma-plan-limits.md`](figma-plan-limits.md)
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: ayatori-delta
-description: "Phase 5: 完成後変更の単一入口。requirement (要件変更の伝播) / screen-edit (手編集 HTML の逆伝播・要件昇格) / feature-add (機能追加) の 3 モードで、影響のある画面・Figma フレームだけを再生成し、無関係な画面には触れない。entry: 完走済 or ベースライン承認済み。"
+description: "Phase 5: 完成後変更の単一入口。requirement (要件変更の伝播) / screen-edit (手編集 HTML の逆伝播・要件昇格) / feature-add (機能追加) の 3 モードで、影響のある画面・Figma フレームだけを再生成し、無関係な画面には触れない。起動時に旧フォーマット仕様書 (振る舞い詳細 / データ項目 なし) を検知すると spec-only の追記 (27c) を提案する。entry: 完走済 or ベースライン承認済み。"
 ---
 
 # /ayatori-delta — Phase 5: Delta Update
@@ -48,6 +48,51 @@ When a completed project (docs + UI + Figma all done) receives a requirements ch
      - Entry found AND incomplete AND `cancelled_at` **not set** → incomplete run in progress; use **Resume logic** below.
      - Entry found AND `cancelled_at` **is set** → previous run was intentionally cancelled. Display "前回のDelta実行（{run_id}）はキャンセルされました（理由: {cancel_reason}）。新しい変更を入力してください。" and **go to Mode Selection** (new run).
      - Entry **not found** (manifest written but pipeline-state stub missing) → **go to Mode Selection** to restart that run.
+
+**不足セクションの追記提案** (Mode Selection の直前に必ず判定。1 セッション 1 回まで — 追記実行後や見送り後に Mode Selection へ戻っても再提示しない):
+`screens/*.md` (00-* / _* 以外) のうち `## 振る舞い詳細` / `## データ項目` のいずれかを持たない旧フォーマット仕様書を数える — 母集団の除外を命令に含めること (`00-screen-list.md` 等は本セクションを持たないため、素の glob だと常に N≥1 になり提案が毎回発火する)。**セクションごとに述語を分け、仕様書ごとの不足セクション集合を作る**。片方だけ欠けている仕様書も対象:
+
+```bash
+# NOTE: 判定の JS 実装は scripts/pipeline-status.mjs の SPEC_REQUIRED_SECTIONS
+# (build-artifact-index.mjs はそれを import)。本 bash 述語と skills/27c-spec-backfill/SKILL.md の
+# 述語はその複製で、label の一致は契約テスト (pipeline-status.test.mjs) が突合する。
+# 直す箇所の一覧は docs/interface-contracts.md § 破壊的変更ルール。
+# -E '^##[[:space:]]*' は JS 側の /^##\s*…/ と等価 (UTF-8 ロケール前提。LC_ALL=C では全角空白が
+# [[:space:]] に入らず乖離しうる)
+specs=$(ls artifacts/{app_name}/screens/*.md 2>/dev/null | grep -v -e '/00-[^/]*$' -e '/_[^/]*$')
+# 空チェック必須 — 対象 0 件のとき printf は空行 1 つを流し、GNU xargs は引数なしで
+# grep を 1 回実行してしまう (ファイル引数なしの grep は stdin を読み "(standard input)" を 1 件返す)
+if [ -n "$specs" ]; then
+  echo "== 振る舞い詳細 未記載 =="
+  printf '%s\n' "$specs" | xargs grep -LE '^##[[:space:]]*振る舞い詳細'
+  echo "== データ項目 未記載 =="
+  printf '%s\n' "$specs" | xargs grep -LE '^##[[:space:]]*データ項目'
+fi
+```
+
+検知した**不足セクション名の集合**を `detected` とし、`pipeline-state.json` の抑制記録と突き合わせる:
+
+- `declined` = `delta.spec_backfill_declined_sections`。**`delta.spec_backfill_declined_at` が set なのに本キーが欠落している場合は `["振る舞い詳細"]`** として扱う (本キー導入前に declined したプロジェクトの後方互換 — 当時はそのセクションしか存在しなかった)。`declined_at` が未設定なら `declined` は空集合。
+- **`detected` が空でなく、かつ `detected ⊄ declined`** (= 抑制対象に入っていない不足セクションが 1 つ以上ある) なら提案する。`detected ⊆ declined` なら提案しない。
+- `proposable` = `detected \ declined` (今回提案するセクション)。**`{N}` = `proposable` のセクションが 1 つ以上欠けている仕様書の数** (ファイル単位・重複なし。抑制中のセクションだけが欠けている仕様書は数えない — 件数とセクション名を同じ母集団で出さないと「5 件 (データ項目)」のように、実際は 1 件しか追記されない数字を人間に見せることになる。reader 側 `scripts/pipeline-status.mjs` の推奨行も同じ数え方)。
+
+これにより、過去に「今後この提案を出さない」を選んだプロジェクトでも、**後から増えたセクションの不足は 1 度提案される** (セクションが増えるたびに提案経路が閉じてしまうのを防ぐ。抑制の完全解除は `spec_backfill_declined_at` の削除で行う (`sections` だけを消すと後方互換フォールバックで `["振る舞い詳細"]` の抑制が残るため、部分解除には使えない))。
+
+提案するときは AskUserQuestion で行う (run を作らない probe — change-manifest / `delta.runs[]` には何も書かない)。**提案は不足セクションをまとめて 1 回**にする — セクションごとに提案を分けると人間の往復が増えるため:
+```
+question: "画面仕様書 {N} 件に不足セクション ({`proposable` のセクション名のみ列挙 — 振る舞い詳細 [操作イベント・入力チェック等の挙動記述] / データ項目 [表示・更新するデータとその出どころ]。すでに抑制済みのセクションは挙げない}) があります。既存の要件文書から導出して追記しますか？ (仕様書 .md のみ追記。HTML / Figma は変更しません)"
+header: "仕様追記"
+options:
+  - label: "今すぐ追記する"
+    description: "要件文書から導出して {N} 件へ追記する。導出できない項目は直後の一括確認ゲートで確認。"
+  - label: "今回は見送る"
+    description: "何も書かない。次回の /ayatori-delta 起動時に再提案される。"
+  - label: "今後この提案を出さない"
+    description: "今回提案したセクションについては以後提案しない (/ayatori-status の検知表示は残る。別のセクションの不足が後から出れば再提案される)。"
+```
+- 「今すぐ追記する」 → Read and execute `skills/27c-spec-backfill/SKILL.md` (spec-only の追記 + 一括確認ゲート) **with `{target_sections}` = `proposable`** — 27c はこの集合に含まれるセクションだけを追記する (抑制済みセクションは、その仕様書に欠けていても書かない。人間が「もう提案しなくてよい」と決めた項目を別セクションの提案に相乗りして書き込まないため)。完了後 **Mode Selection へ進む**。
+- 「今回は見送る」 → 何も記録せず Mode Selection へ。
+- 「今後この提案を出さない」 → `pipeline-state.json` の `delta.spec_backfill_declined_at` に現在時刻 (ISO 8601) を、`delta.spec_backfill_declined_sections` に `declined ∪ detected` (既存の抑制対象 + 今回提案した不足セクション) を merge して Write back し、Mode Selection へ (抑制の完全解除は `spec_backfill_declined_at` の削除で行う (`sections` だけを消すと後方互換フォールバックで `["振る舞い詳細"]` の抑制が残るため、部分解除には使えない))。
 
 **Mode Selection** (choose the delta mode for a new run):
 Read `artifacts/{app_name}/delta/edited-screens.json` if it exists and count entries with `consumed_by_run == null` as `N` (= 手編集済みでまだどの run も処理していない画面数). Present AskUserQuestion。**並び順の優先規則 (上から先勝ちで 1 つだけ適用)**:

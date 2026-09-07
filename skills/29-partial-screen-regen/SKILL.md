@@ -191,16 +191,90 @@ Step 4 の HTML 再生成は spec からの再生成であり、**21g で承認�
    node skills/21g-graphic-embed-review/scripts/gather-context.mjs {app_name} --delta --screens {regen_screens}
    ```
 
-   `slot_count == 0` なら再生成画面にグラフィック slot は無い — この Step を終了して Step 4b へ。`E_*` は message に従い中断 (`feedback-log.md` に Pattern C を記録 — 承認済みプロジェクトで state 不整合は invariant violation)。
+   `slot_count == 0` なら再生成画面にグラフィック slot は無い — この Step を終了して Step 4b へ (`{regen_screens}` の綴り間違い・全不一致は `slot_count: 0` ではなく `E_SCREENS_UNMATCHED` で止まるので、0 件を typo の受け皿として読まない)。`E_*` は message に従い中断 (`feedback-log.md` に Pattern C を記録 — 承認済みプロジェクトで state 不整合は invariant violation)。
 2. **再埋め込み**: 各 slot の挿入位置を `skills/21g-graphic-embed-review/refs/embed-guide.md` §1 (anchor 選定) に従い判断し、dry-run → 本実行する (再生成 HTML の markup が変わっていても spec の「使用グラフィック」節・plan の placement 記述から位置を再判断できる):
 
    ```bash
    node skills/21g-graphic-embed-review/scripts/embed-graphics.mjs {app_name} apply --stdin --delta --screens {regen_screens}
    ```
 
+   `E_UPSCALE_REVOKE` は「21g で人間が承認した拡大受諾が今回の埋め込みで失われる」停止 —
+   `upscale_accept_revoked[]` (拡大が解消して受諾が失効する = 等倍に直した) と
+   `upscale_accept_replaced[]` (同 placement が別の表示寸に差し替わる) を payload に載せる。
+   **書き込みは HTML も台帳も発生していない**ので、そのまま提示材料として user に見せ、
+   「意図した縮小・変更」の確認が取れたら `--allow-revoke` を付けて再実行する。承認済みの表示寸を
+   保つ場合は各 entry の `display` (+ `size_px` / `object_fit`) を attrs に写して再実行する。
+   意図した縮小なのか復元ミスなのかは機械には判別できない (P4 — 補完せず問う)。
+
+   `--allow-revoke` を付けた dry-run では同じ 3 field (`upscale_accept_revoked[]` /
+   `upscale_accept_replaced[]` / `upscale_newly_accepted[]`) が「(予定)」付きの warning とともに
+   本実行の前に出る (台帳の変化は書き込み前に確定する)。
+
    `E_ANCHOR` は anchor を一意な逐語スニペットに選び直し、`E_VALIDATION` は `errors[]` に従い
    placements draft を直して再実行する (リトライ ≤3 → `feedback-log.md` Pattern B → abort — 4 の
-   verify と同じ契約)。
+   verify と同じ契約)。`E_UPSCALE` (表示寸 > 生成寸) は 21g 承認時の
+   attrs を再現できていないシグナル — **承認済みの表示寸は `pipeline-state.json` の
+   `screens.graphics.upscale_accepted[]`** を SoT として復元する。復元は entry の
+   **`display` (width/height) + `size_px` + `object_fit` の 3 点すべて** を attrs に写すこと —
+   受諾記録の照合は完全一致 key (`graphic_id` + `file` + `display` + `size_px` + `object_fit`) で
+   行うため、**`display` だけ戻すと key が一致せず「記録に無い拡大」として `E_UPSCALE` になる**。
+   `object_fit` は embed-guide §2a の規約 (CSS class で与えている object-fit も `attrs.object_fit`
+   に明示する) により承認時の記録に入っていることが多く、ここが最も漏れやすい。
+
+   受諾記録に完全一致する placement は `E_UPSCALE` にならない (script が受諾済みとして通し
+   `upscale_accepted[]` に報告する)。したがって `E_UPSCALE` の原因は 3 通りあり、**`--allow-upscale`
+   を付ける前に必ず区別する**:
+   - 出力に `ledger_authoritative: false` がある → **本プロジェクトの受諾台帳には権威が無い**
+     (`screens.graphics.upscale_ledger_at` 未設定 = 本検査より前に承認されたプロジェクト。承認時に
+     表示寸は機械検査されていない)。**台帳の空を「保護対象なし」と読んではならない** — 現在の表示寸が
+     21g 承認時の設計そのものである可能性がある。
+
+     突合先は **`_backup/` の退避** を使う (下記の順で、最古の timestamp = 承認時に最も近い):
+     1. `_backup/screens/{platform}/{file}.*.html` — 承認時の `<img>` タグ**そのもの**
+        (`embed-graphics apply` が上書き前に自己退避している)。`width` / `height` /
+        `style="object-fit:..."` を直接読める最良の証拠
+     2. `_backup/screens/{screen}.*.md` — 上が無い場合の代替 (「使用グラフィック」節の実表示列)
+
+     > **`screens/{screen}.md` の現物の実表示列を証拠にしてはならない**: 本 Step の 4a-3
+     > (`commit-approval specs`) が **現在の HTML から毎回書き直す** ため、その画面で Step 29 を
+     > 1 度でも通していれば承認時の値ではない (節の見出し自身が「本表の最終更新時点 (21g 承認 /
+     > Step 29 再埋め込み) の実値」と宣言している)。しかも書き直し前は「同じタグから導出した値」と
+     > 「そのタグの attrs」を比べる形になるため、**一致は常に成立する自己一致**であって承認の証拠に
+     > ならない。証拠が退避にしか無いのは、証拠を消すのが同じ Step の後続コマンドだからである。
+
+     退避の値と `upscale[]` の `display` を突き合わせ、**一致するなら承認済みの表示寸**として user に
+     提示し、「縮める / 受諾として記録する (`--allow-upscale`)」の判断を仰ぐ (`AskUserQuestion`)。
+     一致しない・退避が無い場合も同じく提示する (どちらの場合も機械には判断材料が無い)。
+     **自動で `size_px` 以内へ縮めてはならない** (P4 — UNCERTAIN は補完せず
+     問う。承認済みの表示寸を黙って変えるのは本検査が防ごうとしている事故そのもの)
+   - `upscale_key_mismatch[]` に出ている → **承認済みの placement の復元ミス**。`differs` が
+     どの要素 (`display` / `size_px` / `object_fit`) が承認時と違うかを示すので、`accepted` 側の
+     値を attrs に復元して再実行する。**ここで attrs を `size_px` 以内へ縮めてはならない**
+     (承認済みの絵を黙って縮めることになる)。`size_px` が differs に出る場合は 21d 側で
+     再生成されている = 受諾は正当に失効しているため、user に提示して判断を仰ぐ。
+   - `upscale_key_mismatch[]` に無い → 今回の再埋め込みで**新たに生じた**拡大。attrs を
+     `size_px` 以内へ直す。表示寸を意図的に拡大する変更は本 Step の scope 外 (要件変更として扱う)。user が新たにぼけを明示許容した場合のみ `--allow-upscale` を付けて
+   再実行する — **同じ実行が受諾を `upscale_accepted[]` に記録する** (`upscale_newly_accepted[]`
+   として報告される) ため、次の delta 実行は同じ拡大を問い直さない。
+
+   `E_UPSCALE` の payload に `upscale_accept_revoked[]` / `upscale_accept_replaced[]` が併記されて
+   いる場合 (この編集が **同時に** 承認済み受諾を手放す予定 — 一部 placement は復元できたが別 placement
+   で拡大が生じ、別 slot は等倍へ戻った、という形は本 Step では普通に起きる)、**拡大と失効・置き換えを
+   1 回で提示して判断を仰ぐ**。拡大だけ直して再実行すると、そこで初めて `E_UPSCALE_REVOKE` が出て
+   同じ編集について人間ゲートをもう 1 往復させる (P4-07 の「同じ target を 2 回問わない」)。
+   再実行では `--allow-revoke` も必要になる。
+
+   > **flag は run 全体のスコープ**: `--allow-upscale` は placement 単位の指定を持たず、その実行で
+   > 検知された `upscale[]` の **全件** を受諾して永久の台帳記録にする。しかも本 Step では視覚
+   > レポートが使えない (`render-embed-review.mjs` は承認済みプロジェクトで `E_ALREADY_APPROVED`)
+   > ため、目視の代替が無い。したがって flag を付ける前に **`upscale[]` の全 placement を
+   > `graphic_id` / ファイル / `×倍率` つきで列挙して提示し**、各々の可否を確かめる。一部だけ
+   > 許容する場合は、許容しない placement の attrs を先に `size_px` 以内へ直してから flag を付ける
+   > (そうしないと user が見ていない placement のぼけまで確定する)。承認済みプロジェクトでは
+   `commit-approval approve` は `E_ALREADY_APPROVED` で閉じており、delta の受諾を記録できる経路は
+   この apply だけ。記録の write-back 検証に失敗した `E_WRITE_VERIFY` は 1 回だけ再実行 (apply は
+   冪等) → 解消しなければ `feedback-log.md` に Pattern B を記録して中断する (記録なしで進めると
+   次回が同じ質問を再提示する / 承認済みの表示寸が縮む)。
 3. **spec 節の復元**: Step 3 の spec 再生成で「使用グラフィック」節が消えているため、state から決定的に再 append する (由来の承認日は元の `step21g_approved_at` を引用。approvals は変更しない。**script は埋め込み完全性を機械検査する** — `E_EMBED_INCOMPLETE` は 2 が未完了のまま呼んだ順序違反 → 2 へ戻る):
 
    ```bash
@@ -213,7 +287,11 @@ Step 4 の HTML 再生成は spec からの再生成であり、**21g で承認�
    node skills/21g-graphic-embed-review/scripts/embed-graphics.mjs {app_name} verify --delta --screens {regen_screens}
    ```
 
-   `complete: false` は missing / violations に従い 2 をやり直す (リトライ ≤3 → `feedback-log.md` Pattern B → abort — Step 4 の lint 契約と同型)。
+   `E_SCREENS_UNMATCHED` は `--screens` の指定がグラフィック slot を持つどの画面にも一致しなかった (空文字 / typo) — `{regen_screens}` の綴りを確認して再実行する。**この検査が無いと 1 ファイルも読まないまま `complete: true` が返る** ので、本エラーを「対象なし = OK」と読み替えてはならない。一部だけ一致しない場合は正当 (グラフィックを持たない再生成画面) で、`screens_without_graphic_slots[]` に列挙される。
+
+   `complete: false` は missing / violations に従い 2 をやり直す (リトライ ≤3 → `feedback-log.md` Pattern B → abort — Step 4 の lint 契約と同型)。`upscale[]` (未受諾の拡大) が非空なら 2 の `E_UPSCALE` と同じ扱い — **`upscale_accepted[]` に出た placement は承認済みの受諾記録どおりなので触らない** (縮めると承認済みの絵が黙って縮む)。
+
+   **`upscale_accept_unreproduced[]` は「承認済みの表示寸が失われた」直接のシグナル** — 台帳に受諾記録があるのに現在の `<img>` がその表示寸になっていない placement を挙げる。`upscale[]` / `upscale_accepted[]` はどちらも現在のタグから算出した finding 由来なので、**既に縮められた placement はどちらにも現れない** (`upscale_accepted[]` が空なのを「保護対象なし」と読むと縮小が確定する)。非空なら各 entry の **`differs[]` (承認時と違う束縛要素) と `current` (現在の実値)** を見て分岐する: `display` が差分に含まれる → 承認済みの表示寸が縮められている ので entry の `display` へ attrs を戻して 2 をやり直す / `object_fit`・`size_px` のみ → **表示寸は承認どおり** で束縛の別要素が変わった状態 (`display` を戻す操作は no-op) なので、意図した変更かを user に確認してから受諾を更新する。`reason: "tag_missing"` は `<img>` 自体が無い (2 の再埋め込みが未完了) — 2 をやり直す。user が縮小を明示指示した場合のみ、`apply --delta` を通して受諾記録を失効させる (`upscale_accept_revoked[]` に出る) — **`pipeline-state.json` を手で編集して台帳を消さない**。
 
 > **順序が load-bearing**: 本 Step は **Step 4 (main 再生成) の後・Step 4b (sub-state regen) の前** に置く。4b の `inherit_main` subagent は再生成した main HTML をタグごと継承するため、ここで復元した `<img>` は sub-state に自動継承される (逆順だと全 sub-state の個別パッチが要る)。Step 6 の色 lint 全走査・Step 7 ゲートより前に完結させる。preserved 画面には触れない (Step 0 の Hard constraint と同じ — `--screens` の対象絞りが機械的に保証する)。却下済み slot (`excluded_slots[]`) を復元しない点は driver 差集合が構造的に担保する。
 
@@ -315,7 +393,7 @@ Run a focused 3-layer review on the **affected screens only**:
 - Layer 3: Brand consistency — do new/updated screens feel visually consistent with preserved screens?
 - Layer-REQ (要件トレース監査、F-3b): delta は部分再生成 (生成) と本監査が **同一 session・同一 model** で self-bias が漏れる (Step 18 を経由しない独自パス + ablation 実証「生成 context を持つと検証の起点となる疑問が生成されない」)。これを構造分離で断つため、監査を **`ayatori-requirements-auditor` subagent (`layer="delta"`) に委譲**して生成 context を隔離する:
   - 起動 prompt (Task tool): `layer="delta"` / `app_name` / `repo_root` (絶対パス起点) / `requirements_json_path` (**変更後**、突合先) / `regenerated_screens` (本 step で再生成した画面 HTML パス list) / `screen_specs` (対応する画面仕様 `.md` パス list = 列挙源) / (任意) `design_brief_path` (motion/visual の突合先)。
-  - subagent は再生成画面の **component + 挙動/インタラクション/状態** を独立 forced-enum し、変更後 `requirements.json` (+ design-brief) に literal トレース。マップできない要素を deviation candidates として return (REQ-AUD-01〜05。delta は generation-provenance が無いため provenance cross-check は不適用 = `self_bias_signal` は付かない)。
+  - subagent は再生成画面の **component + 挙動/インタラクション/状態 + データ項目** を独立 forced-enum し (列挙単位の SoT は `docs/principle4-disambiguation.md` §5.2 — Step 18 と同じ単位。データ項目の根拠列が有効な出典を持つ行は充足済み、有効性は `skills/17-screen-gen/SKILL.md`「データ項目の記入規則」)、変更後 `requirements.json` (+ design-brief) に literal トレース。マップできない要素を deviation candidates として return (REQ-AUD-01〜05。delta は generation-provenance が無いため provenance cross-check は不適用 = `self_bias_signal` は付かない)。
   - **main (本 step) が single writer** として `requirement-deviations.json` に append (`phase="delta"`, `raised_by_step="29-partial-screen-regen"`, `detected_at` を main 付与) + `coverage[]` に `{ phase:"delta", raised_by_step:"29-partial-screen-regen", enumerated_count, enumerated_refs, checked_at }` (**0 件でも必須**) を記録 → `node scripts/render-deviations-view.mjs artifacts/{app_name}/requirement-deviations.json` で view を決定論生成 (手焼き禁止)。
   - ⚠️ **フォールバック (registry 未反映時)**: auditor 起動失敗時は §5.2 forced-enum を main が inline 実行して継続 + `feedback-log.md` に Pattern C 記録 (self-bias は残るが silent skip より良い)。
   delta は変更への過剰適応で要件外を足しやすいため必須。下記 Step 7 gate で view.html を提示。詳細は `docs/principle4-disambiguation.md` §5 (§5.3 表の delta 行も参照)。
