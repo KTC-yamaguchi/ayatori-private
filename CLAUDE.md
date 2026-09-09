@@ -133,6 +133,21 @@ Rationale: AYATORI パイプラインは過去に「`/ayatori-question` → `/ay
 
 ---
 
+## 実行環境と分業（トークン予算）
+
+⚠️ **本節はパイプライン仕様ではなく実行環境の運用規約** — Phase / Step / artifact の振る舞いを定義しない。上の Operating Principles（正しさのガードレール）とは別軸で、「同じパイプラインを予算制約のある環境でどう回すか」を扱う。詳細と貼るだけプロンプト集の SoT は **`docs/remote-engagement-workflow.md`**。
+
+取引先・顧客貸与アカウント等、**トークン予算に制約のある環境**でパイプラインを実行し、設計・判断は制約のない環境で行う運用がある。この構図では以下を前提として扱う（ユーザーが毎回説明しなくてよい）:
+
+1. **判断は潤沢な環境で、実行は制約環境で** — 制約環境のトークンを食うのは本番実行そのものより**手前の探索と相談**である。「どのモジュールを対象にすべきか」を制約環境で相談させるとリポジトリ探索が走って数十万トークン消える。選定・見積解釈・プロンプト設計は潤沢な環境で終わらせ、制約環境には**結論だけ**を持ち込む。往復は決定論スクリプト出力のコピペで足りる。
+2. **支配項は shard 数** — コード読み取りコストは subagent 起動固定費（`scripts/build-code-inventory.mjs` の `EST_SHARD_OVERHEAD_TOKENS`、実測 ~100k tokens/shard）が支配的で、読む行数はほぼ効かない。**節約とは「読む量を減らす」ではなく「shard 数を減らす」こと**。閾値・shard 切り分けの定数はすべて同 script 冒頭が SoT。
+3. **見積は無料で取れる** — `node scripts/build-code-inventory.mjs {app_name} [--modules …] [--tiers …] --stdout` は LLM を呼ばない決定論スクリプトかつ台帳を書かない preview。**本番実行の前に必ず通し**、shard 数と予想トークンを人間が見てから範囲を確定する。
+4. **制約環境では探索させない** — 制約環境で作業を頼むプロンプトには「それ以外は何もしないで / phase を起動しないで / ソースを読まないで」を明示する。これが無いと見積を取る前に浪費する。
+
+上記に該当する相談を受けたとき、Claude は前提の再説明を求めず `docs/remote-engagement-workflow.md` を参照して進める。
+
+---
+
 ## Pipeline Execution
 
 Read `pipeline.yaml` to confirm Phase order, then execute the corresponding Phase SKILL.md.
